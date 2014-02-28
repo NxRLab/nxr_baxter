@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<package>
+  <name>nxr_baxter</name>
+  <version>0.0.1</version>
+  <description>
+    This is a package that has Baxter scripts developed at NU.
+  </description>
+
+  <maintainer email="jonathanrovira2016@u.northwestern.edu">Jon Rovira</maintainer>
+  <author email="jonathanrovira2016@u.northwestern.edu">Jon Rovira</author>
+  <author email="kylelueptow@gmail.com">Kyle Lueptow</author>
+  <license>BSD</license>
+
+  <!-- Dependencies -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!--Build_depends-->
+  <build_depend>rospy</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>roslib</build_depend>
+  <build_depend>actionlib</build_depend>
+
+  <build_depend>message_generation</build_depend>
+  <build_depend>trajectory_msgs</build_depend>
+  <build_depend>control_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>baxter_core_msgs</build_depend>
+  <build_depend>skeletonmsgs_nu</build_depend>
+
+  <build_depend>baxter_interface</build_depend>
+  <build_depend>utilities</build_depend>
+
+  <build_depend>tf</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+  <!---->
+
+  <!--Run_depends-->
+  <run_depend>rospy</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>roslib</run_depend>
+  <run_depend>actionlib</run_depend>
+
+  <run_depend>message_runtime</run_depend>
+  <run_depend>trajectory_msgs</run_depend>
+  <run_depend>control_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>baxter_core_msgs</run_depend>
+  <run_depend>skeletonmsgs_nu</run_depend>
+
+  <run_depend>baxter_interface</run_depend>
+  <run_depend>utilities</run_depend>
+
+  <run_depend>tf</run_depend>
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+  <!---->
+
+  <!---->
+
+</package>

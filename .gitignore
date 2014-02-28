@@ -1,0 +1,57 @@
+# .gitignore taken from Jarvis's kinect_pendulum_demo just to get an idea
+
+# Let's ignore images for now at least
+*.jpg
+*.png
+
+# ignore these files
+*.pcd
+
+# ignore these directories and the files in them.
+*~
+bin/
+build/
+data/
+
+*TAGS
+
+# github ignore suggestions...
+
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+*.pyc
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+
+# OS generated files #
+######################
+*.DS_Store*
+ehthumbs.db
+Icon?
+Thumbs.db
+*.pdf
+*.pgf
+
