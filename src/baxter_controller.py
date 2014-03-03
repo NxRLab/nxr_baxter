@@ -102,12 +102,11 @@ class Baxter_Controller:
         # self.r_el_c = 0
         # self.r_ha_c = 0
 
-
-
         # Screen images
-        # So this is a thread, can we implement this as a publisher/subscriber instead?
+        # Let's make a new class that handles image changing, inside it will have two timers, one that runs at ~1/3hz to switch between images or whatever and one that runs more frequently to check which mode it should be in.
+        # Can also have it read image names from a file or param server instead of hardcoded
         # Seems like it would make more sense and might fix the weird issues we've had with it
-        # I'll need to look into the threading stuff
+        # Need to make sure we "init node" which it seems like we do
         img_thread = threading.Thread(target=self.img_change,
                                       name='Top',
                                       args=(['top']))
@@ -124,6 +123,8 @@ class Baxter_Controller:
         """
         Changes images on head screen
         """
+        # Declare pub at the top
+        # I want to rewrite this anyway
         if(type == 'top'):
             img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Top.png")
             msg = cv_bridge.CvBridge().cv_to_imgmsg(img)
@@ -160,24 +161,25 @@ class Baxter_Controller:
 
     def choose_user(self, skeletons):
         """
-        Selects primary user to avoid abgiguity
+        Selects primary user to avoid ambiguity
         """
         for skeleton in skeletons:
             lh = skeleton.left_hand.transform.translation.y
             rh = skeleton.right_hand.transform.translation.y
             h = skeleton.head.transform.translation.y
-            if h - lh > 0.11 or h - rh > 0.11:
+            if h - lh > 0.11 or h - rh > 0.11: # What units are these? should we make this higher or fix the filtering?
                 self.userid_almost_chosen = True
                 self.main_userid = skeleton.userid
                 print "\n\nMain user chosen.\nUser %s, please proceed.\n" % str(self.main_userid)
                 self.user_starting_position = skeleton.torso.transform.translation
                 if h - lh > 0.11:
-                    # Prep user images
+                    # Prep user images, will need to change these also
                     img_thread = threading.Thread(target=self.img_change,
                                                    name="Crane_Prep",
                                                    args=(['crane_prep']))
                     img_thread.daemon = True
                     img_thread.start()
+                    #Let's try and speed this stuff up
                     self.left_arm.move_to_joint_positions(self.crane_l_angles)
                     self.right_arm.move_to_joint_positions(self.crane_r_angles)
                     self.userid_chosen = True
@@ -204,8 +206,9 @@ class Baxter_Controller:
         if (choice == 'left'):
             dy = math.fabs(tor_y - lh_y)
             dx = math.fabs(lh_x - tor_x)
+            #These tolerances have been causing problems
             if(dy < 0.08 and dx > 0.4):
-                self.display_crane_prep = False
+                self.display_crane_prep = False # will be redone with new image switcher class
                 img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-User-Positioned.png")
                 msg = cv_bridge.CvBridge().cv_to_imgmsg(img)
                 pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
@@ -221,7 +224,7 @@ class Baxter_Controller:
                 msg = cv_bridge.CvBridge().cv_to_imgmsg(img)
                 pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
                 pub.publish(msg)
-                rospy.sleep(2.0)
+                rospy.sleep(2.0) #why do we sleep for 2 seconds?
                 return True
         return False
 
@@ -289,6 +292,7 @@ class Baxter_Controller:
         pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
         pub.publish(msg)
 
+        #Why do we disable, reset, and enable when resetting user stuff?
         self.rs.disable()
         self.rs.reset()
         self.rs.enable()
@@ -330,36 +334,6 @@ class Baxter_Controller:
         r_el = skeleton.right_elbow.transform.translation
         r_ha = skeleton.right_hand.transform.translation
         
-        # if self.mime_count == 300:
-        #     self.l_sh_c = l_sh
-        #     self.l_el_c = l_el
-        #     self.l_ha_c = l_ha
-        #     self.r_sh_c = r_sh
-        #     self.r_el_c = r_el
-        #     self.r_ha_c = r_ha
-        #     print "Mime Count 300"
-            
-        # if self.mime_count >= 300:
-        #     l_sh.x = self.l_sh_c.x# + np.random.randn()*0.01
-        #     l_sh.y = self.l_sh_c.y# + np.random.randn()*0.01
-        #     l_sh.z = self.l_sh_c.z# + np.random.randn()*0.01
-        #     l_el.x = self.l_el_c.x# + np.random.randn()*0.01
-        #     l_el.y = self.l_el_c.y# + np.random.randn()*0.01
-        #     l_el.z = self.l_el_c.z# + np.random.randn()*0.01
-        #     self.l_ha_c.x -= 0.001
-        #     l_ha.x = self.l_ha_c.x# + np.random.randn()*0.01
-        #     l_ha.y = self.l_ha_c.y# + np.random.randn()*0.01
-        #     l_ha.z = self.l_ha_c.z# + np.random.randn()*0.01
-        #     r_sh.x = self.r_sh_c.x# + np.random.randn()*0.01
-        #     r_sh.y = self.r_sh_c.y# + np.random.randn()*0.01
-        #     r_sh.z = self.r_sh_c.z# + np.random.randn()*0.01
-        #     r_el.x = self.r_el_c.x# + np.random.randn()*0.01
-        #     r_el.y = self.r_el_c.y# + np.random.randn()*0.01
-        #     r_el.z = self.r_el_c.z# + np.random.randn()*0.01
-        #     self.r_ha_c.x += 0.001
-        #     r_ha.x = self.r_ha_c.x# + np.random.randn()*0.01
-        #     r_ha.y = self.r_ha_c.y# + np.random.randn()*0.01
-        #     r_ha.z = self.r_ha_c.z# + np.random.randn()*0.01
 
         if self.mime_count % DOWN_SAMPLE == 0:
             self.mime.move(l_sh, l_el, l_ha, r_sh, r_el, r_ha)
@@ -388,6 +362,8 @@ class Baxter_Controller:
     def skeletonCallback(self, data):
         """
         Runs every time a skeleton is received from the tracker
+        This seems to do everything
+        This function is somewhat confusing, I'll go through later and document it better
         """
         # Chooses correct user
         if self.userid_chosen == True:
@@ -464,11 +440,8 @@ if __name__=='__main__':
     rospy.logdebug("node starting")
     Baxter_Controller()
 
-    done = False
+    done = False # when does this get flipped?
     while not done and not rospy.is_shutdown():
         rospy.spin()
 
     print("\n\nDone.")
-
-
-
