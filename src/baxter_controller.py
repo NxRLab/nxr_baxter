@@ -2,6 +2,7 @@
 
 # Jon Rovira & Kyle Lueptow
 # Summer 2013
+# Adam Barber edits March 2014
 
 ################
 # ROS IMPORTS: #
@@ -62,6 +63,8 @@ class Baxter_Controller:
 
         Another different terminal:
         rosrun baxter_interface trajectory_controller.py
+
+        Should be handled in launch file, no?
     """
 
     def __init__(self):
@@ -69,7 +72,7 @@ class Baxter_Controller:
         Enables robot, initializes booleans, subscribes to skeletons
         """
         print "Getting robot state..."
-        self.rs = baxter_interface.RobotEnable()
+        self.rs = baxter_interface.RobotEnable() #RS is a wrapper for the robot state
         print "Enabling robot... "
         self.rs.enable()
 
@@ -102,6 +105,9 @@ class Baxter_Controller:
 
 
         # Screen images
+        # So this is a thread, can we implement this as a publisher/subscriber instead?
+        # Seems like it would make more sense and might fix the weird issues we've had with it
+        # I'll need to look into the threading stuff
         img_thread = threading.Thread(target=self.img_change,
                                       name='Top',
                                       args=(['top']))
