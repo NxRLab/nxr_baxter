@@ -33,6 +33,8 @@ class ImageSwitcher(object):
                                            range(1,3)],
                             "mime": [baseFilename + 'Display-Mime.png'],
                             "crane": [baseFilename + 'Display-Crane.png'],
+                            "positioned": [baseFilename + 'Display-User-Positioned.png'],
+                            "bool_reset": [baseFilename + 'Display-Booleans-Reset.jpg']
                             }
     
     def timerCallback(self, event):
@@ -66,19 +68,17 @@ class ImageSwitcher(object):
 
 
     # written first without file stuff, lets just get it working hardcoded
-    def __init__(self, mode='idle', image_period=3.0):
+    def __init__(self, mode='idle', image_period=0):
         """
         Constructor for the class, optionally takes a mode and an image
-        switching period. Then starts the timer.
+        switching period. Then starts the timer. An image period of 0 or
+        negative means a one-shot timer.
         """
         if mode not in self.mode_to_images.keys():
             #Maybe want to raise an exception here instead of this
             mode = "top"
         self._mode = mode
         self.image_timer = None
-        if image_period <= 0:
-            #Should probably raise an exception here instead
-            image_period = 3
         self._image_period = image_period
         self._image_no = 0
         self._pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
@@ -105,17 +105,19 @@ class ImageSwitcher(object):
             self.image_timer.shutdown()
         # Note that the timer won't show an image until the timer goes off, so 
         # let's call the function that the callback calls once
+        # Note that we only set up a timer if the period is > 0
         self._imageUpdate(reset=True)
-        self.image_timer = rospy.Timer(rospy.Duration(self._image_period),self.timerCallback)
+        if self._image_period > 0:
+            self.image_timer = rospy.Timer(rospy.Duration(self._image_period),self.timerCallback)
 
 
 
 if __name__=="__main__":
     rospy.init_node('image_switcher_test_node')
     print "image switcher timer test"
-    img_sw = ImageSwitcher('top',2)
+    img_sw = ImageSwitcher('top')
     print "made object"
     rospy.sleep(6)
-    img_sw.change_mode('crane_prep',1)
+    img_sw.change_mode('crane_prep')
     rospy.spin()
     
