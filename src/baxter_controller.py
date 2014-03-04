@@ -16,6 +16,18 @@ import sensor_msgs.msg
 import baxter_interface
 import baxter_dataflow
 
+####################
+# OTHER IMPORTS: #
+####################
+import os
+import traceback
+import threading
+import Queue
+import math
+import cv
+import cv_bridge
+import numpy as np
+
 ###############
 # NU IMPORTS: #
 ###############
@@ -29,18 +41,6 @@ from vector_operations import (make_vector_from_POINTS,
                                vector_projection_onto_plane,
                                shortest_vector_from_point_to_vector)
 import skeleton_filter as sf
-
-####################
-# OTHER IMPORTS: #
-####################
-import os
-import traceback
-import threading
-import Queue
-import math
-import cv
-import cv_bridge
-import numpy as np
 
 
 DOWN_SAMPLE = 5
