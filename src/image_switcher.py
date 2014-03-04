@@ -17,13 +17,27 @@ class ImageSwitcher(object):
 
     """
     def timerCallback(self, event):
-        print "Timer!"
+        print "Mode: ", self.mode
     
     # written first without file stuff, lets just get it working hardcoded
-    def __init__(self, mode='idle'):
+    def __init__(self, mode='idle', image_period=3.0):
         self.mode = mode
-        rospy.Timer(rospy.Duration(1), self.timerCallback)
+        self.modeChanged = True
+        self.image_timer = None
+        self.image_period = image_period
+        self.startTimer()
         print "Got here"
+
+    def change_mode(self, newMode):
+        self.mode = newMode
+        self.modeChanged = True
+        #re-run the timer callback function now
+        self.startTimer()
+
+    def startTimer(self):
+        if self.image_timer:
+            self.image_timer.shutdown()
+        self.image_timer = rospy.Timer(rospy.Duration(self.image_period),self.timerCallback)
 
 
 
@@ -32,5 +46,7 @@ if __name__=="__main__":
     print "image switcher timer test"
     img_sw = ImageSwitcher()
     print "made object"
+    rospy.sleep(10)
+    img_sw.change_mode('mode 2')
     rospy.spin()
     
