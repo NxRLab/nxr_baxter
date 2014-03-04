@@ -8,7 +8,7 @@
 # ROS IMPORTS: #
 ################
 import rospy
-import sensor_msgs.msg
+#import sensor_msgs.msg
 
 ####################
 # RETHINK IMPORTS: #
@@ -24,8 +24,8 @@ import traceback
 import threading
 import Queue
 import math
-import cv
-import cv_bridge
+#import cv
+#import cv_bridge
 import numpy as np
 
 ###############

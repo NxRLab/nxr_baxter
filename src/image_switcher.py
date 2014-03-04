@@ -3,7 +3,14 @@
 # Adam Barber
 # March 2014
 
+# Ros imports
 import rospy
+import sensor_msgs.msg
+
+# Other imports
+import cv
+import cv_bridge
+
 
 class ImageSwitcher(object):
     """
@@ -45,18 +52,19 @@ class ImageSwitcher(object):
         mode/period has been changed and the timer needs to be reset.
         """
         image_list = self.mode_to_images[self._mode]
+        
         if reset:
             self.image_no = 0
-        image_filename = image_list[self.image_no]
 
-        # Need to replace printing with publishing
-        print image_filename
+        image_filename = image_list[self.image_no]
+        msg = cv_bridge.CvBridge().cv_to_imgmsg(cv.LoadImage(image_filename))
+        self._pub.publish(msg)
         
         self.image_no += 1
         if self.image_no >= len(image_list):
             self.image_no = 0
-        
-    
+
+
     # written first without file stuff, lets just get it working hardcoded
     def __init__(self, mode='idle', image_period=3.0):
         """
@@ -73,6 +81,7 @@ class ImageSwitcher(object):
             image_period = 3
         self._image_period = image_period
         self._image_no = 0
+        self._pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
         self._startTimer()
 
     def change_mode(self, newMode=None, newPeriod=None):
