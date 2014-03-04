@@ -15,7 +15,19 @@ class ImageSwitcher(object):
     based on the mode that decides which image to display. The images, and
     potentially a list of modes should be loaded from a file.
 
+
     """
+    baseFilename = '/home/nxr-baxter/groovyws/src/nxr_baxter/images/'
+    mode_to_images = { "top": [baseFilename + 'Display-Top.png'],
+                            "mime_prep": [baseFilename + 'Display-Mime-Prep-' +
+                                          str(x) + '.png' for x in range(1,3)],
+                            "crane_prep": [baseFilename + 'Display-Crane-Prep-'
+                                           + str(x) + '.png' for x in
+                                           range(1,3)],
+                            "mime": [baseFilename + 'Display-Mime.png'],
+                            "crane": [baseFilename + 'Display-Crane.png'],
+                            }
+    
     def timerCallback(self, event):
         """
         Callback function for the image switching period timer. Calls the image
@@ -32,10 +44,18 @@ class ImageSwitcher(object):
         started. Should  only be called by the timer callback or whenever the
         mode/period has been changed and the timer needs to be reset.
         """
+        image_list = self.mode_to_images[self._mode]
         if reset:
-            print "Resetting, mode: %s" % self._mode
-        else:
-            print "Continuing mode: %s" % self._mode
+            self.image_no = 0
+        image_filename = image_list[self.image_no]
+
+        # Need to replace printing with publishing
+        print image_filename
+        
+        self.image_no += 1
+        if self.image_no >= len(image_list):
+            self.image_no = 0
+        
     
     # written first without file stuff, lets just get it working hardcoded
     def __init__(self, mode='idle', image_period=3.0):
@@ -43,9 +63,16 @@ class ImageSwitcher(object):
         Constructor for the class, optionally takes a mode and an image
         switching period. Then starts the timer.
         """
+        if mode not in self.mode_to_images.keys():
+            #Maybe want to raise an exception here instead of this
+            mode = "top"
         self._mode = mode
         self.image_timer = None
+        if image_period <= 0:
+            #Should probably raise an exception here instead
+            image_period = 3
         self._image_period = image_period
+        self._image_no = 0
         self._startTimer()
 
     def change_mode(self, newMode=None, newPeriod=None):
@@ -77,9 +104,9 @@ class ImageSwitcher(object):
 if __name__=="__main__":
     rospy.init_node('image_switcher_test_node')
     print "image switcher timer test"
-    img_sw = ImageSwitcher()
+    img_sw = ImageSwitcher('top',2)
     print "made object"
-    rospy.sleep(10)
-    img_sw.change_mode('mode 2',1)
+    rospy.sleep(6)
+    img_sw.change_mode('crane_prep',1)
     rospy.spin()
     
