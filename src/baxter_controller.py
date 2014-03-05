@@ -2,18 +2,31 @@
 
 # Jon Rovira & Kyle Lueptow
 # Summer 2013
+# Adam Barber edits March 2014
 
 ################
 # ROS IMPORTS: #
 ################
 import rospy
-import sensor_msgs.msg
+#import sensor_msgs.msg
 
 ####################
 # RETHINK IMPORTS: #
 ####################
 import baxter_interface
 import baxter_dataflow
+
+####################
+# OTHER IMPORTS: #
+####################
+import os
+import traceback
+import threading
+import Queue
+import math
+#import cv
+#import cv_bridge
+import numpy as np
 
 ###############
 # NU IMPORTS: #
@@ -28,18 +41,7 @@ from vector_operations import (make_vector_from_POINTS,
                                vector_projection_onto_plane,
                                shortest_vector_from_point_to_vector)
 import skeleton_filter as sf
-
-####################
-# OTHER IMPORTS: #
-####################
-import os
-import traceback
-import threading
-import Queue
-import math
-import cv
-import cv_bridge
-import numpy as np
+import image_switcher as imgswitch
 
 
 DOWN_SAMPLE = 5
@@ -62,6 +64,8 @@ class Baxter_Controller:
 
         Another different terminal:
         rosrun baxter_interface trajectory_controller.py
+
+        Should be handled in launch file, no?
     """
 
     def __init__(self):
@@ -69,7 +73,7 @@ class Baxter_Controller:
         Enables robot, initializes booleans, subscribes to skeletons
         """
         print "Getting robot state..."
-        self.rs = baxter_interface.RobotEnable()
+        self.rs = baxter_interface.RobotEnable() #RS is a wrapper for the robot state
         print "Enabling robot... "
         self.rs.enable()
 
@@ -99,14 +103,10 @@ class Baxter_Controller:
         # self.r_el_c = 0
         # self.r_ha_c = 0
 
-
-
-        # Screen images
-        img_thread = threading.Thread(target=self.img_change,
-                                      name='Top',
-                                      args=(['top']))
-        img_thread.daemon = True
-        img_thread.start()
+        # Set up our ImageSwitcher object to do our first set of images
+        # Note for the top mode there is only one image (for now) so we
+        # don't need to set a period other than 0 which is a one-shot
+        self.img_switch = imgswitch.ImageSwitcher(mode='top', image_period=0)
 
         # skeletonCallback called whenever skeleton received
         rospy.Subscriber("skeletons", Skeletons, self.skeletonCallback)
@@ -114,75 +114,28 @@ class Baxter_Controller:
         self.skel_filt = sf.SkeletonFilter(sf.joints)
         self.first_filt_flag = True
 
-    def img_change(self, type):
-        """
-        Changes images on head screen
-        """
-        if(type == 'top'):
-            img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Top.png")
-            msg = cv_bridge.CvBridge().cv_to_imgmsg(img)
-            pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
-            pub.publish(msg)
-        elif(type == 'mime_prep'):
-            for x in range(1, 3):
-                if(self.display_mime_prep == True):
-                    img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Mime-Prep-" + str(x) + ".png")
-                    msg = cv_bridge.CvBridge().cv_to_imgmsg(img)
-                    pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
-                    pub.publish(msg)
-                    rospy.sleep(3.0)
-        elif(type == 'crane_prep'):
-            for x in range(1, 3):
-                if(self.display_crane_prep == True):
-                    img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Crane-Prep-" + str(x) + ".png")
-                    msg = cv_bridge.CvBridge().cv_to_imgmsg(img)
-                    pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
-                    pub.publish(msg)
-                    rospy.sleep(3.0)
-        elif(type == 'mime'):
-            img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Mime.png")
-            msg = cv_bridge.CvBridge().cv_to_imgmsg(img)
-            pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
-            pub.publish(msg)
-            rospy.sleep(3.0)
-        elif(type == 'crane'):
-            img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Crane.png")
-            msg = cv_bridge.CvBridge().cv_to_imgmsg(img)
-            pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
-            pub.publish(msg)
-            rospy.sleep(3.0)
-
     def choose_user(self, skeletons):
         """
-        Selects primary user to avoid abgiguity
+        Selects primary user to avoid ambiguity
         """
         for skeleton in skeletons:
             lh = skeleton.left_hand.transform.translation.y
             rh = skeleton.right_hand.transform.translation.y
             h = skeleton.head.transform.translation.y
-            if h - lh > 0.11 or h - rh > 0.11:
+            if h - lh > 0.11 or h - rh > 0.11: # What units are these? 
                 self.userid_almost_chosen = True
                 self.main_userid = skeleton.userid
                 print "\n\nMain user chosen.\nUser %s, please proceed.\n" % str(self.main_userid)
                 self.user_starting_position = skeleton.torso.transform.translation
                 if h - lh > 0.11:
-                    # Prep user images
-                    img_thread = threading.Thread(target=self.img_change,
-                                                   name="Crane_Prep",
-                                                   args=(['crane_prep']))
-                    img_thread.daemon = True
-                    img_thread.start()
+                    self.img_switch.change_mode('crane_prep',3)
                     self.left_arm.move_to_joint_positions(self.crane_l_angles)
                     self.right_arm.move_to_joint_positions(self.crane_r_angles)
                     self.userid_chosen = True
                     return 'left'
                 elif h - rh > 0.11:
-                    # Prep user images
-                    img_thread = threading.Thread(target=self.img_change,
-                                                   name="Mime_Prep",
-                                                   args=(['mime_prep']))
-                    img_thread.daemon = True
-                    img_thread.start()
+                    self.img_switch.change_mode('mime_prep', 3)
+                    #Let's try and speed this stuff up
                     self.left_arm.move_to_joint_positions(self.mime_l_angles)
                     self.right_arm.move_to_joint_positions(self.mime_r_angles)
                     self.userid_chosen = True
@@ -195,27 +148,20 @@ class Baxter_Controller:
         rh_x = skeleton.right_hand.transform.translation.y
         tor_y = skeleton.torso.transform.translation.y
         tor_x = skeleton.torso.transform.translation.x
-        if (choice == 'left'):
+        if choice == 'left':
             dy = math.fabs(tor_y - lh_y)
             dx = math.fabs(lh_x - tor_x)
-            if(dy < 0.08 and dx > 0.4):
-                self.display_crane_prep = False
-                img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-User-Positioned.png")
-                msg = cv_bridge.CvBridge().cv_to_imgmsg(img)
-                pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
-                pub.publish(msg)
-                rospy.sleep(2.0)
+            #These tolerances have been causing problems
+            if dy < 0.08 and dx > 0.4:
+                self.img_switch.change_mode('positioned',0)
+                rospy.sleep(0.5) # try a 1/2 second delay
                 return True
         elif (choice == 'right'):
             dy = math.fabs(tor_y - lh_y) + math.fabs(tor_y - rh_y)
             dx = math.fabs(lh_x - tor_x) + math.fabs(rh_x - tor_x)
-            if(dy < 0.20 and dx > 0.8):
-                self.display_mime_prep = False
-                img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-User-Positioned.png")
-                msg = cv_bridge.CvBridge().cv_to_imgmsg(img)
-                pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
-                pub.publish(msg)
-                rospy.sleep(2.0)
+            if dy < 0.20 and dx > 0.8:
+                self.img_switch.change_mode('positioned',0)
+                rospy.sleep(0.5) # try 1/2 second delay
                 return True
         return False
 
@@ -225,7 +171,6 @@ class Baxter_Controller:
         """
         Determines which action for Baxter to perform based on gestures
         """
-
         # Action not chosen yet
         if self.action_id == 0:
             # MIME
@@ -253,12 +198,7 @@ class Baxter_Controller:
             self.action_chosen = True
 
             # Screen images
-            img_thread = threading.Thread(target=self.img_change,
-                                           name="Mime",
-                                           args=(['mime']))
-            img_thread.daemon = True
-            img_thread.start()
-
+            self.img_switch.change_mode('mime',3)
 
         elif action == 2:
             print "    Action chosen: Crane\n"
@@ -267,22 +207,16 @@ class Baxter_Controller:
             self.action_chosen = True
 
             # Screen images
-            img_thread = threading.Thread(target=self.img_change,
-                                           name="Crane",
-                                           args=(['crane']))
-            img_thread.daemon = True
-            img_thread.start()
+            self.img_switch.change_mode('crane',3)
 
     def reset_booleans(self):
         """
         Resets booleans when user is done with action
         """
         print "\n**Booleans reset**\n"
-        img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Booleans-Reset.jpg")
-        msg = cv_bridge.CvBridge().cv_to_imgmsg(img)
-        pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
-        pub.publish(msg)
+        self.img_switch.change_mode('bool_reset',3)
 
+        #Why do we disable, reset, and enable when resetting user stuff?
         self.rs.disable()
         self.rs.reset()
         self.rs.enable()
@@ -300,11 +234,7 @@ class Baxter_Controller:
         rospy.sleep(2.0)
         
         # Screen images
-        img_thread = threading.Thread(target=self.img_change,
-                                       name="Top",
-                                       args=(['top']))
-        img_thread.daemon = True
-        img_thread.start()
+        self.img_switch.change_mode('top',3)
 
     #=========================================================#
     #                        ACTIONS:                         #
@@ -324,36 +254,6 @@ class Baxter_Controller:
         r_el = skeleton.right_elbow.transform.translation
         r_ha = skeleton.right_hand.transform.translation
         
-        # if self.mime_count == 300:
-        #     self.l_sh_c = l_sh
-        #     self.l_el_c = l_el
-        #     self.l_ha_c = l_ha
-        #     self.r_sh_c = r_sh
-        #     self.r_el_c = r_el
-        #     self.r_ha_c = r_ha
-        #     print "Mime Count 300"
-            
-        # if self.mime_count >= 300:
-        #     l_sh.x = self.l_sh_c.x# + np.random.randn()*0.01
-        #     l_sh.y = self.l_sh_c.y# + np.random.randn()*0.01
-        #     l_sh.z = self.l_sh_c.z# + np.random.randn()*0.01
-        #     l_el.x = self.l_el_c.x# + np.random.randn()*0.01
-        #     l_el.y = self.l_el_c.y# + np.random.randn()*0.01
-        #     l_el.z = self.l_el_c.z# + np.random.randn()*0.01
-        #     self.l_ha_c.x -= 0.001
-        #     l_ha.x = self.l_ha_c.x# + np.random.randn()*0.01
-        #     l_ha.y = self.l_ha_c.y# + np.random.randn()*0.01
-        #     l_ha.z = self.l_ha_c.z# + np.random.randn()*0.01
-        #     r_sh.x = self.r_sh_c.x# + np.random.randn()*0.01
-        #     r_sh.y = self.r_sh_c.y# + np.random.randn()*0.01
-        #     r_sh.z = self.r_sh_c.z# + np.random.randn()*0.01
-        #     r_el.x = self.r_el_c.x# + np.random.randn()*0.01
-        #     r_el.y = self.r_el_c.y# + np.random.randn()*0.01
-        #     r_el.z = self.r_el_c.z# + np.random.randn()*0.01
-        #     self.r_ha_c.x += 0.001
-        #     r_ha.x = self.r_ha_c.x# + np.random.randn()*0.01
-        #     r_ha.y = self.r_ha_c.y# + np.random.randn()*0.01
-        #     r_ha.z = self.r_ha_c.z# + np.random.randn()*0.01
 
         if self.mime_count % DOWN_SAMPLE == 0:
             self.mime.move(l_sh, l_el, l_ha, r_sh, r_el, r_ha)
@@ -382,6 +282,8 @@ class Baxter_Controller:
     def skeletonCallback(self, data):
         """
         Runs every time a skeleton is received from the tracker
+        This seems to do everything
+        This function is somewhat confusing, I'll go through later and document it better
         """
         # Chooses correct user
         if self.userid_chosen == True:
@@ -458,11 +360,8 @@ if __name__=='__main__':
     rospy.logdebug("node starting")
     Baxter_Controller()
 
-    done = False
+    done = False # when does this get flipped?
     while not done and not rospy.is_shutdown():
         rospy.spin()
 
     print("\n\nDone.")
-
-
-
