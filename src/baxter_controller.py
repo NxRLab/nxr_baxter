@@ -41,6 +41,7 @@ from vector_operations import (make_vector_from_POINTS,
                                vector_projection_onto_plane,
                                shortest_vector_from_point_to_vector)
 import skeleton_filter as sf
+import image_switcher as imgswitch
 
 
 DOWN_SAMPLE = 5
@@ -105,7 +106,7 @@ class Baxter_Controller:
         # Set up our ImageSwitcher object to do our first set of images
         # Note for the top mode there is only one image (for now) so we
         # don't need to set a period other than 0 which is a one-shot
-        self.img_switch = ImageSwitcher(mode='top', image_period=0)
+        self.img_switch = imgswitch.ImageSwitcher(mode='top', image_period=0)
 
         # skeletonCallback called whenever skeleton received
         rospy.Subscriber("skeletons", Skeletons, self.skeletonCallback)
