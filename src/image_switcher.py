@@ -129,6 +129,7 @@ class ImageSwitcher(object):
 
 
 if __name__=="__main__":
+    #Simple test script for ImageSwitcher class
     rospy.init_node('image_switcher_test_node')
     print "image switcher timer test"
     img_sw = ImageSwitcher('top')
