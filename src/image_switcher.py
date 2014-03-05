@@ -24,18 +24,18 @@ class ImageSwitcher(object):
 
 
     """
-    baseFilename = '/home/nxr-baxter/groovyws/src/nxr_baxter/images/'
-    mode_to_images = { "top": [baseFilename + 'Display-Top.png'],
-                            "mime_prep": [baseFilename + 'Display-Mime-Prep-' +
-                                          str(x) + '.png' for x in range(1,3)],
-                            "crane_prep": [baseFilename + 'Display-Crane-Prep-'
-                                           + str(x) + '.png' for x in
-                                           range(1,3)],
-                            "mime": [baseFilename + 'Display-Mime.png'],
-                            "crane": [baseFilename + 'Display-Crane.png'],
-                            "positioned": [baseFilename + 'Display-User-Positioned.png'],
-                            "bool_reset": [baseFilename + 'Display-Booleans-Reset.jpg']
-                            }
+    # baseFilename = '/home/nxr-baxter/groovyws/src/nxr_baxter/images/'
+    # mode_to_images = { "top": [baseFilename + 'Display-Top.png'],
+    #                         "mime_prep": [baseFilename + 'Display-Mime-Prep-' +
+    #                                       str(x) + '.png' for x in range(1,3)],
+    #                         "crane_prep": [baseFilename + 'Display-Crane-Prep-'
+    #                                        + str(x) + '.png' for x in
+    #                                        range(1,3)],
+    #                         "mime": [baseFilename + 'Display-Mime.png'],
+    #                         "crane": [baseFilename + 'Display-Crane.png'],
+    #                         "positioned": [baseFilename + 'Display-User-Positioned.png'],
+    #                         "bool_reset": [baseFilename + 'Display-Booleans-Reset.jpg']
+    #                         }
     
     def timerCallback(self, event):
         """
@@ -68,14 +68,30 @@ class ImageSwitcher(object):
 
 
     # written first without file stuff, lets just get it working hardcoded
-    def __init__(self, mode='idle', image_period=0):
+    def __init__(self, img_files_filename, mode='idle', image_period=0):
         """
-        Constructor for the class, optionally takes a mode and an image
+        Constructor for the class, takes a filename that contains a list 
+        of modes and their image files. Optionally takes a mode and an image
         switching period. Then starts the timer. An image period of 0 or
         negative means a one-shot timer.
+
+        img_files_filename should be a file with a list of modes and
+        filenames as strings with the following syntax:
+        mode1 filename1_1 filename1_2
+        mode2 filename2_1 filename2_2 filename2_3
+        ...
+        modeN filenameN
         """
+        f = open(img_files_filename, 'r')
+        self.mode_to_images = {}
+        for line in f:
+            split_line = line.split()
+            #Allow pure whitespace lines
+            if line != []:
+                self.mode_to_images[split_line[0]] = split_line[1:]
         if mode not in self.mode_to_images.keys():
             #Maybe want to raise an exception here instead of this
+            print "Image mode requested not in list of image modes."
             mode = "top"
         self._mode = mode
         self.image_timer = None
