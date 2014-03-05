@@ -24,8 +24,6 @@ import traceback
 import threading
 import Queue
 import math
-#import cv
-#import cv_bridge
 import numpy as np
 
 ###############
@@ -103,10 +101,17 @@ class Baxter_Controller:
         # self.r_el_c = 0
         # self.r_ha_c = 0
 
+        #Pull the required filename from the parameter server
+        try:
+            img_files_filename = rospy.get_param('img_files_filename')
+        except KeyError:
+            sys.exit("img_files_filename not set in ROS parameter server")
+
         # Set up our ImageSwitcher object to do our first set of images
         # Note for the top mode there is only one image (for now) so we
         # don't need to set a period other than 0 which is a one-shot
-        self.img_switch = imgswitch.ImageSwitcher(mode='top', image_period=0)
+        self.img_switch = imgswitch.ImageSwitcher(img_files_filename, mode='top',
+                                                  image_period=0)
 
         # skeletonCallback called whenever skeleton received
         rospy.Subscriber("skeletons", Skeletons, self.skeletonCallback)
