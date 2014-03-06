@@ -94,13 +94,6 @@ class Baxter_Controller:
         self.display_mime = True
         self.display_crane = True
 
-        # self.l_sh_c = 0
-        # self.l_el_c = 0
-        # self.l_ha_c = 0
-        # self.r_sh_c = 0
-        # self.r_el_c = 0
-        # self.r_ha_c = 0
-
         #Pull the required filename from the parameter server
         try:
             img_files_filename = rospy.get_param('img_files_filename')
