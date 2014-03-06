@@ -9,6 +9,7 @@
 ################
 import rospy
 #import sensor_msgs.msg
+import std_msgs.msg import Empty
 
 ####################
 # RETHINK IMPORTS: #
@@ -111,6 +112,10 @@ class Baxter_Controller:
         # instantiate a skeleton filter
         self.skel_filt = sf.SkeletonFilter(sf.joints)
         self.first_filt_flag = True
+
+        # Make a subscriber to call a function to track the heartbeat of the
+        # skeleton tracker
+        rospy.Subscriber("tracker_heartbeat", Empty, self.heartbeatCallback)
 
     def choose_user(self, skeletons):
         """
@@ -348,8 +353,11 @@ class Baxter_Controller:
 
         elif not found:           
             self.reset_booleans()
-    
 
+    #Callback for the heartbeat. Updates the heartbeat count.
+    #There will be a separate timer to calculate the actual frequency
+    def heartbeatCallback(self, data):
+        self._heartbeat_count += 1
 
 
 if __name__=='__main__':
