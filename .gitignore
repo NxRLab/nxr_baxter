@@ -1,5 +1,8 @@
 # .gitignore taken from Jarvis's kinect_pendulum_demo just to get an idea
 
+# ignore things with #'s
+*\#*
+
 # Let's ignore images for now at least
 *.jpg
 *.png

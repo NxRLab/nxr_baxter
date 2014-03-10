@@ -1,0 +1,26 @@
+Things that need to be done for Baxter
+
+Fix shutdown and restart of kinect
+-Hearbeat message on the skeleton tracker
+-Need to do the timer
+
+Meta-mode controller
+-Service-based to change the mode, publishes a latched topic whenever mode is changed
+-Modes are things like: baxter shutdown motors, baxter turn on motors, etc.
+
+"Low-Pass filter" for hand raise to trigger baxter
+-Wait ~0.5-1s and see if hand is raised the whole time
+
+Have motors turn off in a 'better' position
+
+Speed up process of getting into each demo
+-Remove 'clicking' of gripper etc
+
+Longer-term
+Smarter handling of Kinect
+-Shut down kinect or skeleton tracker entirely if no one is nearby
+-Use headcam or other webcam to detect changes in scene (a.k.a.) people nearby
+-Then start back up, only do "full restart" of kinect if skeleton tracker won't start up properly
+
+Smarter shutdowns at night
+-Run a chron job to shutdown everything at night and start everything in the morning

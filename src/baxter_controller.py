@@ -9,6 +9,7 @@
 ################
 import rospy
 #import sensor_msgs.msg
+import std_msgs.msg import Empty
 
 ####################
 # RETHINK IMPORTS: #
@@ -24,8 +25,6 @@ import traceback
 import threading
 import Queue
 import math
-#import cv
-#import cv_bridge
 import numpy as np
 
 ###############
@@ -41,7 +40,8 @@ from vector_operations import (make_vector_from_POINTS,
                                vector_projection_onto_plane,
                                shortest_vector_from_point_to_vector)
 import skeleton_filter as sf
-import image_switcher
+import image_switcher as imgswitch
+
 
 
 DOWN_SAMPLE = 5
@@ -96,23 +96,35 @@ class Baxter_Controller:
         self.display_mime = True
         self.display_crane = True
 
-        # self.l_sh_c = 0
-        # self.l_el_c = 0
-        # self.l_ha_c = 0
-        # self.r_sh_c = 0
-        # self.r_el_c = 0
-        # self.r_ha_c = 0
+        # For calculating skeleton heartbeat
+        # Average it every 5 seconds.
+        self.heartbeat_period = 5; 
+
+        #Pull the required filename from the parameter server
+        try:
+            img_files_filename = rospy.get_param('img_files_filename')
+        except KeyError:
+            sys.exit("img_files_filename not set in ROS parameter server")
 
         # Set up our ImageSwitcher object to do our first set of images
         # Note for the top mode there is only one image (for now) so we
         # don't need to set a period other than 0 which is a one-shot
-        self.img_switch = image_switcher.ImageSwitcher(mode='top', image_period=0)
+
+        self.img_switch = imgswitch.ImageSwitcher(img_files_filename, mode='top',
+                                                  image_period=0)
 
         # skeletonCallback called whenever skeleton received
         rospy.Subscriber("skeletons", Skeletons, self.skeletonCallback)
         # instantiate a skeleton filter
         self.skel_filt = sf.SkeletonFilter(sf.joints)
         self.first_filt_flag = True
+
+        # Make a subscriber to call a function to track the heartbeat of the
+        # skeleton tracker
+        rospy.Subscriber("tracker_heartbeat", Empty, self.heartbeatCallback)
+
+        # Start the timer
+        self.heartbeat_timer = rospy.Timer(rospy.Duration(self.heartbeat_period), self.heartbeat_timer_callback);
 
     def choose_user(self, skeletons):
         """
@@ -350,7 +362,20 @@ class Baxter_Controller:
 
         elif not found:           
             self.reset_booleans()
-    
+
+    #Callback for the heartbeat. Updates the heartbeat count.
+    #There will be a separate timer to calculate the actual frequency
+    def heartbeatCallback(self, data):
+        self._heartbeat_count += 1
+
+    # Callback for heartbeat timer calculation. Gets the current count and will
+    # calculate the average. For now it will just asdflkjsd
+    def heartbeat_timer_callback(self, event):
+        # Calculate frequency
+        ht_bt_freq = count/self.heartbeat_period
+        #Reset count
+        self._heartbeat_count = 0
+        print ht_bt_freq
 
 
 
