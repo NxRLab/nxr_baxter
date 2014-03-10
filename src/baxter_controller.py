@@ -9,7 +9,7 @@
 ################
 import rospy
 #import sensor_msgs.msg
-import std_msgs.msg import Empty
+from std_msgs.msg import Empty
 
 ####################
 # RETHINK IMPORTS: #
@@ -72,9 +72,9 @@ class Baxter_Controller:
         """
         Enables robot, initializes booleans, subscribes to skeletons
         """
-        print "Getting robot state..."
+        # print "Getting robot state..."
         self.rs = baxter_interface.RobotEnable() #RS is a wrapper for the robot state
-        print "Enabling robot... "
+        # print "Enabling robot... "
         self.rs.enable()
 
         self.left_arm = baxter_interface.limb.Limb('left')
@@ -98,7 +98,9 @@ class Baxter_Controller:
 
         # For calculating skeleton heartbeat
         # Average it every 5 seconds.
-        self.heartbeat_period = 5; 
+        self.heartbeat_period = 5.0
+        # Initialize count
+        self._heartbeat_count = 0
 
         #Pull the required filename from the parameter server
         try:
@@ -372,7 +374,7 @@ class Baxter_Controller:
     # calculate the average. For now it will just asdflkjsd
     def heartbeat_timer_callback(self, event):
         # Calculate frequency
-        ht_bt_freq = count/self.heartbeat_period
+        ht_bt_freq = self._heartbeat_count/self.heartbeat_period
         #Reset count
         self._heartbeat_count = 0
         print ht_bt_freq
