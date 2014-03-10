@@ -95,6 +95,10 @@ class Baxter_Controller:
         self.display_mime = True
         self.display_crane = True
 
+        # For calculating skeleton heartbeat
+        # Average it every 5 seconds.
+        self.heartbeat_period = 5; 
+
         #Pull the required filename from the parameter server
         try:
             img_files_filename = rospy.get_param('img_files_filename')
@@ -116,6 +120,9 @@ class Baxter_Controller:
         # Make a subscriber to call a function to track the heartbeat of the
         # skeleton tracker
         rospy.Subscriber("tracker_heartbeat", Empty, self.heartbeatCallback)
+
+        # Start the timer
+        self.heartbeat_timer = rospy.Timer(rospy.Duration(self.heartbeat_period), self.heartbeat_timer_callback);
 
     def choose_user(self, skeletons):
         """
@@ -358,6 +365,16 @@ class Baxter_Controller:
     #There will be a separate timer to calculate the actual frequency
     def heartbeatCallback(self, data):
         self._heartbeat_count += 1
+
+    # Callback for heartbeat timer calculation. Gets the current count and will
+    # calculate the average. For now it will just asdflkjsd
+    def heartbeat_timer_callback(self, event):
+        # Calculate frequency
+        ht_bt_freq = count/self.heartbeat_period
+        #Reset count
+        self._heartbeat_count = 0
+        print ht_bt_freq
+
 
 
 if __name__=='__main__':
