@@ -22,7 +22,6 @@ import baxter_dataflow
 ####################
 import os
 import traceback
-import threading
 import Queue
 import math
 import numpy as np

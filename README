@@ -1,8 +1,12 @@
 Things that need to be done for Baxter
 
 Fix shutdown and restart of kinect
--Hearbeat message on the skeleton tracker
--Need to do the timer
+-Heartbeat is done
+-Put it on a startup delay
+-Do a running average of frequencies
+
+
+
 
 Meta-mode controller
 -Service-based to change the mode, publishes a latched topic whenever mode is changed
