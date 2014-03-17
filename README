@@ -1,9 +1,8 @@
 Things that need to be done for Baxter
 
 Fix shutdown and restart of kinect
--Heartbeat is done
--Put it on a startup delay
--Do a running average of frequencies
+-Heartbeat is done, need to have it handle shutdowns
+-Shutdown needs to be done by popen or something like that to kill the thing. Run stuff like that.
 
 Meta-mode controller
 -Service-based to change the mode, publishes a latched topic whenever mode is changed

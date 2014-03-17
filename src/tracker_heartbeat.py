@@ -8,10 +8,14 @@
 # from baxter_controller.py and can kill it on its own. Or at least will
 # eventually.
 
-
 # ROS IMPORTS
 import rospy
 from std_msgs.msg import Empty
+
+# PYTHON IMPORTS
+import os
+import signal
+import subprocess
 
 class Heartbeat_Monitor:
     def __init__(self):
@@ -22,6 +26,7 @@ class Heartbeat_Monitor:
         self._heartbeat_count = 0
 
         self.n_moving_avg_filt = 12
+        self.max_allowable_frequency = 25.0
         self.freq_filter_list = Heartbeat_List(self.n_moving_avg_filt)
 
         # Time to wait to start (1 min)
@@ -43,7 +48,8 @@ class Heartbeat_Monitor:
         self._heartbeat_count += 1
 
     # Callback for heartbeat timer calculation. Gets the current count and will
-    # calculate the average. For now it will just asdflkjsd
+    # calculate the average. Keeps an updated list of the past n_moving_avg_filt
+    # frequencies and if its less than 25, shutdown and restart the processes
     def heartbeat_timer_callback(self, event):
         # Calculate frequency
         ht_bt_freq = self._heartbeat_count/self.heartbeat_period
@@ -51,6 +57,22 @@ class Heartbeat_Monitor:
         #Reset count
         self._heartbeat_count = 0
         print self.freq_filter_list.sum/self.n_moving_avg_filt
+        if self.freq_filter_list.sum/self.n_moving_avg_filt < self.max_allowable_frequency:
+            self.shutdown_and_restart()
+
+    #This function is called when the frequency gets bad
+    def shutdown_and_restart(self):
+        #First kill /camera_nodelet_manager
+        
+        #When do we call USB restart?
+        #Wait two seconds
+        #Get pid for skeletontrackernu
+        pid_list = subprocess.checkoutput(["pgrep","skeletontracker"])
+        #kill the first pid, split by '\n'
+        pid = pid_list.split('\n')[0]
+        #Run something like
+        #os.kill(pid,sig) for skeletontrackernu, it will startup on its own
+        os.kill(pid, signal.CTRL_C_EVENT)
 
 
 class Heartbeat_List:
