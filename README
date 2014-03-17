@@ -5,9 +5,6 @@ Fix shutdown and restart of kinect
 -Put it on a startup delay
 -Do a running average of frequencies
 
-
-
-
 Meta-mode controller
 -Service-based to change the mode, publishes a latched topic whenever mode is changed
 -Modes are things like: baxter shutdown motors, baxter turn on motors, etc.
