@@ -17,6 +17,18 @@ import os
 import signal
 import subprocess
 
+
+# Function taken from Jarvis/Jon's script to kill all child processes
+def terminate_process_and_children(p):
+    print "Terminating process %d" % p.pid
+    ps_command = subprocess.Popen("ps -o pid --ppid %d --noheaders" % p.pid, shell=True, stdout=subprocess.PIPE)
+    ps_output = ps_command.stdout.read()
+    retcode = ps_command.wait()
+    assert retcode == 0, "ps command returned %d" % retcode
+    for pid_str in ps_output.split("\n")[:-1]:
+        os.kill(int(pid_str), signal.SIGINT)
+    p.terminate()
+
 class Heartbeat_Monitor:
     def __init__(self):
         # For calculating skeleton heartbeat
@@ -29,8 +41,8 @@ class Heartbeat_Monitor:
         self.max_allowable_frequency = 25.0
         self.freq_filter_list = Heartbeat_List(self.n_moving_avg_filt)
 
-        # Time to wait to start (1 min)
-        self.delay_start = 60
+        # Time to wait to start (5 min)
+        self.delay_start = 60*5
 
         # Make a subscriber to call a function to track the heartbeat of the
         # skeleton tracker
@@ -49,6 +61,7 @@ class Heartbeat_Monitor:
         # "roslaunch openni_launch openni.launch"
         cmd = 'roslaunch openni_launch openni.launch'
         self.openni_proc = subprocess.Popen(cmd,shell=True, stdout = subprocess.PIPE)
+
         cmd = 'rosrun skeletontracker_nu skeletontracker'
         self.skel_tracker_proc = subprocess.Popen(cmd,shell=True, stdout = subprocess.PIPE)
 
@@ -72,24 +85,18 @@ class Heartbeat_Monitor:
 
     #This function is called when the frequency gets bad
     def shutdown_and_restart(self):
-        print "Attempting to send SIGINT to skel tracker"
-        self.skel_tracker_proc.send_signal(signal.SIGINT)
-        print "SIGINT sent to tracker, sending SIGKILL to openni"
-        self.openni_proc.kill()
-        # #First kill /camera_nodelet_manager
+        print "Kill nodelet"
+        p2 = subprocess.Popen("rosnode kill /camera_nodelet_manager", shell=True, stdout=subprocess.PIPE)
+        rospy.sleep(2.0)
+        print "Kill skel tracker"
+        terminate_process_and_children(self.skel_tracker_proc)
+        rospy.sleep(2.0)
+        print "Kill openni"
+        terminate_process_and_children(self.openni_proc)
+        print "Did it work?"
         
-        # #When do we call USB restart?
-        # #Wait two seconds
-        # #Get pid for skeletontrackernu
-        # pid_list = subprocess.check_output(["pgrep","skeletontracker"])
-        # #kill the first pid, split by '\n'
-        # print pid_list
-        # pid = int(pid_list.split('\n')[0])
-        # print pid
-        # #Run something like
-        # #os.kill(pid,sig) for skeletontrackernu, it will startup on its own
-        # os.kill(pid, signal.SIGKILL)
-        # print("Sent SIGKILL")
+        #USB restart
+        #restart processes
 
 
 class Heartbeat_List:
@@ -120,7 +127,8 @@ if __name__=='__main__':
     rospy.init_node('Heartbeat_Tracker', log_level=rospy.INFO)
     rospy.logdebug("node starting")
     hm = Heartbeat_Monitor()
-    rospy.sleep(30)
+
+    rospy.sleep(60)
     print("Attempting to kill node...")
     hm.shutdown_and_restart()
     
