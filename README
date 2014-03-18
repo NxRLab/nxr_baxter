@@ -1,8 +1,12 @@
 Things that need to be done for Baxter
 
 Fix shutdown and restart of kinect
--Heartbeat is done, need to have it handle shutdowns
--Shutdown needs to be done by popen or something like that to kill the thing. Run stuff like that.
+-Kills the nodes
+-Need to USB restart, use restart_usb.sh
+--Change bind/unbind scripts to be in a different group, give that group write permissions
+--Remove "sudos" from the script
+--Test if it works
+-Start scripts back up
 
 Meta-mode controller
 -Service-based to change the mode, publishes a latched topic whenever mode is changed
