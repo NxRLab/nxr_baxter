@@ -67,12 +67,15 @@ class Heartbeat_Monitor:
         #When do we call USB restart?
         #Wait two seconds
         #Get pid for skeletontrackernu
-        pid_list = subprocess.checkoutput(["pgrep","skeletontracker"])
+        pid_list = subprocess.check_output(["pgrep","skeletontracker"])
         #kill the first pid, split by '\n'
-        pid = pid_list.split('\n')[0]
+        print pid_list
+        pid = int(pid_list.split('\n')[0])
+        print pid
         #Run something like
         #os.kill(pid,sig) for skeletontrackernu, it will startup on its own
-        os.kill(pid, signal.CTRL_C_EVENT)
+        os.kill(pid, signal.SIGKILL)
+        print("Sent SIGINT")
 
 
 class Heartbeat_List:
@@ -103,6 +106,9 @@ if __name__=='__main__':
     rospy.init_node('Heartbeat_Tracker', log_level=rospy.INFO)
     rospy.logdebug("node starting")
     hm = Heartbeat_Monitor()
+    rospy.sleep(30)
+    print("Attempting to kill node...")
+    hm.shutdown_and_restart()
     
     rospy.spin()
 
