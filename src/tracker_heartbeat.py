@@ -42,6 +42,16 @@ class Heartbeat_Monitor:
                                               self.heartbeat_timer_callback),
                                               oneshot=True)
 
+        # We will be calling the roslaunch file from here for the skeleton tracker
+        # Command is "roslaunch skeletontracker_nu nu_skeletontracker.launch"
+        # Or instead... "rosrun skeletontracker_nu skeletontracker"
+        # And we can run openni stuff in another thread as:
+        # "roslaunch openni_launch openni.launch"
+        cmd = 'roslaunch openni_launch openni.launch'
+        self.openni_proc = subprocess.Popen(cmd,shell=True, stdout = subprocess.PIPE)
+        cmd = 'rosrun skeletontracker_nu skeletontracker'
+        self.skel_tracker_proc = subprocess.Popen(cmd,shell=True, stdout = subprocess.PIPE)
+
     #Callback for the heartbeat. Updates the heartbeat count.
     #There will be a separate timer to calculate the actual frequency
     def heartbeatCallback(self, event):
@@ -62,20 +72,24 @@ class Heartbeat_Monitor:
 
     #This function is called when the frequency gets bad
     def shutdown_and_restart(self):
-        #First kill /camera_nodelet_manager
+        print "Attempting to send SIGINT to skel tracker"
+        self.skel_tracker_proc.send_signal(signal.SIGINT)
+        print "SIGINT sent to tracker, sending SIGKILL to openni"
+        self.openni_proc.kill()
+        # #First kill /camera_nodelet_manager
         
-        #When do we call USB restart?
-        #Wait two seconds
-        #Get pid for skeletontrackernu
-        pid_list = subprocess.check_output(["pgrep","skeletontracker"])
-        #kill the first pid, split by '\n'
-        print pid_list
-        pid = int(pid_list.split('\n')[0])
-        print pid
-        #Run something like
-        #os.kill(pid,sig) for skeletontrackernu, it will startup on its own
-        os.kill(pid, signal.SIGKILL)
-        print("Sent SIGINT")
+        # #When do we call USB restart?
+        # #Wait two seconds
+        # #Get pid for skeletontrackernu
+        # pid_list = subprocess.check_output(["pgrep","skeletontracker"])
+        # #kill the first pid, split by '\n'
+        # print pid_list
+        # pid = int(pid_list.split('\n')[0])
+        # print pid
+        # #Run something like
+        # #os.kill(pid,sig) for skeletontrackernu, it will startup on its own
+        # os.kill(pid, signal.SIGKILL)
+        # print("Sent SIGKILL")
 
 
 class Heartbeat_List:

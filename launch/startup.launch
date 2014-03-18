@@ -1,6 +1,6 @@
 <launch>
 
-	<include file="$(find skeletontracker_nu)/launch/nu_skeletontracker.launch"/>
+	<!-- <include file="$(find skeletontracker_nu)/launch/nu_skeletontracker.launch"/> -->
 
 	<rosparam param="img_files_filename">'/home/nxr-baxter/groovyws/src/nxr_baxter/images/image_files.txt'</rosparam>
 
