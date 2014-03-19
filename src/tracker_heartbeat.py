@@ -92,7 +92,7 @@ class Heartbeat_Monitor:
         terminate_process_and_children(self.openni_proc)
         
         #USB restart
-        cmd = "source /home/adam/adam_groovy_ws/src/nxr_baxter_demo_package/src/restart_usb.sh"
+        cmd = "/home/adam-baxter/adam_groovy_ws/src/nxr_baxter_demo_package/src/restart_usb.sh"
         subprocess.call(cmd, shell=True)
 
         rospy.sleep(10.0)

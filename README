@@ -1,13 +1,11 @@
 Things that need to be done for Baxter
 
+Change things to use rospy.log instead of print
+
 Fix shutdown and restart of kinect
--Kills the nodes
 -Need to USB restart, use restart_usb.sh
---Change bind/unbind scripts to be in a different group, give that group write permissions
---Remove "sudos" from the script
 --Test if it works
---Written in, just need to try it.
--Start scripts back up, written in
+-Set it so that it restarts on that long timer with a 40Hz cap. If that works for like an hour, its probably fixed.
 
 Meta-mode controller
 -Service-based to change the mode, publishes a latched topic whenever mode is changed
