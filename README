@@ -6,7 +6,8 @@ Fix shutdown and restart of kinect
 --Change bind/unbind scripts to be in a different group, give that group write permissions
 --Remove "sudos" from the script
 --Test if it works
--Start scripts back up
+--Written in, just need to try it.
+-Start scripts back up, written in
 
 Meta-mode controller
 -Service-based to change the mode, publishes a latched topic whenever mode is changed

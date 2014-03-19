@@ -54,16 +54,13 @@ class Heartbeat_Monitor:
                                               self.heartbeat_timer_callback),
                                               oneshot=True)
 
-        # We will be calling the roslaunch file from here for the skeleton tracker
-        # Command is "roslaunch skeletontracker_nu nu_skeletontracker.launch"
-        # Or instead... "rosrun skeletontracker_nu skeletontracker"
-        # And we can run openni stuff in another thread as:
-        # "roslaunch openni_launch openni.launch"
-        cmd = 'roslaunch openni_launch openni.launch'
-        self.openni_proc = subprocess.Popen(cmd,shell=True, stdout = subprocess.PIPE)
+        # We will launch openni and start the skeleton tracker here.
+        self.openni_proc = None
+        self.skel_tracker_proc = None
+        self.launch_processes()
 
-        cmd = 'rosrun skeletontracker_nu skeletontracker'
-        self.skel_tracker_proc = subprocess.Popen(cmd,shell=True, stdout = subprocess.PIPE)
+
+
 
     #Callback for the heartbeat. Updates the heartbeat count.
     #There will be a separate timer to calculate the actual frequency
@@ -93,10 +90,29 @@ class Heartbeat_Monitor:
         rospy.sleep(2.0)
         print "Kill openni"
         terminate_process_and_children(self.openni_proc)
-        print "Did it work?"
         
         #USB restart
+        cmd = "source /home/adam/adam_groovy_ws/src/nxr_baxter_demo_package/src/restart_usb.sh"
+        subprocess.call(cmd, shell=True)
+
+        rospy.sleep(10.0)
         #restart processes
+        self.launch_processes()
+
+    def launch_processes(self):
+        if self.openni_proc == None or self.openni_proc.poll() != None:
+            print "Launch openni"
+            cmd = 'roslaunch openni_launch openni.launch'
+            self.openni_proc = subprocess.Popen(cmd,shell=True, stdout = subprocess.PIPE)
+        else:
+            print "Trying to start openni thread while it is already running."
+
+        if self.skel_tracker_proc == None or self.skel_tracker_proc.poll() != None:
+            print "Launch skeleton tracker"
+            cmd = 'rosrun skeletontracker_nu skeletontracker'
+            self.skel_tracker_proc = subprocess.Popen(cmd,shell=True, stdout = subprocess.PIPE)
+        else:
+            print "Trying to start skeleton tracker thread while it is already running."
 
 
 class Heartbeat_List:
