@@ -97,6 +97,8 @@ class Heartbeat_Monitor:
     #This function is called when the frequency gets bad
     def shutdown_and_restart(self):
         rospy.logdebug("Calling shutdown_and_restart")
+        self.kill_count += 1
+        rospy.loginfo("Shutdown count: %d", self.kill_count)
         if self.main_timer != None:
             rospy.logdebug("Shutting down main timer")
             self.main_timer.shutdown()
