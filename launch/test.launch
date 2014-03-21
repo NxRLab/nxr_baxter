@@ -1,0 +1,7 @@
+<launch>
+
+	<!-- <include file="$(find skeletontracker_nu)/launch/nu_skeletontracker.launch"/> -->
+
+	<node pkg="nxr_baxter" type="tracker_heartbeat.py" name="skel_tracker_heartbeat" output="screen" respawn="true" />
+
+</launch>

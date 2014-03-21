@@ -87,7 +87,7 @@ class ImageSwitcher(object):
         for line in f:
             split_line = line.split()
             #Allow pure whitespace lines
-            if line != []:
+            if len(split_line) > 0:
                 self.mode_to_images[split_line[0]] = split_line[1:]
         if mode not in self.mode_to_images.keys():
             #Maybe want to raise an exception here instead of this

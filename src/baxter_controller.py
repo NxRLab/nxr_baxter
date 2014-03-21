@@ -9,6 +9,7 @@
 ################
 import rospy
 #import sensor_msgs.msg
+from std_msgs.msg import Empty
 
 ####################
 # RETHINK IMPORTS: #
@@ -21,7 +22,6 @@ import baxter_dataflow
 ####################
 import os
 import traceback
-import threading
 import Queue
 import math
 import numpy as np
@@ -40,6 +40,7 @@ from vector_operations import (make_vector_from_POINTS,
                                shortest_vector_from_point_to_vector)
 import skeleton_filter as sf
 import image_switcher as imgswitch
+
 
 
 DOWN_SAMPLE = 5
@@ -70,9 +71,9 @@ class Baxter_Controller:
         """
         Enables robot, initializes booleans, subscribes to skeletons
         """
-        print "Getting robot state..."
+        # print "Getting robot state..."
         self.rs = baxter_interface.RobotEnable() #RS is a wrapper for the robot state
-        print "Enabling robot... "
+        # print "Enabling robot... "
         self.rs.enable()
 
         self.left_arm = baxter_interface.limb.Limb('left')
@@ -94,13 +95,6 @@ class Baxter_Controller:
         self.display_mime = True
         self.display_crane = True
 
-        # self.l_sh_c = 0
-        # self.l_el_c = 0
-        # self.l_ha_c = 0
-        # self.r_sh_c = 0
-        # self.r_el_c = 0
-        # self.r_ha_c = 0
-
         #Pull the required filename from the parameter server
         try:
             img_files_filename = rospy.get_param('img_files_filename')
@@ -110,6 +104,7 @@ class Baxter_Controller:
         # Set up our ImageSwitcher object to do our first set of images
         # Note for the top mode there is only one image (for now) so we
         # don't need to set a period other than 0 which is a one-shot
+
         self.img_switch = imgswitch.ImageSwitcher(img_files_filename, mode='top',
                                                   image_period=0)
 
@@ -355,9 +350,6 @@ class Baxter_Controller:
 
         elif not found:           
             self.reset_booleans()
-    
-
-
 
 if __name__=='__main__':
     print("\nInitializing Baxter Controller node... ")
