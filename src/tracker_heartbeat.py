@@ -21,7 +21,7 @@ import subprocess
 # Function taken from Jarvis/Jon's script to kill all child processes
 def terminate_process_and_children(p):
     rospy.logdebug("Calling terminate_process_and_children")
-    rospy.logdebug("Terminating process %d", p,pid)
+    rospy.logdebug("Terminating process %d", p.pid)
     ps_command = subprocess.Popen("ps -o pid --ppid %d --noheaders" % p.pid, shell=True, stdout=subprocess.PIPE)
     ps_output = ps_command.stdout.read()
     retcode = ps_command.wait()
@@ -66,7 +66,7 @@ class Heartbeat_Monitor:
         rospy.logdebug("Calling start_delay_timer")
         #clear the Heartbeat List
         self.freq_filter_list.clear()
-        rospy.Timer(rospy.Duration(self.delay_start), self.start_main_timer, oneshot=True)
+        rospy.Timer(rospy.Duration(self.delay_start), self.start_main_timer(), oneshot=True)
 
     #Start the main timer after the delay timer has been launched
     def start_main_timer(self):
@@ -84,7 +84,7 @@ class Heartbeat_Monitor:
     # calculate the average. Keeps an updated list of the past n_moving_avg_filt
     # frequencies and if its less than 25, shutdown and restart the processes
     def heartbeat_timer_callback(self, event):
-        ros.logdebug("Calling heartbeat_timer_callback")
+        rospy.logdebug("Calling heartbeat_timer_callback")
         # Calculate frequency
         ht_bt_freq = self._heartbeat_count/self.heartbeat_period
         self.freq_filter_list.push(ht_bt_freq)
@@ -164,7 +164,7 @@ class Heartbeat_List:
     
     def clear(self):
         rospy.logdebug("Calling Heartbeat_List.clear()")
-        self._list = [0]*length
+        self._list = [0]*(self._max_index + 1)
         self.sum = 0.0
         self._oldest_index = 0
 
@@ -177,7 +177,7 @@ if __name__=='__main__':
 
     rospy.sleep(60)
     rospy.loginfo("Attempting to kill node...")
-    hm.shutdown_and_restart()
+#    hm.shutdown_and_restart()
     
     rospy.spin()
 
