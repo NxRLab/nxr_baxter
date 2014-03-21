@@ -43,14 +43,14 @@ class Heartbeat_Monitor:
         self.max_allowable_frequency = 40.0
         self.freq_filter_list = Heartbeat_List(self.n_moving_avg_filt)
 
-        # Time to wait to start (5 min)
-        self.delay_start = 60*5
+        # Time to wait to start (1 min)
+        self.delay_start = 60*1
 
         self.kill_count = 0
 
         # Make a subscriber to call a function to track the heartbeat of the
         # skeleton tracker
-        rospy.Subscriber("tracker_heartbeat", Empty, self.heartbeatCallback)
+        rospy.Subscriber("tracker_heartbeat", Empty, self.empty_skel_callback)
 
         #Start the delay, and launch the regular timer after the delay_start
         self.start_delay_timer()
@@ -66,18 +66,18 @@ class Heartbeat_Monitor:
         rospy.logdebug("Calling start_delay_timer")
         #clear the Heartbeat List
         self.freq_filter_list.clear()
-        rospy.Timer(rospy.Duration(self.delay_start), self.start_main_timer(), oneshot=True)
+        self.delay_timer = rospy.Timer(rospy.Duration(self.delay_start), self.start_main_timer, oneshot=True)
 
     #Start the main timer after the delay timer has been launched
-    def start_main_timer(self):
+    def start_main_timer(self, event=None):
         rospy.logdebug("Calling start_main_timer")
         self.main_timer = rospy.Timer(rospy.Duration(self.heartbeat_period),
                                           self.heartbeat_timer_callback)
 
     #Callback for the heartbeat. Updates the heartbeat count.
     #There will be a separate timer to calculate the actual frequency
-    def heartbeatCallback(self, event):
-        rospy.logdebug("Calling heartbeatCallback()")
+    def empty_skel_callback(self, event):
+        rospy.logdebug("Calling empty_skel_callback()")
         self._heartbeat_count += 1
 
     # Callback for heartbeat timer calculation. Gets the current count and will
@@ -152,9 +152,12 @@ class Heartbeat_List:
         self.sum = 0.0
         self._oldest_index = 0
         self._max_index = length - 1
+        self.num_pushed = 0
 
     def push(self, val):
         rospy.logdebug("Calling Heartbeat_List.push(val)")
+        if self.num_pushed < self._max_index + 1:
+            self.num_pushed += 1
         self.sum -= self._list[self._oldest_index]
         self.sum += val
         self._list[self._oldest_index] = val
@@ -167,16 +170,20 @@ class Heartbeat_List:
         self._list = [0]*(self._max_index + 1)
         self.sum = 0.0
         self._oldest_index = 0
+        self.num_pushed = 0
+
+    def get_average(self):
+        return self.sum/self.num_pushed
 
 
 if __name__=='__main__':
     rospy.loginfo("Starting Heartbeat Tracker Node...")
-    rospy.init_node('Heartbeat_Tracker', log_level=rospy.INFO)
+    rospy.init_node('Heartbeat_Tracker', log_level=rospy.DEBUG)
     rospy.logdebug("node starting")
     hm = Heartbeat_Monitor()
 
-    rospy.sleep(60)
-    rospy.loginfo("Attempting to kill node...")
+    # rospy.sleep(60)
+    # rospy.loginfo("Attempting to kill node...")
 #    hm.shutdown_and_restart()
     
     rospy.spin()
