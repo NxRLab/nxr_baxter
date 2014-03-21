@@ -5,9 +5,7 @@ Change things to use rospy.log instead of print - done for tracker_heartbeat.py
 
 Adam-
 Fix shutdown and restart of kinect
--Need to USB restart, use restart_usb.sh
---Test if it works
--Set it so that it restarts on that long timer with a 40Hz cap. If that works for like an hour, its probably fixed.
+-Should probably change self.delay_start to 2 min or 3 min in tracker_heartbeat.py
 
 Adam-
 Meta-mode controller
