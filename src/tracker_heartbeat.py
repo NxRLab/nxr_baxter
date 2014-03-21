@@ -46,15 +46,14 @@ class Heartbeat_Monitor:
         # Time to wait to start (5 min)
         self.delay_start = 60*5
 
+        self.kill_count = 0
+
         # Make a subscriber to call a function to track the heartbeat of the
         # skeleton tracker
         rospy.Subscriber("tracker_heartbeat", Empty, self.heartbeatCallback)
 
         #Start the delay, and launch the regular timer after the delay_start
-        rospy.Timer(rospy.Duration(self.delay_start),
-                    lambda event: rospy.Timer(rospy.Duration(self.heartbeat_period),
-                                              self.heartbeat_timer_callback),
-                                              oneshot=True)
+        self.start_delay_timer()
 
         # We will launch openni and start the skeleton tracker here.
         self.openni_proc = None
@@ -62,7 +61,18 @@ class Heartbeat_Monitor:
         self.launch_processes()
 
 
+    #Start the delay timer
+    def start_delay_timer(self):
+        rospy.logdebug("Calling start_delay_timer")
+        #clear the Heartbeat List
+        self.freq_filter_list.clear()
+        rospy.Timer(rospy.Duration(self.delay_start), self.start_main_timer, oneshot=True)
 
+    #Start the main timer after the delay timer has been launched
+    def start_main_timer(self):
+        rospy.logdebug("Calling start_main_timer")
+        self.main_timer = rospy.Timer(rospy.Duration(self.heartbeat_period),
+                                          self.heartbeat_timer_callback)
 
     #Callback for the heartbeat. Updates the heartbeat count.
     #There will be a separate timer to calculate the actual frequency
@@ -87,6 +97,9 @@ class Heartbeat_Monitor:
     #This function is called when the frequency gets bad
     def shutdown_and_restart(self):
         rospy.logdebug("Calling shutdown_and_restart")
+        if self.main_timer != None:
+            rospy.logdebug("Shutting down main timer")
+            self.main_timer.shutdown()
         rospy.loginfo("Killing nodelet...")
         p2 = subprocess.Popen("rosnode kill /camera_nodelet_manager", shell=True, stdout=subprocess.PIPE)
         rospy.sleep(2.0)
@@ -104,6 +117,7 @@ class Heartbeat_Monitor:
         rospy.sleep(10.0)
         #restart processes
         self.launch_processes()
+        self.start_delay_timer()
 
     def launch_processes(self):
         rospy.logdebug("Calling launch_processes")
@@ -145,6 +159,12 @@ class Heartbeat_List:
         self._oldest_index += 1
         if self._oldest_index > self._max_index:
             self._oldest_index = 0
+    
+    def clear(self):
+        rospy.logdebug("Calling Heartbeat_List.clear()")
+        self._list = [0]*length
+        self.sum = 0.0
+        self._oldest_index = 0
 
 
 if __name__=='__main__':
