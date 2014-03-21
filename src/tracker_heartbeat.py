@@ -40,7 +40,7 @@ class Heartbeat_Monitor:
         self._heartbeat_count = 0
 
         self.n_moving_avg_filt = 12
-        self.max_allowable_frequency = 25.0
+        self.max_allowable_frequency = 40.0
         self.freq_filter_list = Heartbeat_List(self.n_moving_avg_filt)
 
         # Time to wait to start (5 min)
