@@ -40,7 +40,7 @@ class Heartbeat_Monitor:
         self._heartbeat_count = 0
 
         self.n_moving_avg_filt = 12
-        self.max_allowable_frequency = 40.0
+        self.max_allowable_frequency = 24.0
         self.freq_filter_list = Heartbeat_List(self.n_moving_avg_filt)
 
         # Time to wait to start (1 min)
@@ -126,14 +126,14 @@ class Heartbeat_Monitor:
         if self.openni_proc == None or self.openni_proc.poll() != None:
             rospy.loginfo("Launching openni processes...")
             cmd = 'roslaunch openni_launch openni.launch'
-            self.openni_proc = subprocess.Popen(cmd,shell=True, stdout = subprocess.PIPE)
+            self.openni_proc = subprocess.Popen(cmd,shell=True)
         else:
             rospy.logwarn("Trying to start openni thread while it is already running.")
 
         if self.skel_tracker_proc == None or self.skel_tracker_proc.poll() != None:
             rospy.loginfo("Launching skeleton tracker...")
             cmd = 'rosrun skeletontracker_nu skeletontracker'
-            self.skel_tracker_proc = subprocess.Popen(cmd,shell=True, stdout = subprocess.PIPE)
+            self.skel_tracker_proc = subprocess.Popen(cmd,shell=True)
         else:
             rospy.logwarn("Trying to start skeleton tracker thread while it is already running.")
 
@@ -178,7 +178,7 @@ class Heartbeat_List:
 
 if __name__=='__main__':
     rospy.loginfo("Starting Heartbeat Tracker Node...")
-    rospy.init_node('Heartbeat_Tracker', log_level=rospy.DEBUG)
+    rospy.init_node('Heartbeat_Tracker', log_level=rospy.INFO)
     rospy.logdebug("node starting")
     hm = Heartbeat_Monitor()
 
