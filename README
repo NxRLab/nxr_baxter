@@ -1,22 +1,29 @@
 Things that need to be done for Baxter
 
+Adam-
 Change things to use rospy.log instead of print
 
+Adam-
 Fix shutdown and restart of kinect
 -Need to USB restart, use restart_usb.sh
 --Test if it works
 -Set it so that it restarts on that long timer with a 40Hz cap. If that works for like an hour, its probably fixed.
 
+Adam-
 Meta-mode controller
 -Service-based to change the mode, publishes a latched topic whenever mode is changed
 -Modes are things like: baxter shutdown motors, baxter turn on motors, etc.
 
+Jon-
 "Low-Pass filter" for hand raise to trigger baxter
 -Wait ~0.5-1s and see if hand is raised the whole time
 
+Jon-
 Have motors turn off in a 'better' position
 
+Jon-
 Speed up process of getting into each demo
+-Arms move at the same time
 -Remove 'clicking' of gripper etc
 
 Longer-term
