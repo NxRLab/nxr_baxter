@@ -20,7 +20,8 @@ import subprocess
 
 # Function taken from Jarvis/Jon's script to kill all child processes
 def terminate_process_and_children(p):
-    print "Terminating process %d" % p.pid
+    rospy.logdebug("Calling terminate_process_and_children")
+    rospy.logdebug("Terminating process %d", p,pid)
     ps_command = subprocess.Popen("ps -o pid --ppid %d --noheaders" % p.pid, shell=True, stdout=subprocess.PIPE)
     ps_output = ps_command.stdout.read()
     retcode = ps_command.wait()
@@ -31,6 +32,7 @@ def terminate_process_and_children(p):
 
 class Heartbeat_Monitor:
     def __init__(self):
+        rospy.logdebug("Calling Heartbeat_Monitor.__init__()")
         # For calculating skeleton heartbeat
         # Average it every 5 seconds.
         self.heartbeat_period = 5.0
@@ -65,33 +67,37 @@ class Heartbeat_Monitor:
     #Callback for the heartbeat. Updates the heartbeat count.
     #There will be a separate timer to calculate the actual frequency
     def heartbeatCallback(self, event):
+        rospy.logdebug("Calling heartbeatCallback()")
         self._heartbeat_count += 1
 
     # Callback for heartbeat timer calculation. Gets the current count and will
     # calculate the average. Keeps an updated list of the past n_moving_avg_filt
     # frequencies and if its less than 25, shutdown and restart the processes
     def heartbeat_timer_callback(self, event):
+        ros.logdebug("Calling heartbeat_timer_callback")
         # Calculate frequency
         ht_bt_freq = self._heartbeat_count/self.heartbeat_period
         self.freq_filter_list.push(ht_bt_freq)
         #Reset count
         self._heartbeat_count = 0
-        print self.freq_filter_list.sum/self.n_moving_avg_filt
+        rospy.loginfo("Averaged tracker frequency: %d", self.freq_filter_list.sum/self.n_moving_avg_filt)
         if self.freq_filter_list.sum/self.n_moving_avg_filt < self.max_allowable_frequency:
             self.shutdown_and_restart()
 
     #This function is called when the frequency gets bad
     def shutdown_and_restart(self):
-        print "Kill nodelet"
+        rospy.logdebug("Calling shutdown_and_restart")
+        rospy.loginfo("Killing nodelet...")
         p2 = subprocess.Popen("rosnode kill /camera_nodelet_manager", shell=True, stdout=subprocess.PIPE)
         rospy.sleep(2.0)
-        print "Kill skel tracker"
+        rospy.loginfo("Killing skeleton tracker...")
         terminate_process_and_children(self.skel_tracker_proc)
         rospy.sleep(2.0)
-        print "Kill openni"
+        rospy.loginfo("Killing openni processes...")
         terminate_process_and_children(self.openni_proc)
         
         #USB restart
+        rospy.loginfo("Restarting usb...")
         cmd = "/home/adam-baxter/adam_groovy_ws/src/nxr_baxter_demo_package/src/restart_usb.sh"
         subprocess.call(cmd, shell=True)
 
@@ -100,19 +106,20 @@ class Heartbeat_Monitor:
         self.launch_processes()
 
     def launch_processes(self):
+        rospy.logdebug("Calling launch_processes")
         if self.openni_proc == None or self.openni_proc.poll() != None:
-            print "Launch openni"
+            rospy.loginfo("Launching openni processes...")
             cmd = 'roslaunch openni_launch openni.launch'
             self.openni_proc = subprocess.Popen(cmd,shell=True, stdout = subprocess.PIPE)
         else:
-            print "Trying to start openni thread while it is already running."
+            rospy.logwarn("Trying to start openni thread while it is already running.")
 
         if self.skel_tracker_proc == None or self.skel_tracker_proc.poll() != None:
-            print "Launch skeleton tracker"
+            rospy.loginfo("Launching skeleton tracker...")
             cmd = 'rosrun skeletontracker_nu skeletontracker'
             self.skel_tracker_proc = subprocess.Popen(cmd,shell=True, stdout = subprocess.PIPE)
         else:
-            print "Trying to start skeleton tracker thread while it is already running."
+            rospy.logwarn("Trying to start skeleton tracker thread while it is already running.")
 
 
 class Heartbeat_List:
@@ -124,12 +131,14 @@ class Heartbeat_List:
     """
 
     def __init__(self,length=1):
+        rospy.logdebug("Calling Heartbeat_List.__init__()")
         self._list = [0]*length
         self.sum = 0.0
         self._oldest_index = 0
         self._max_index = length - 1
 
     def push(self, val):
+        rospy.logdebug("Calling Heartbeat_List.push(val)")
         self.sum -= self._list[self._oldest_index]
         self.sum += val
         self._list[self._oldest_index] = val
@@ -139,15 +148,15 @@ class Heartbeat_List:
 
 
 if __name__=='__main__':
-    print("\nInitializing Heartbeat Tracker node... ")
+    rospy.loginfo("Starting Heartbeat Tracker Node...")
     rospy.init_node('Heartbeat_Tracker', log_level=rospy.INFO)
     rospy.logdebug("node starting")
     hm = Heartbeat_Monitor()
 
     rospy.sleep(60)
-    print("Attempting to kill node...")
+    rospy.loginfo("Attempting to kill node...")
     hm.shutdown_and_restart()
     
     rospy.spin()
 
-    print("\nHeartbeat Tracker shutting down.")
+    rospy.loginfo("Heartbeat Tracker shutting down.")

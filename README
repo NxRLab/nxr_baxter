@@ -1,7 +1,7 @@
 Things that need to be done for Baxter
 
 Adam-
-Change things to use rospy.log instead of print
+Change things to use rospy.log instead of print - done for tracker_heartbeat.py
 
 Adam-
 Fix shutdown and restart of kinect
