@@ -42,10 +42,16 @@ catkin_package(
   trajectory_msgs
   baxter_core_msgs
   skeletonmsgs_nu
+  message_runtime
   
   baxter_interface
 
   tf
   dynamic_reconfigure
   cv_bridge
+)
+
+add_message_files(
+  FILES
+  MetaMode.msg
 )
