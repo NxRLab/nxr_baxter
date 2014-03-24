@@ -5,7 +5,7 @@ Change things to use rospy.log instead of print - done for tracker_heartbeat.py.
 
 Adam-
 Fix shutdown and restart of kinect
--Should probably change self.delay_start to 2 min or 3 min in tracker_heartbeat.py
+-May need to include something to check if the skeleton tracker can't start up properly. It may also just reset on its own, not sure.
 
 Adam-
 Meta-mode controller
