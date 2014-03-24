@@ -10,13 +10,14 @@
 
 # ROS IMPORTS
 import rospy
-from std_msgs.msg import String
+from nxr_baxter_msgs.msg import MetaMode
+from nxr_baxter_msgs.srv import ChangeMetaMode
 
 # PYTHON IMPORTS
 
 
 class MetaMode_Controller:
-    def __init__(self, start_mode='idle_enabled'):
+    def __init__(self):
         rospy.logdebug("Calling MetaMode_Controller.__init__")
 
         # Define the list of possible modes, not definite Mime and crane are
@@ -25,22 +26,30 @@ class MetaMode_Controller:
         # we have a way to see if there's a user before turning things on and
         # during startup, and restart_kinect means that tracker_heartbeat has
         # determined it needs to restart all the kinect stuff.
-        self.modes = ['mime', 'crane', 'idle_enabled', 'idle_disabled',
-                      'restart_kinect']
 
         # Start topic
-        self._pub = rospy.Publisher('meta_mode', String, latch=True)
+        msg = MetaMode()
+        msg.mode = msg.IDLE_DISABLED
+        self.current_mode = msg.IDLE_DISABLED
+        self._pub = rospy.Publisher('meta_mode', MetaMode, latch=True)
+        self._pub.publish(msg)
+        self.change_mode = rospy.Service('change_meta_mode', ChangeMetaMode, change_mode_callback)
 
-        self.set_meta_mode(start_mode)
+    def change_mode_callback(req):
+        if req.mode not in [req.IDLE_DISABLED, req.IDLE_ENABLED, req.RESTART_KINECT, req.MIME, req.CRANE]:
+            rospy.logerr("Meta Mode %d does not match one of the possible meta\ modes. Keeping same mode.", req.mode)
+            return ChangeMetaModeResponse(False)
+        else:
+            self.current_mode = req.mode
+            msg = MetaMode()
+            msg.mode = req.mode
+            self._pub.publish(msg)
+            return ChangeMetaModeResponse(True)
 
-    def set_meta_mode(mode='idle_enabled'):
-        rospy.logdebug("Calling MetaMode_Controller.set_meta_mode")
-        if mode not in self.modes:
-            rospy.logerr("Meta Mode %s does not match one of the possible meta\
- modes. Defaulting to 'idle_enabled.'", mode)
-            start_mode = 'idle_enabled'
-        self._current_mode = mode
-        self._pub.publish(String(self._current_mode))
 
-    def get_meta_mode():
-        return self._current_mode
+if __name__=='__main__':
+    print("Initializing meta_mode controller...")
+    rospy.init_node('meta_mode_controller', log_level = rospy.INFO)
+    MetaMode_Controller()
+    rospy.spin()
+

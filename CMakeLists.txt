@@ -50,8 +50,3 @@ catkin_package(
   dynamic_reconfigure
   cv_bridge
 )
-
-add_message_files(
-  FILES
-  MetaMode.msg
-)
