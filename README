@@ -1,16 +1,12 @@
 Things that need to be done for Baxter
 
 Adam-
-Change things to use rospy.log instead of print - done for tracker_heartbeat.py. Done for image-switcher too. 
-
-Adam-
 Fix shutdown and restart of kinect
 -May need to include something to check if the skeleton tracker can't start up properly. It may also just reset on its own, not sure.
 
 Adam-
 Meta-mode controller
--Service-based to change the mode, publishes a latched topic whenever mode is changed
--Modes are things like: baxter shutdown motors, baxter turn on motors, etc.
+- Set up. Needs to be written into other files.
 
 Jon-
 "Low-Pass filter" for hand raise to trigger baxter
