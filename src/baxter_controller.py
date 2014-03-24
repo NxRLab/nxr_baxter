@@ -71,9 +71,11 @@ class Baxter_Controller:
         """
         Enables robot, initializes booleans, subscribes to skeletons
         """
+        rospy.logdebug("Calling Baxter_Controller.__init__()")
         # print "Getting robot state..."
         self.rs = baxter_interface.RobotEnable() #RS is a wrapper for the robot state
         # print "Enabling robot... "
+        rospy.loginfo("Enabling motors...")
         self.rs.enable()
 
         self.left_arm = baxter_interface.limb.Limb('left')
@@ -118,6 +120,7 @@ class Baxter_Controller:
         """
         Selects primary user to avoid ambiguity
         """
+        rospy.logdebug("Calling choose_user")
         for skeleton in skeletons:
             lh = skeleton.left_hand.transform.translation.y
             rh = skeleton.right_hand.transform.translation.y
@@ -125,7 +128,7 @@ class Baxter_Controller:
             if h - lh > 0.11 or h - rh > 0.11: # What units are these? 
                 self.userid_almost_chosen = True
                 self.main_userid = skeleton.userid
-                print "\n\nMain user chosen.\nUser %s, please proceed.\n" % str(self.main_userid)
+                rospy.loginfo("Main user chosen.\nUser %s, please proceed", str(self.main_userid))
                 self.user_starting_position = skeleton.torso.transform.translation
                 if h - lh > 0.11:
                     self.img_switch.change_mode('crane_prep',3)
@@ -142,6 +145,7 @@ class Baxter_Controller:
                     return 'right'
 
     def position_user(self, skeleton, choice):
+        rospy.logdebug("Calling position_user")
         lh_y = skeleton.left_hand.transform.translation.y
         lh_x = skeleton.left_hand.transform.translation.x
         rh_y = skeleton.right_hand.transform.translation.y
@@ -172,6 +176,7 @@ class Baxter_Controller:
         Determines which action for Baxter to perform based on gestures
         """
         # Action not chosen yet
+        rospy.logdebug("Calling choose_action")
         if self.action_id == 0:
             # MIME
             if choice == 'right':
@@ -188,10 +193,11 @@ class Baxter_Controller:
         """
         Creates action objects and initializes their state
         """
+        rospy.logdebug("Calling initialize_actions")
         self.actions = {1: self.mime_go,
                         2: self.crane_go}
         if action==1:
-            print "    Action chosen: Mime\n"
+            rospy.loginfo("    Action chosen: Mime\n")
             self.mime = Mime()
             self.action = 'mime_go'
             self.mime_count = 0
@@ -201,7 +207,7 @@ class Baxter_Controller:
             self.img_switch.change_mode('mime',3)
 
         elif action == 2:
-            print "    Action chosen: Crane\n"
+            rospy.loginfo("    Action chosen: Mime\n")
             self.crane = Crane()
             self.crane_count = 0
             self.action_chosen = True
@@ -213,7 +219,8 @@ class Baxter_Controller:
         """
         Resets booleans when user is done with action
         """
-        print "\n**Booleans reset**\n"
+        rospy.logdebug("Calling reset_booleans")
+        rospy.loginfo("\n**Booleans reset**\n")
         self.img_switch.change_mode('bool_reset',3)
 
         #Why do we disable, reset, and enable when resetting user stuff?
@@ -244,6 +251,7 @@ class Baxter_Controller:
         """
         Progresses mime when skeletons are passed into controller
         """
+        rospy.logdebug("Calling mime_go")
         # For passing certain percentage of skeletons to mime
         self.mime_count+=1
         # Skeleton values
@@ -262,6 +270,7 @@ class Baxter_Controller:
         """
         Progresses crane when skeletons are passed into controller
         """
+        rospy.logdebug("Calling crane_go")
         # For passing certain percentage of skeletons to crane
         self.crane_count+=1
         # Skeleton values
@@ -285,6 +294,7 @@ class Baxter_Controller:
         This seems to do everything
         This function is somewhat confusing, I'll go through later and document it better
         """
+        rospy.logdebug("Calling skeletonCallback")
         # Chooses correct user
         if self.userid_chosen == True:
             found = False
