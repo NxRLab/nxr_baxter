@@ -22,6 +22,7 @@ import baxter_dataflow
 ####################
 import os
 import traceback
+import threading
 import Queue
 import math
 import numpy as np
@@ -84,7 +85,6 @@ class Baxter_Controller:
         self.crane_r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 0.00, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
 
         # Booleans used throughout controller
-        self.userid_almost_chosen = False
         self.userid_chosen = False
         self.user_positioned = False
         self.action_chosen = False
@@ -94,6 +94,9 @@ class Baxter_Controller:
         self.display_crane_prep = True
         self.display_mime = True
         self.display_crane = True
+        self.left_hand_timer = 0
+        self.right_hand_timer = 0
+        self.main_userid = 0
 
         #Pull the required filename from the parameter server
         try:
@@ -114,6 +117,18 @@ class Baxter_Controller:
         self.skel_filt = sf.SkeletonFilter(sf.joints)
         self.first_filt_flag = True
 
+    def move_thread(self, limb, mode, queue, timeout=15.0):
+        if mode == 'crane':
+            if limb == 'left':
+                self.left_arm.move_to_joint_positions(self.crane_l_angles)
+            elif limb == 'right':
+                self.right_arm.move_to_joint_positions(self.crane_r_angles)
+        elif mode == 'mime':
+            if limb == 'left':
+                self.left_arm.move_to_joint_positions(self.mime_l_angles)
+            elif limb == 'right':
+                self.right_arm.move_to_joint_positions(self.mime_r_angles)
+
     def choose_user(self, skeletons):
         """
         Selects primary user to avoid ambiguity
@@ -122,24 +137,85 @@ class Baxter_Controller:
             lh = skeleton.left_hand.transform.translation.y
             rh = skeleton.right_hand.transform.translation.y
             h = skeleton.head.transform.translation.y
-            if h - lh > 0.11 or h - rh > 0.11: # What units are these? 
-                self.userid_almost_chosen = True
-                self.main_userid = skeleton.userid
-                print "\n\nMain user chosen.\nUser %s, please proceed.\n" % str(self.main_userid)
-                self.user_starting_position = skeleton.torso.transform.translation
-                if h - lh > 0.11:
-                    self.img_switch.change_mode('crane_prep',3)
-                    self.left_arm.move_to_joint_positions(self.crane_l_angles)
-                    self.right_arm.move_to_joint_positions(self.crane_r_angles)
-                    self.userid_chosen = True
-                    return 'left'
-                elif h - rh > 0.11:
-                    self.img_switch.change_mode('mime_prep', 3)
-                    #Let's try and speed this stuff up
-                    self.left_arm.move_to_joint_positions(self.mime_l_angles)
-                    self.right_arm.move_to_joint_positions(self.mime_r_angles)
-                    self.userid_chosen = True
-                    return 'right'
+            if h - lh > 0.11 or h - rh > 0.11: # What units are these? A: Meters (I think) - Jon
+                if skeleton.userid == self.main_userid:
+                    if h - lh > 0.11:
+                        if self.right_hand_timer == 0:
+                            self.left_hand_timer += 0.1
+                            if self.left_hand_timer > 3:
+                                self.left_hand_timer = 0
+                                self.user_starting_position = skeleton.torso.transform.translation
+                                self.img_switch.change_mode('crane_prep',3)
+
+                                left_queue = Queue.Queue()
+                                right_queue = Queue.Queue()
+                                left_thread = threading.Thread(target=self.move_thread,
+                                                               args=('left', 'crane', left_queue))
+                                right_thread = threading.Thread(target=self.move_thread,
+                                                                args=('right', 'crane', right_queue))
+                                left_thread.daemon = True
+                                right_thread.daemon = True
+                                left_thread.start()
+                                right_thread.start()
+                                baxter_dataflow.wait_for(
+                                    lambda: not (left_thread.is_alive() or
+                                                  right_thread.is_alive()),
+                                    timeout=20.0,
+                                    timeout_msg=("Timeout while waiting for arm move threads"
+                                                 " to finish"),
+                                    rate=10,
+                                )
+                                left_thread.join()
+                                right_thread.join()
+
+                                self.userid_chosen = True
+                                print "\n\nMain user chosen.\nUser %s, please proceed.\n" % str(self.main_userid)
+                                return 'left'
+                        else: right_hand_timer = 0
+                    elif h - rh > 0.11:
+                        if self.left_hand_timer == 0:
+                            self.right_hand_timer += 0.1
+                            if self.right_hand_timer > 3:
+                                self.right_hand_timer = 0
+                                self.user_starting_position = skeleton.torso.transform.translation
+                                self.img_switch.change_mode('mime_prep', 3)
+                                
+                                left_queue = Queue.Queue()
+                                right_queue = Queue.Queue()
+                                left_thread = threading.Thread(target=self.move_thread,
+                                                               args=('left', 'mime', left_queue))
+                                right_thread = threading.Thread(target=self.move_thread,
+                                                                args=('right', 'mime', right_queue))
+                                left_thread.daemon = True
+                                right_thread.daemon = True
+                                left_thread.start()
+                                right_thread.start()
+                                baxter_dataflow.wait_for(
+                                    lambda: not (left_thread.is_alive() or
+                                                  right_thread.is_alive()),
+                                    timeout=20.0,
+                                    timeout_msg=("Timeout while waiting for arm move threads"
+                                                 " to finish"),
+                                    rate=10,
+                                )
+                                left_thread.join()
+                                right_thread.join()
+
+                                self.userid_chosen = True
+                                print "\n\nMain user chosen.\nUser %s, please proceed.\n" % str(self.main_userid)
+                                return 'right'
+                        else: left_hand_timer = 0
+                    return
+                elif self.left_hand_timer == 0 and self.right_hand_timer == 0:
+                    self.main_userid = skeleton.userid
+                    return
+            elif skeleton.userid == self.main_userid:
+                self.left_hand_timer = 0
+                self.right_hand_timer = 0
+
+
+        return
+
 
     def position_user(self, skeleton, choice):
         lh_y = skeleton.left_hand.transform.translation.y
@@ -214,14 +290,13 @@ class Baxter_Controller:
         Resets booleans when user is done with action
         """
         print "\n**Booleans reset**\n"
-        self.img_switch.change_mode('bool_reset',3)
+        #self.img_switch.change_mode('bool_reset',3)
 
         #Why do we disable, reset, and enable when resetting user stuff?
         self.rs.disable()
         self.rs.reset()
         self.rs.enable()
 
-        self.userid_almost_chosen = False
         self.userid_chosen = False
         self.user_positioned = False
         self.action_chosen = False
@@ -231,6 +306,8 @@ class Baxter_Controller:
         self.display_crane_prep = True
         self.display_mime = True
         self.display_crane = True
+        self.left_hand_timer = 0
+        self.right_hand_timer = 0
         rospy.sleep(2.0)
         
         # Screen images
