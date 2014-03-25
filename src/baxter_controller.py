@@ -117,7 +117,7 @@ class Baxter_Controller:
         self.skel_filt = sf.SkeletonFilter(sf.joints)
         self.first_filt_flag = True
 
-    def move_thread(self, limb, mode, queue, timeout=15.0):
+    def setup_move_thread(self, limb, mode, queue, timeout=15.0):
         if mode == 'crane':
             if limb == 'left':
                 self.left_arm.move_to_joint_positions(self.crane_l_angles)
@@ -158,9 +158,9 @@ class Baxter_Controller:
 
                                 left_queue = Queue.Queue()
                                 right_queue = Queue.Queue()
-                                left_thread = threading.Thread(target=self.move_thread,
+                                left_thread = threading.Thread(target=self.setup_move_thread,
                                                                args=('left', 'crane', left_queue))
-                                right_thread = threading.Thread(target=self.move_thread,
+                                right_thread = threading.Thread(target=self.setup_move_thread,
                                                                 args=('right', 'crane', right_queue))
                                 left_thread.daemon = True
                                 right_thread.daemon = True
@@ -303,6 +303,17 @@ class Baxter_Controller:
             # Screen images
             self.img_switch.change_mode('crane',3)
 
+    def disable_move_thread(self, limb, queue, timeout=15.0):
+        """
+        Handles moving to disable position for each arm's thread
+        """
+        l_angles = {'left_s0': 0.35, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 0.00, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
+        r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 0.00, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
+        if limb == 'left':
+            self.left_arm.move_to_joint_positions(l_angles)
+        elif limb == 'right':
+            self.right_arm.move_to_joint_positions(r_angles)
+
     def reset_booleans(self):
         """
         Resets booleans when user is done with action
@@ -313,6 +324,28 @@ class Baxter_Controller:
         #
         # +++++++ MOVE RJ TO DISABLE POSITION HERE ++++++
         #
+        # 
+        # left_queue = Queue.Queue()
+        # right_queue = Queue.Queue()
+        # 
+        # left_thread = threading.Thread(target=self.move_thread, args=('left', 'mime', left_queue))
+        # right_thread = threading.Thread(target=self.move_thread, args=('right', 'mime', right_queue))
+        # 
+        # left_thread.daemon = True
+        # right_thread.daemon = True
+        # 
+        # left_thread.start()
+        # right_thread.start()
+        # 
+        # baxter_dataflow.wait_for(
+        #     lambda: not (left_thread.is_alive() or right_thread.is_alive()),
+        #     timeout=20.0,
+        #     timeout_msg=("Timeout while waiting for arm move threads to finish"),
+        #     rate=10,
+        # )
+        #
+        # left_thread.join()
+        # right_thread.join()
 
         #Why do we disable, reset, and enable when resetting user stuff?
         self.rs.disable()
