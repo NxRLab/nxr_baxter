@@ -11,12 +11,13 @@
 # ROS IMPORTS
 import rospy
 from std_msgs.msg import Empty
+from nxr_baxter_msgs.msg import MetaMode
+from nxr_baxter_msgs.srv import ChangeMetaMode
 
 # PYTHON IMPORTS
 import os
 import signal
 import subprocess
-
 
 # Function taken from Jarvis/Jon's script to kill all child processes
 def terminate_process_and_children(p):
@@ -51,6 +52,7 @@ class Heartbeat_Monitor:
         # Make a subscriber to call a function to track the heartbeat of the
         # skeleton tracker
         rospy.Subscriber("tracker_heartbeat", Empty, self.empty_skel_callback)
+        rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
         #Start the delay, and launch the regular timer after the delay_start
         self.start_delay_timer()
@@ -92,7 +94,40 @@ class Heartbeat_Monitor:
         self._heartbeat_count = 0
         rospy.loginfo("Averaged tracker frequency: %d", self.freq_filter_list.sum/self.n_moving_avg_filt)
         if self.freq_filter_list.sum/self.n_moving_avg_filt < self.max_allowable_frequency:
+            # self.shutdown_and_restart()
+            # Now send a service request to change the mode so we can restart
+            # kinect and stuff, then our callback on that will call
+            # shutdown_and_restart
+            rospy.wait_for_service('change_meta_mode')
+            try:
+                change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
+                change_srv = ChangeMetaModeRequest()
+                change_srv.mode = change_srv.RESTART_KINECT
+                change_success = change_mode(change_srv)
+                if not change_success.error:
+                    rospy.logerr("Tried to restart Kinect, but mode change request failed.")
+                else:
+                    rospy.logdebug("Kinect shutdown meta mode change succeeded.")
+            except rospy.serviceException, e:
+                rospy.logerr("Service call failed: %s",e)
+
+    def meta_mode_callback(self, data):
+        rospy.logdebug("Calling meta_mode_callback")
+        if data.mode == data.RESTART_KINECT:
             self.shutdown_and_restart()
+            #Once restarted, tell it we can go back to idle enabled mode
+            rospy.wait_for_service('change_meta_mode')
+            try:
+                change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
+                change_srv = ChangeMetaModeRequest()
+                change_srv.mode = change_srv.IDLE_ENABLED
+                change_success = change_mode(change_srv)
+                if not change_success.error:
+                    rospy.logerr("Tried to go back to idle mode, failed!")
+                else:
+                    rospy.logdebug("Back to idle mode meta mode change succeeded.")
+            except rospy.serviceException, e:
+                rospy.logerr("Service call failed: %s",e)
 
     #This function is called when the frequency gets bad
     def shutdown_and_restart(self):
