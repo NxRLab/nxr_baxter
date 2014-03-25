@@ -133,14 +133,23 @@ class Baxter_Controller:
         """
         Selects primary user to avoid ambiguity
         """
+
+        # Go through each person in view
         for skeleton in skeletons:
             lh = skeleton.left_hand.transform.translation.y
             rh = skeleton.right_hand.transform.translation.y
             h = skeleton.head.transform.translation.y
+
+            # PersonX is raising a hand
             if h - lh > 0.11 or h - rh > 0.11: # What units are these? A: Meters (I think) - Jon
+                # PersonX is main user
                 if skeleton.userid == self.main_userid:
+
+                    # PersonX is raising LEFT hand
                     if h - lh > 0.11:
+                        # Makes sure that PersonX's right hand wasn't recently raised
                         if self.right_hand_timer == 0:
+                            # Increment LEFT hand timer and set up RJ if it's been 3 seconds
                             self.left_hand_timer += 0.1
                             if self.left_hand_timer > 3:
                                 self.left_hand_timer = 0
@@ -171,9 +180,14 @@ class Baxter_Controller:
                                 self.userid_chosen = True
                                 print "\n\nMain user chosen.\nUser %s, please proceed.\n" % str(self.main_userid)
                                 return 'left'
+                        # LEFT hand is risen. Reset right hand timer
                         else: right_hand_timer = 0
+
+                    # PersonX is raising RIGHT hand
                     elif h - rh > 0.11:
+                        # Makes sure that PersonX's left hand wasn't recently raised
                         if self.left_hand_timer == 0:
+                            # Increment RIGHT hand timer and set up RJ if it's been 3 seconds
                             self.right_hand_timer += 0.1
                             if self.right_hand_timer > 3:
                                 self.right_hand_timer = 0
@@ -204,15 +218,19 @@ class Baxter_Controller:
                                 self.userid_chosen = True
                                 print "\n\nMain user chosen.\nUser %s, please proceed.\n" % str(self.main_userid)
                                 return 'right'
+                        # RIGHT hand is risen. Reset left hand timer
                         else: left_hand_timer = 0
                     return
+                # Not main user.
+                # If there isn't a main user, set PersonX as main
                 elif self.left_hand_timer == 0 and self.right_hand_timer == 0:
                     self.main_userid = skeleton.userid
                     return
+            # No hand risen and this is the main user
+            # Reset both hand timers
             elif skeleton.userid == self.main_userid:
                 self.left_hand_timer = 0
                 self.right_hand_timer = 0
-
 
         return
 
@@ -290,7 +308,11 @@ class Baxter_Controller:
         Resets booleans when user is done with action
         """
         print "\n**Booleans reset**\n"
-        #self.img_switch.change_mode('bool_reset',3)
+        self.img_switch.change_mode('bool_reset',3)
+
+        #
+        # +++++++ MOVE RJ TO DISABLE POSITION HERE ++++++
+        #
 
         #Why do we disable, reset, and enable when resetting user stuff?
         self.rs.disable()
