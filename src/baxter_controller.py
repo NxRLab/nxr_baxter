@@ -322,30 +322,30 @@ class Baxter_Controller:
         self.img_switch.change_mode('bool_reset',3)
 
         #
-        # +++++++ MOVE RJ TO DISABLE POSITION HERE ++++++
+        #+++++++ MOVE RJ TO DISABLE POSITION HERE ++++++
         #
-        # 
-        # left_queue = Queue.Queue()
-        # right_queue = Queue.Queue()
-        # 
-        # left_thread = threading.Thread(target=self.move_thread, args=('left', 'mime', left_queue))
-        # right_thread = threading.Thread(target=self.move_thread, args=('right', 'mime', right_queue))
-        # 
-        # left_thread.daemon = True
-        # right_thread.daemon = True
-        # 
-        # left_thread.start()
-        # right_thread.start()
-        # 
-        # baxter_dataflow.wait_for(
-        #     lambda: not (left_thread.is_alive() or right_thread.is_alive()),
-        #     timeout=20.0,
-        #     timeout_msg=("Timeout while waiting for arm move threads to finish"),
-        #     rate=10,
-        # )
-        #
-        # left_thread.join()
-        # right_thread.join()
+        
+        left_queue = Queue.Queue()
+        right_queue = Queue.Queue()
+        
+        left_thread = threading.Thread(target=self.move_thread, args=('left', 'mime', left_queue))
+        right_thread = threading.Thread(target=self.move_thread, args=('right', 'mime', right_queue))
+        
+        left_thread.daemon = True
+        right_thread.daemon = True
+        
+        left_thread.start()
+        right_thread.start()
+        
+        baxter_dataflow.wait_for(
+            lambda: not (left_thread.is_alive() or right_thread.is_alive()),
+            timeout=20.0,
+            timeout_msg=("Timeout while waiting for arm move threads to finish"),
+            rate=10,
+        )
+        
+        left_thread.join()
+        right_thread.join()
 
         #Why do we disable, reset, and enable when resetting user stuff?
         self.rs.disable()
