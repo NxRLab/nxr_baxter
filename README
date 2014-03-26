@@ -7,6 +7,7 @@ Fix shutdown and restart of kinect
 Adam-
 Meta-mode controller
 - Set up. Needs to be written into other files.
+- Written into tracker_heartbeat.py. Needs to be incorporated into baxter_controller.py (this will be the hardest to undertake)
 
 Jon-
 "Low-Pass filter" for hand raise to trigger baxter
