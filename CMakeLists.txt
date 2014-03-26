@@ -26,7 +26,7 @@ find_package(catkin
 
 catkin_python_setup()
 
-generate_messages(DEPENDENCIES sensor_msgs std_msgs geometry_msgs control_msgs trajectory_msgs baxter_core_msgs skeletonmsgs_nu)
+#generate_messages(DEPENDENCIES sensor_msgs std_msgs geometry_msgs control_msgs trajectory_msgs baxter_core_msgs skeletonmsgs_nu)
 
 catkin_package(
   CATKIN_DEPENDS
