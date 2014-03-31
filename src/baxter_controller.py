@@ -41,7 +41,9 @@ from vector_operations import (make_vector_from_POINTS,
 import skeleton_filter as sf
 import image_switcher as imgswitch
 
-
+#Messages for meat-mode
+from nxr_baxter_msgs.msg import MetaMode
+from nxr_baxter_msgs.srv import ChangeMetaMode
 
 DOWN_SAMPLE = 5
 
@@ -91,11 +93,6 @@ class Baxter_Controller:
         self.user_positioned = False
         self.action_chosen = False
         self.action_id = 0
-        self.display_top = True
-        self.display_mime_prep = True
-        self.display_crane_prep = True
-        self.display_mime = True
-        self.display_crane = True
 
         #Pull the required filename from the parameter server
         try:
@@ -115,6 +112,10 @@ class Baxter_Controller:
         # instantiate a skeleton filter
         self.skel_filt = sf.SkeletonFilter(sf.joints)
         self.first_filt_flag = True
+
+        # Set up subscriber to meta-mode controller
+        self.internal_mode = MetaMode.IDLE_ENABLED
+        rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
     def choose_user(self, skeletons):
         """
@@ -233,11 +234,6 @@ class Baxter_Controller:
         self.user_positioned = False
         self.action_chosen = False
         self.action_id = 0
-        self.display_top = True
-        self.display_mime_prep = True
-        self.display_crane_prep = True
-        self.display_mime = True
-        self.display_crane = True
         rospy.sleep(2.0)
         
         # Screen images
@@ -360,6 +356,10 @@ class Baxter_Controller:
 
         elif not found:           
             self.reset_booleans()
+
+    def meta_mode_callback(self, data):
+        self.internal_mode = data.mode
+        pass
 
 if __name__=='__main__':
     print("\nInitializing Baxter Controller node... ")
