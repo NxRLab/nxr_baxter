@@ -103,7 +103,6 @@ class Baxter_Controller:
         # Set up our ImageSwitcher object to do our first set of images
         # Note for the top mode there is only one image (for now) so we
         # don't need to set a period other than 0 which is a one-shot
-
         self.img_switch = imgswitch.ImageSwitcher(img_files_filename, mode='top',
                                                   image_period=0)
 
@@ -132,20 +131,46 @@ class Baxter_Controller:
                 rospy.loginfo("Main user chosen.\nUser %s, please proceed", str(self.main_userid))
                 self.user_starting_position = skeleton.torso.transform.translation
                 if h - lh > 0.11:
-                    self.img_switch.change_mode('crane_prep',3)
-                    self.left_arm.move_to_joint_positions(self.crane_l_angles)
-                    self.right_arm.move_to_joint_positions(self.crane_r_angles)
-                    self.userid_chosen = True
-                    return 'left'
+                    #TODO:
+                    # send service to pick crane game
+                    # message receive needs to call "choose crane" and whatnot
+                    self.change_mode_service(MetaMode.CRANE)
+                    # return 'left'
                 elif h - rh > 0.11:
-                    self.img_switch.change_mode('mime_prep', 3)
-                    #Let's try and speed this stuff up
-                    self.left_arm.move_to_joint_positions(self.mime_l_angles)
-                    self.right_arm.move_to_joint_positions(self.mime_r_angles)
-                    self.userid_chosen = True
-                    return 'right'
+                    self.change_mode_service(MetaMode.MIME)
+                    # return 'right'
 
-    def position_user(self, skeleton, choice):
+    def choose_crane(self):
+        rospy.logdebug("Calling choose_crane...")
+        self.img_switch.change_mode('crane_prep',3)
+        self.left_arm.move_to_joint_positions(self.crane_l_angles)
+        self.right_arm.move_to_joint_positions(self.crane_r_angles)
+        self.userid_chosen = True
+
+    def choose_mime(self):
+        rospy.logdebug("Calling choose_crane...")
+        self.img_switch.change_mode('mime_prep', 3)
+        #Let's try and speed this stuff up
+        self.left_arm.move_to_joint_positions(self.mime_l_angles)
+        self.right_arm.move_to_joint_positions(self.mime_r_angles)
+        self.userid_chosen = True
+
+    def change_mode_service(self, mode_type)
+        rospy.logdebug("Calling change_mode_service...")
+        rospy.wait_for_service('change_meta_mode')
+        try:
+            change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
+            change_srv = ChangeMetaModeRequest()
+            chagne_srv.mode = mode_type
+            change_success = change_mode(change_srv)
+            if not change_success.error:
+                rospy.logerr("Tried to go back to idle mode, failed!")
+            else:
+                rospy.logdebug("Mode changed.")
+        except rospy.serviceException, e:
+            rospy.logerr("Service call failed: %s", e)
+
+    def position_user(self, skeleton):
         rospy.logdebug("Calling position_user")
         lh_y = skeleton.left_hand.transform.translation.y
         lh_x = skeleton.left_hand.transform.translation.x
@@ -153,7 +178,8 @@ class Baxter_Controller:
         rh_x = skeleton.right_hand.transform.translation.y
         tor_y = skeleton.torso.transform.translation.y
         tor_x = skeleton.torso.transform.translation.x
-        if choice == 'left':
+        # if choice == 'left':
+        if self.internal_mode == MetaMode.CRANE:
             dy = math.fabs(tor_y - lh_y)
             dx = math.fabs(lh_x - tor_x)
             #These tolerances have been causing problems
@@ -161,7 +187,8 @@ class Baxter_Controller:
                 self.img_switch.change_mode('positioned',0)
                 rospy.sleep(0.5) # try a 1/2 second delay
                 return True
-        elif (choice == 'right'):
+        # elif (choice == 'right'):
+        elif self.internal_mode == MetaMode.MIME
             dy = math.fabs(tor_y - lh_y) + math.fabs(tor_y - rh_y)
             dx = math.fabs(lh_x - tor_x) + math.fabs(rh_x - tor_x)
             if dy < 0.20 and dx > 0.8:
@@ -190,14 +217,16 @@ class Baxter_Controller:
             print "Action chosen: %s\nProceed?\n" % action
             self.initialize_actions(self.action_id)
 
-    def initialize_actions(self, action):
+    # def initialize_actions(self, action):
+    def initialize_actions(self)
         """
         Creates action objects and initializes their state
         """
         rospy.logdebug("Calling initialize_actions")
-        self.actions = {1: self.mime_go,
-                        2: self.crane_go}
-        if action==1:
+        # self.actions = {1: self.mime_go,
+        #                 2: self.crane_go}
+        # if action==1:
+        if self.internal_mode == MetaMode.MIME
             rospy.loginfo("    Action chosen: Mime\n")
             self.mime = Mime()
             self.action = 'mime_go'
@@ -207,8 +236,9 @@ class Baxter_Controller:
             # Screen images
             self.img_switch.change_mode('mime',3)
 
-        elif action == 2:
-            rospy.loginfo("    Action chosen: Mime\n")
+        # elif action == 2:
+        elif self.internal_mode == MetaMode.CRANE
+            rospy.loginfo("    Action chosen: Crane\n")
             self.crane = Crane()
             self.crane_count = 0
             self.action_chosen = True
@@ -234,6 +264,7 @@ class Baxter_Controller:
         self.user_positioned = False
         self.action_chosen = False
         self.action_id = 0
+        self.started_action = False
         rospy.sleep(2.0)
         
         # Screen images
@@ -293,7 +324,9 @@ class Baxter_Controller:
         rospy.logdebug("Calling skeletonCallback")
         # Chooses correct user
         if self.userid_chosen == True:
+            #A user has been chosen by a previous run
             found = False
+            #Check if they are still in the frame by running through all the skeletons in the frame
             for skeleton in data.skeletons:
                 if skeleton.userid == self.main_userid:
                     skel_raw = skeleton
@@ -305,13 +338,16 @@ class Baxter_Controller:
                         skel = self.skel_filt.filter_skeletons(skel_raw)
                     found = True
 
-
         # Chooses and sticks to one main user throughout
         if self.userid_chosen == False:
-            self.choice = self.choose_user(data.skeletons)
+            # We haven't previously chosen a user.
+            # self.choice = self.choose_user(data.skeletons)
+            self.choose_user(data.skeletons)
+            # Don't think we need self.choice
             self.first_filt_flag = True
 
         elif self.user_positioned == False and found:
+            # There IS a user, we found them still in the frame, and they are not in position yet to do the task
             p1_x = self.user_starting_position.x
             p1_z = self.user_starting_position.z
             p2_x = skel.torso.transform.translation.x
@@ -327,15 +363,34 @@ class Baxter_Controller:
             dx = p2_x - p1_x
             dz = p2_z - p1_z
             if not (math.fabs(dx) > 0.10 and math.fabs(dz) > 0.10 and left_ratio > 0.5 and right_ratio > 0.5):
-                self.user_positioned = self.position_user(skel, self.choice)
+                self.user_positioned = self.position_user(skel)
             else: self.reset_booleans()
     
         # Chooses action to complete
-        elif self.action_chosen == False and found:
-            self.choose_action(skel, self.choice)
+        # Instead of self.userid_choice == False
+        elif self.started_action == False and found:
+            #There is a user, they are in position, time to start the actual action
+            # self.choose_action(skel, self.choice)
+            if self.internal_mode == MetaMode.MIME:
+                rospy.loginfo("    Action chosen: Mime\n")
+                self.mime = Mime()
+                self.mime_count = 0
+                self.action_chosen = True
+                # Screen images
+                self.img_switch.change_mode('mime',3)
+                self.started_action == True
+            elif self.internal_mode == MetaMode.CRANE:
+                rospy.loginfo("    Action chosen: Crane\n")
+                self.crane = Crane()
+                self.crane_count = 0
+                self.action_chosen = True
+                # Screen images
+                self.img_switch.change_mode('crane',3)
+                self.started_action == True
+            
 
-        # If user doesn't leave, completes action
-        elif found:
+        # Means found == True and user_positioned == True
+        elif self.user_positioned and found:
             p1_x = self.user_starting_position.x
             p1_z = self.user_starting_position.z
             p2_x = skel.torso.transform.translation.x
@@ -347,10 +402,11 @@ class Baxter_Controller:
             left_ratio = (y_LH - y_torso) / y_torso
             right_ratio = (y_RH - y_torso) / y_torso
 
-
             dx = p2_x - p1_x
             dz = p2_z - p1_z
             if not (math.fabs(dx) > 0.10 and math.fabs(dz) > 0.10 and left_ratio > 0.5 and right_ratio > 0.5):
+                if self.internal_mode == MetaMode.MIME:
+                    self.mime_go(skel)
                 self.actions[self.action_id](skel)
             else: self.reset_booleans()
 
@@ -359,7 +415,21 @@ class Baxter_Controller:
 
     def meta_mode_callback(self, data):
         self.internal_mode = data.mode
-        pass
+        if data.mode == MetaMode.MIME:
+            self.choose_mime()
+        elif data.mode == MetaMode.CRANE:
+            self.choose_crane()
+        elif data.mode == MetaMode.IDLE_DISABLED:
+            #Disable everything
+            pass
+        elif data.mode == MetaMode.IDLE_ENABLED:
+            #Enable everything
+            pass
+        elif data.mode == MetaMode.RESTART_KINECT:
+            #Disable everything while kinect is restarting?
+            pass
+        else:
+            rospy.logerr("Got a mode that doesn't exist...")
 
 if __name__=='__main__':
     print("\nInitializing Baxter Controller node... ")
