@@ -83,7 +83,7 @@ class ImageSwitcher(object):
                 self.mode_to_images[split_line[0]] = split_line[1:]
         if mode not in self.mode_to_images.keys():
             #Maybe want to raise an exception here instead of this
-            rospy.logerr("Image mode requested not in list of image modes. Requested: %s, going to top mode." mode)
+            rospy.logerr("Image mode requested not in list of image modes. Requested: %s, going to top mode.", mode)
             mode = "top"
         self._mode = mode
         self.image_timer = None

@@ -1,5 +1,7 @@
 Things that need to be done for Baxter
 
+Adam - Bug with mime mode with new meta mode controller. Weird stuff.
+
 Adam-
 Fix shutdown and restart of kinect
 -May need to include something to check if the skeleton tracker can't start up properly. It may also just reset on its own, not sure.

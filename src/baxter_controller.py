@@ -127,17 +127,12 @@ class Baxter_Controller:
             if h - lh > 0.11 or h - rh > 0.11: # What units are these? 
                 self.userid_almost_chosen = True
                 self.main_userid = skeleton.userid
-                rospy.loginfo("Main user chosen.\nUser %s, please proceed", str(self.main_userid))
+                # rospy.loginfo("Main user chosen.\nUser %s, please proceed", str(self.main_userid))
                 self.user_starting_position = skeleton.torso.transform.translation
                 if h - lh > 0.11:
-                    #TODO:
-                    # send service to pick crane game
-                    # message receive needs to call "choose crane" and whatnot
                     self.change_mode_service(MetaMode.CRANE)
-                    # return 'left'
                 elif h - rh > 0.11:
                     self.change_mode_service(MetaMode.MIME)
-                    # return 'right'
 
     def choose_crane(self):
         rospy.logdebug("Calling choose_crane...")
@@ -154,19 +149,21 @@ class Baxter_Controller:
         self.right_arm.move_to_joint_positions(self.mime_r_angles)
         self.userid_chosen = True
 
-    def change_mode_service(self, mode_type)
+    def change_mode_service(self, mode_type):
         rospy.logdebug("Calling change_mode_service...")
         rospy.wait_for_service('change_meta_mode')
         try:
             change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
-            change_srv = ChangeMetaModeRequest()
-            chagne_srv.mode = mode_type
-            change_success = change_mode(change_srv)
-            if not change_success.error:
+            # change_srv = ChangeMetaModeRequest()
+            # chagne_srv.mode = mode_type
+            # change_success = change_mode(change_srv)
+            change_resp = change_mode(mode_type)
+            # if not change_success.error:
+            if not change_resp.error:
                 rospy.logerr("Tried to go back to idle mode, failed!")
             else:
                 rospy.logdebug("Mode changed.")
-        except rospy.serviceException, e:
+        except rospy.ServiceException, e:
             rospy.logerr("Service call failed: %s", e)
 
     def position_user(self, skeleton):
@@ -187,7 +184,7 @@ class Baxter_Controller:
                 rospy.sleep(0.5) # try a 1/2 second delay
                 return True
         # elif (choice == 'right'):
-        elif self.internal_mode == MetaMode.MIME
+        elif self.internal_mode == MetaMode.MIME:
             dy = math.fabs(tor_y - lh_y) + math.fabs(tor_y - rh_y)
             dx = math.fabs(lh_x - tor_x) + math.fabs(rh_x - tor_x)
             if dy < 0.20 and dx > 0.8:
@@ -408,6 +405,7 @@ class Baxter_Controller:
             self.reset_booleans()
 
     def meta_mode_callback(self, data):
+        rospy.logdebug("New mode: %d", data.mode)
         self.internal_mode = data.mode
         if data.mode == MetaMode.MIME:
             self.choose_mime()
@@ -444,7 +442,7 @@ class Baxter_Controller:
         self.rs.reset()
         self.rs.enable()
         rospy.sleep(2.0)
-        self.img_switch_change_mode('top',3)
+        self.img_switch.change_mode('top',3)
 
     def bool_reset(self):
         self.userid_almost_chosen = False

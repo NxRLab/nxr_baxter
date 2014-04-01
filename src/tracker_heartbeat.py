@@ -10,8 +10,11 @@
 
 # ROS IMPORTS
 import rospy
+
 from std_msgs.msg import Empty
+
 from nxr_baxter_msgs.msg import MetaMode
+
 from nxr_baxter_msgs.srv import ChangeMetaMode
 
 # PYTHON IMPORTS
@@ -45,7 +48,7 @@ class Heartbeat_Monitor:
         self.freq_filter_list = Heartbeat_List(self.n_moving_avg_filt)
 
         # Time to wait to start (3 min)
-        self.delay_start = 60*3
+        self.delay_start = 60*2
 
         self.kill_count = 0
 
