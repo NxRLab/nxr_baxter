@@ -8,7 +8,6 @@
 # ROS IMPORTS: #
 ################
 import rospy
-#import sensor_msgs.msg
 from std_msgs.msg import Empty
 
 ####################
@@ -199,52 +198,52 @@ class Baxter_Controller:
 
 
 
-    def choose_action(self, skeleton, choice):
-        """
-        Determines which action for Baxter to perform based on gestures
-        """
-        # Action not chosen yet
-        rospy.logdebug("Calling choose_action")
-        if self.action_id == 0:
-            # MIME
-            if choice == 'right':
-                self.action_id = 1
-                action = 'Mime'
-            elif choice == 'left':
-                self.action_id = 2
-                action = 'Crane'
-            # ACTION CHOSEN
-            print "Action chosen: %s\nProceed?\n" % action
-            self.initialize_actions(self.action_id)
+    # def choose_action(self, skeleton, choice):
+    #     """
+    #     Determines which action for Baxter to perform based on gestures
+    #     """
+    #     # Action not chosen yet
+    #     rospy.logdebug("Calling choose_action")
+    #     if self.action_id == 0:
+    #         # MIME
+    #         if choice == 'right':
+    #             self.action_id = 1
+    #             action = 'Mime'
+    #         elif choice == 'left':
+    #             self.action_id = 2
+    #             action = 'Crane'
+    #         # ACTION CHOSEN
+    #         print "Action chosen: %s\nProceed?\n" % action
+    #         self.initialize_actions(self.action_id)
 
-    # def initialize_actions(self, action):
-    def initialize_actions(self)
-        """
-        Creates action objects and initializes their state
-        """
-        rospy.logdebug("Calling initialize_actions")
-        # self.actions = {1: self.mime_go,
-        #                 2: self.crane_go}
-        # if action==1:
-        if self.internal_mode == MetaMode.MIME
-            rospy.loginfo("    Action chosen: Mime\n")
-            self.mime = Mime()
-            self.action = 'mime_go'
-            self.mime_count = 0
-            self.action_chosen = True
+    # # def initialize_actions(self, action):
+    # def initialize_actions(self)
+    #     """
+    #     Creates action objects and initializes their state
+    #     """
+    #     rospy.logdebug("Calling initialize_actions")
+    #     # self.actions = {1: self.mime_go,
+    #     #                 2: self.crane_go}
+    #     # if action==1:
+    #     if self.internal_mode == MetaMode.MIME
+    #         rospy.loginfo("    Action chosen: Mime\n")
+    #         self.mime = Mime()
+    #         self.action = 'mime_go'
+    #         self.mime_count = 0
+    #         self.action_chosen = True
 
-            # Screen images
-            self.img_switch.change_mode('mime',3)
+    #         # Screen images
+    #         self.img_switch.change_mode('mime',3)
 
-        # elif action == 2:
-        elif self.internal_mode == MetaMode.CRANE
-            rospy.loginfo("    Action chosen: Crane\n")
-            self.crane = Crane()
-            self.crane_count = 0
-            self.action_chosen = True
+    #     # elif action == 2:
+    #     elif self.internal_mode == MetaMode.CRANE
+    #         rospy.loginfo("    Action chosen: Crane\n")
+    #         self.crane = Crane()
+    #         self.crane_count = 0
+    #         self.action_chosen = True
 
-            # Screen images
-            self.img_switch.change_mode('crane',3)
+    #         # Screen images
+    #         self.img_switch.change_mode('crane',3)
 
     def reset_booleans(self):
         """
@@ -264,7 +263,6 @@ class Baxter_Controller:
         self.user_positioned = False
         self.action_chosen = False
         self.action_id = 0
-        self.started_action = False
         rospy.sleep(2.0)
         
         # Screen images
@@ -368,7 +366,7 @@ class Baxter_Controller:
     
         # Chooses action to complete
         # Instead of self.userid_choice == False
-        elif self.started_action == False and found:
+        elif self.action_chosen == False and found:
             #There is a user, they are in position, time to start the actual action
             # self.choose_action(skel, self.choice)
             if self.internal_mode == MetaMode.MIME:
@@ -378,7 +376,6 @@ class Baxter_Controller:
                 self.action_chosen = True
                 # Screen images
                 self.img_switch.change_mode('mime',3)
-                self.started_action == True
             elif self.internal_mode == MetaMode.CRANE:
                 rospy.loginfo("    Action chosen: Crane\n")
                 self.crane = Crane()
@@ -386,11 +383,9 @@ class Baxter_Controller:
                 self.action_chosen = True
                 # Screen images
                 self.img_switch.change_mode('crane',3)
-                self.started_action == True
-            
 
-        # Means found == True and user_positioned == True
-        elif self.user_positioned and found:
+        # Means found == True and user_positioned == True and action_chosen == True
+        elif found:
             p1_x = self.user_starting_position.x
             p1_z = self.user_starting_position.z
             p2_x = skel.torso.transform.translation.x
@@ -407,8 +402,10 @@ class Baxter_Controller:
             if not (math.fabs(dx) > 0.10 and math.fabs(dz) > 0.10 and left_ratio > 0.5 and right_ratio > 0.5):
                 if self.internal_mode == MetaMode.MIME:
                     self.mime_go(skel)
-                self.actions[self.action_id](skel)
-            else: self.reset_booleans()
+                elif self.internal_mode == MetaMode.CRANE:
+                    self.crane_go(skel)
+            else:
+                self.reset_booleans()
 
         elif not found:           
             self.reset_booleans()
