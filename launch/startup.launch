@@ -3,6 +3,8 @@
 	<!-- <include file="$(find skeletontracker_nu)/launch/nu_skeletontracker.launch"/> -->
 
 	<rosparam param="img_files_filename">'/home/nxr-baxter/groovyws/src/nxr_baxter/images/image_files.txt'</rosparam>
+	
+	<node pkg="nxr_baxter" type="meta_mode_controller.py" name="meta_mode" output="screen" respawn="true" />
 
 	<node pkg="nxr_baxter" type="baxter_controller.py" name="bax_controller" output="screen" respawn="true" />
 	<node pkg="nxr_baxter" type="tracker_heartbeat.py" name="skel_tracker_heartbeat" output="screen" respawn="true" />

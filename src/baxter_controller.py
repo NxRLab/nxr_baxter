@@ -258,11 +258,8 @@ class Baxter_Controller:
         self.rs.reset()
         self.rs.enable()
 
-        self.userid_almost_chosen = False
-        self.userid_chosen = False
-        self.user_positioned = False
-        self.action_chosen = False
-        self.action_id = 0
+        #Actually reset the boolean values
+        self.bool_reset()
         rospy.sleep(2.0)
         
         # Screen images
@@ -418,15 +415,43 @@ class Baxter_Controller:
             self.choose_crane()
         elif data.mode == MetaMode.IDLE_DISABLED:
             #Disable everything
+            self.disable()
             pass
         elif data.mode == MetaMode.IDLE_ENABLED:
             #Enable everything
+            self.enable()
             pass
         elif data.mode == MetaMode.RESTART_KINECT:
             #Disable everything while kinect is restarting?
+            self.disable()
             pass
         else:
             rospy.logerr("Got a mode that doesn't exist...")
+
+    def disable(self):
+        rospy.logdebug("Calling disable...")
+        #Disable motors
+        rospy.loginfo("Disabling baxter_controller.py")
+        rospy.loginfo("TODO: Make an image for being disabled")
+        self.rs.disable()
+        #Reset booleans, won't call the function because that does other stuff
+        self.bool_reset()
+
+    def enable(self):
+        rospy.logdebug("Calling enable...")
+        #Enable motors
+        rospy.loginfo("Enabling baxter_controller.py")
+        self.rs.reset()
+        self.rs.enable()
+        rospy.sleep(2.0)
+        self.img_switch_change_mode('top',3)
+
+    def bool_reset(self):
+        self.userid_almost_chosen = False
+        self.userid_chosen = False
+        self.user_positioned = False
+        self.action_chosen = False
+        self.action_id = 0
 
 if __name__=='__main__':
     print("\nInitializing Baxter Controller node... ")
