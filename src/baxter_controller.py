@@ -246,21 +246,12 @@ class Baxter_Controller:
         """
         Resets booleans when user is done with action
         """
+        self.change_mode_service(MetaMode.IDLE_ENABLED)
         rospy.logdebug("Calling reset_booleans")
         rospy.loginfo("\n**Booleans reset**\n")
         self.img_switch.change_mode('bool_reset',3)
 
-        #Why do we disable, reset, and enable when resetting user stuff?
-        self.rs.disable()
-        self.rs.reset()
-        self.rs.enable()
-
-        #Actually reset the boolean values
-        self.bool_reset()
-        rospy.sleep(2.0)
-        
-        # Screen images
-        self.img_switch.change_mode('top',3)
+        self.change_mode_service(MetaMode.IDLE_ENABLED)
 
     #=========================================================#
     #                        ACTIONS:                         #
@@ -356,7 +347,8 @@ class Baxter_Controller:
             dz = p2_z - p1_z
             if not (math.fabs(dx) > 0.10 and math.fabs(dz) > 0.10 and left_ratio > 0.5 and right_ratio > 0.5):
                 self.user_positioned = self.position_user(skel)
-            else: self.reset_booleans()
+            else:
+                self.reset_booleans()
     
         # Chooses action to complete
         # Instead of self.userid_choice == False
@@ -401,7 +393,7 @@ class Baxter_Controller:
             else:
                 self.reset_booleans()
 
-        elif not found:           
+        elif not found:
             self.reset_booleans()
 
     def meta_mode_callback(self, data):
@@ -442,6 +434,7 @@ class Baxter_Controller:
         self.rs.reset()
         self.rs.enable()
         rospy.sleep(2.0)
+        self.bool_reset()
         self.img_switch.change_mode('top',3)
 
     def bool_reset(self):

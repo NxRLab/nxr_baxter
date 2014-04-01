@@ -1,6 +1,9 @@
 Things that need to be done for Baxter
 
-Adam - Bug with mime mode with new meta mode controller. Weird stuff.
+Adam - Bug with mime mode with new meta mode controller. Weird stuff. 
+Reset_booleans now is still called, it just calls the service change itself.
+
+More testing!
 
 Adam-
 Fix shutdown and restart of kinect
@@ -11,8 +14,6 @@ Meta-mode controller
 - Set up. Needs to be written into other files.
 - Written into tracker_heartbeat.py. Needs to be incorporated into baxter_controller.py (this will be the hardest to undertake). Done.
 -Need to add the node to the launch file. added
-
-Need to test this all.
 
 Jon-
 "Low-Pass filter" for hand raise to trigger baxter
