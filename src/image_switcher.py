@@ -24,18 +24,6 @@ class ImageSwitcher(object):
 
 
     """
-    # baseFilename = '/home/nxr-baxter/groovyws/src/nxr_baxter/images/'
-    # mode_to_images = { "top": [baseFilename + 'Display-Top.png'],
-    #                         "mime_prep": [baseFilename + 'Display-Mime-Prep-' +
-    #                                       str(x) + '.png' for x in range(1,3)],
-    #                         "crane_prep": [baseFilename + 'Display-Crane-Prep-'
-    #                                        + str(x) + '.png' for x in
-    #                                        range(1,3)],
-    #                         "mime": [baseFilename + 'Display-Mime.png'],
-    #                         "crane": [baseFilename + 'Display-Crane.png'],
-    #                         "positioned": [baseFilename + 'Display-User-Positioned.png'],
-    #                         "bool_reset": [baseFilename + 'Display-Booleans-Reset.jpg']
-    #                         }
     
     def timerCallback(self, event):
         """
@@ -44,6 +32,7 @@ class ImageSwitcher(object):
         that anytime the function gets called out of this method, it will not
         assume  the mode has been changed.
         """
+        rospy.logdebug("Calling timerCallback")
         self._imageUpdate()
 
     def _imageUpdate(self, reset=False):
@@ -53,6 +42,7 @@ class ImageSwitcher(object):
         started. Should  only be called by the timer callback or whenever the
         mode/period has been changed and the timer needs to be reset.
         """
+        rospy.logdebug("Calling imageUpdate")
         image_list = self.mode_to_images[self._mode]
         
         if reset:
@@ -60,6 +50,7 @@ class ImageSwitcher(object):
 
         image_filename = image_list[self.image_no]
         msg = cv_bridge.CvBridge().cv_to_imgmsg(cv.LoadImage(image_filename))
+        rospy.logdebug("Changing image")
         self._pub.publish(msg)
         
         self.image_no += 1
@@ -82,6 +73,7 @@ class ImageSwitcher(object):
         ...
         modeN filenameN
         """
+        rospy.logdebug("Calling image_switcher.__init__")
         f = open(img_files_filename, 'r')
         self.mode_to_images = {}
         for line in f:
@@ -91,7 +83,7 @@ class ImageSwitcher(object):
                 self.mode_to_images[split_line[0]] = split_line[1:]
         if mode not in self.mode_to_images.keys():
             #Maybe want to raise an exception here instead of this
-            print "Image mode requested not in list of image modes."
+            rospy.logerr("Image mode requested not in list of image modes. Requested: %s, going to top mode." mode)
             mode = "top"
         self._mode = mode
         self.image_timer = None
@@ -105,6 +97,7 @@ class ImageSwitcher(object):
         Takes in a new mode type and/or a new image switching period. Note that
         even if neither of these change, the timer will be reset.
         """
+        rospy.logdebug("Calling change_mode")
         if newMode:
             self._mode = newMode
         if newPeriod:
@@ -117,6 +110,7 @@ class ImageSwitcher(object):
         first image in the sequence (by resetting _imageUpdate()) and then
         starts the timer with the stored period.
         """
+        rospy.logdebug("Calling _startTimer")
         if self.image_timer:
             self.image_timer.shutdown()
         # Note that the timer won't show an image until the timer goes off, so 
@@ -130,10 +124,10 @@ class ImageSwitcher(object):
 
 if __name__=="__main__":
     #Simple test script for ImageSwitcher class
-    rospy.init_node('image_switcher_test_node')
-    print "image switcher timer test"
+    rospy.init_node('image_switcher_test_node', log_level=rospy.INFO)
+    rospy.info("image switcher timer test")
     img_sw = ImageSwitcher('top')
-    print "made object"
+    rospy.info("made object")
     rospy.sleep(6)
     img_sw.change_mode('crane_prep')
     rospy.spin()
