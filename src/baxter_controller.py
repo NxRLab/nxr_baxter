@@ -246,7 +246,6 @@ class Baxter_Controller:
         """
         Resets booleans when user is done with action
         """
-        self.change_mode_service(MetaMode.IDLE_ENABLED)
         rospy.logdebug("Calling reset_booleans")
         rospy.loginfo("\n**Booleans reset**\n")
         self.img_switch.change_mode('bool_reset',3)
@@ -275,6 +274,7 @@ class Baxter_Controller:
 
         if self.mime_count % DOWN_SAMPLE == 0:
             self.mime.move(l_sh, l_el, l_ha, r_sh, r_el, r_ha)
+            self.mime_count = 0
 
     def crane_go(self, skeleton):
         """
@@ -293,6 +293,7 @@ class Baxter_Controller:
 
         if self.crane_count % DOWN_SAMPLE == 0:
             self.crane.move(l_sh, l_el, l_ha, r_sh, r_el, r_ha)
+            self.crane_count = 0
     
 
     #######################
@@ -443,6 +444,7 @@ class Baxter_Controller:
         self.user_positioned = False
         self.action_chosen = False
         self.action_id = 0
+        
 
 if __name__=='__main__':
     print("\nInitializing Baxter Controller node... ")
