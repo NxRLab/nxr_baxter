@@ -247,7 +247,6 @@ class Baxter_Controller:
         Resets booleans when user is done with action
         """
         rospy.logdebug("Calling reset_booleans")
-        rospy.loginfo("\n**Booleans reset**\n")
         self.img_switch.change_mode('bool_reset',3)
 
         self.change_mode_service(MetaMode.IDLE_ENABLED)
@@ -395,29 +394,30 @@ class Baxter_Controller:
                 self.reset_booleans()
 
         elif not found:
+            rospy.loginfo("not found")
             self.reset_booleans()
 
     def meta_mode_callback(self, data):
-        rospy.logdebug("New mode: %d", data.mode)
-        self.internal_mode = data.mode
-        if data.mode == MetaMode.MIME:
-            self.choose_mime()
-        elif data.mode == MetaMode.CRANE:
-            self.choose_crane()
-        elif data.mode == MetaMode.IDLE_DISABLED:
+        if self.internal_mode != data.mode:
+            rospy.logdebug("New mode: %d", data.mode)
+            self.internal_mode = data.mode
+            if data.mode == MetaMode.MIME:
+                self.choose_mime()
+            elif data.mode == MetaMode.CRANE:
+                self.choose_crane()
+            elif data.mode == MetaMode.IDLE_DISABLED:
             #Disable everything
-            self.disable()
-            pass
-        elif data.mode == MetaMode.IDLE_ENABLED:
+                self.disable()
+            elif data.mode == MetaMode.IDLE_ENABLED:
             #Enable everything
-            self.enable()
-            pass
-        elif data.mode == MetaMode.RESTART_KINECT:
+                self.enable()
+            elif data.mode == MetaMode.RESTART_KINECT:
             #Disable everything while kinect is restarting?
-            self.disable()
-            pass
+                self.disable()
+            else:
+                rospy.logerr("Got a mode that doesn't exist...")
         else:
-            rospy.logerr("Got a mode that doesn't exist...")
+            rospy.logdebug("Already in mode: %d", data.mode)
 
     def disable(self):
         rospy.logdebug("Calling disable...")
@@ -439,6 +439,7 @@ class Baxter_Controller:
         self.img_switch.change_mode('top',3)
 
     def bool_reset(self):
+        rospy.loginfo("\n**Booleans reset**\n")
         self.userid_almost_chosen = False
         self.userid_chosen = False
         self.user_positioned = False

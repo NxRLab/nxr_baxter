@@ -22,11 +22,13 @@ class MetaMode_Controller:
         if req.mode not in [req.IDLE_DISABLED, req.IDLE_ENABLED, req.RESTART_KINECT, req.MIME, req.CRANE]:
             rospy.logerr("Meta Mode %d does not match one of the possible meta\ modes. Keeping same mode.", req.mode)
             return ChangeMetaModeResponse(False)
-        else:
+        elif req.mode != self.current_mode:
             self.current_mode = req.mode
             msg = MetaMode()
             msg.mode = req.mode
             self._pub.publish(msg)
+            return ChangeMetaModeResponse(True)
+        else:
             return ChangeMetaModeResponse(True)
 
 

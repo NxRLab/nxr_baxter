@@ -15,7 +15,7 @@ from std_msgs.msg import Empty
 
 from nxr_baxter_msgs.msg import MetaMode
 
-from nxr_baxter_msgs.srv import ChangeMetaMode
+from nxr_baxter_msgs.srv import *
 
 # PYTHON IMPORTS
 import os
@@ -47,8 +47,8 @@ class Heartbeat_Monitor:
         self.max_allowable_frequency = 24.0
         self.freq_filter_list = Heartbeat_List(self.n_moving_avg_filt)
 
-        # Time to wait to start (3 min)
-        self.delay_start = 60*2
+        # Time to wait to start (1 min)
+        self.delay_start = 60
 
         self.kill_count = 0
 
@@ -104,14 +104,15 @@ class Heartbeat_Monitor:
             rospy.wait_for_service('change_meta_mode')
             try:
                 change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
-                change_srv = ChangeMetaModeRequest()
-                change_srv.mode = change_srv.RESTART_KINECT
-                change_success = change_mode(change_srv)
-                if not change_success.error:
+                # change_srv = ChangeMetaModeRequest()
+                # change_srv.mode = change_srv.RESTART_KINECT
+                # change_success = change_mode(change_srv)
+                change_resp = change_mode(ChangeMetaModeRequest.RESTART_KINECT)
+                if not change_resp.error:
                     rospy.logerr("Tried to restart Kinect, but mode change request failed.")
                 else:
                     rospy.logdebug("Kinect shutdown meta mode change succeeded.")
-            except rospy.serviceException, e:
+            except rospy.ServiceException, e:
                 rospy.logerr("Service call failed: %s",e)
 
     def meta_mode_callback(self, data):
@@ -122,14 +123,15 @@ class Heartbeat_Monitor:
             rospy.wait_for_service('change_meta_mode')
             try:
                 change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
-                change_srv = ChangeMetaModeRequest()
-                change_srv.mode = change_srv.IDLE_ENABLED
-                change_success = change_mode(change_srv)
-                if not change_success.error:
+                # change_srv = ChangeMetaModeRequest()
+                # change_srv.mode = change_srv.IDLE_ENABLED
+                # change_success = change_mode(change_srv)
+                change_resp = change_mode(ChangeMetaModeResponse.IDLE_ENABLED)
+                if not change_resp.error:
                     rospy.logerr("Tried to go back to idle mode, failed!")
                 else:
                     rospy.logdebug("Back to idle mode meta mode change succeeded.")
-            except rospy.serviceException, e:
+            except rospy.ServiceException, e:
                 rospy.logerr("Service call failed: %s",e)
 
     #This function is called when the frequency gets bad
@@ -194,9 +196,10 @@ class Heartbeat_List:
 
     def push(self, val):
         rospy.logdebug("Calling Heartbeat_List.push(val)")
-        if self.num_pushed < self._max_index + 1:
+        if self.num_pushed <= self._max_index:
             self.num_pushed += 1
-        self.sum -= self._list[self._oldest_index]
+        else:
+            self.sum -= self._list[self._oldest_index]
         self.sum += val
         self._list[self._oldest_index] = val
         self._oldest_index += 1
