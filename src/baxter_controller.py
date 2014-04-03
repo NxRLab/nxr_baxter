@@ -130,7 +130,7 @@ class Baxter_Controller:
             elif limb == 'right':
                 self.right_arm.move_to_joint_positions(self.mime_r_angles)
 
-    def setup_gripper_thread(self, queue, timeout=15.0):
+    def setup_gripper_thread(self, timeout=15.0):
         self.gripper.reboot()
         self.gripper.calibrate()
 
@@ -168,8 +168,7 @@ class Baxter_Controller:
                                                                args=('left', 'crane', left_queue))
                                 right_thread = threading.Thread(target=self.setup_move_thread,
                                                                 args=('right', 'crane', right_queue))
-                                gripper_thread = threading.Thread(target=self.setup_gripper_thread,
-                                                                  args=(gripper_queue))
+                                gripper_thread = threading.Thread(target=self.setup_gripper_thread)
                                 left_thread.daemon = True
                                 right_thread.daemon = True
                                 gripper_thread.daemon = True
