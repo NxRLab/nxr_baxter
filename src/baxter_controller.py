@@ -21,6 +21,7 @@ import baxter_dataflow
 ####################
 import os
 import traceback
+import threading
 import Queue
 import math
 import numpy as np
@@ -81,6 +82,7 @@ class Baxter_Controller:
 
         self.left_arm = baxter_interface.limb.Limb('left')
         self.right_arm = baxter_interface.limb.Limb('right')
+        self.gripper = baxter_interface.Gripper('right')
         self.mime_l_angles = {'left_s0': 0.35, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 0.00, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
         self.mime_r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 0.00, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
         self.crane_l_angles = {'left_s0': 0.35, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
@@ -141,6 +143,17 @@ class Baxter_Controller:
         self.gripper.reboot()
         self.gripper.calibrate()
 
+    def disable_move_thread(self, limb, queue, timeout=15.0):
+        """
+        Handles moving to disable position for each arm's thread
+        """
+        l_angles = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
+        r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
+        if limb == 'left':
+            self.left_arm.move_to_joint_positions(l_angles)
+        elif limb == 'right':
+            self.right_arm.move_to_joint_positions(r_angles)
+
     def choose_user(self, skeletons):
         """
         Selects primary user to avoid ambiguity
@@ -163,6 +176,7 @@ class Baxter_Controller:
                             self.left_hand_timer += 0.1
                             if self.left_hand_timer > 3:
                                 self.left_hand_timer = 0
+                                self.user_starting_position = skeleton.torso.transform.translation
                                 self.change_mode_service(MetaMode.CRANE)
                         # LEFT hand is risen. Reset right hand timer
                         else: right_hand_timer = 0
@@ -175,6 +189,7 @@ class Baxter_Controller:
                             self.right_hand_timer += 0.1
                             if self.right_hand_timer > 3:
                                 self.right_hand_timer = 0
+                                self.user_starting_position = skeleton.torso.transform.translation
                                 self.change_mode_service(MetaMode.MIME)
                         # RIGHT hand is risen. Reset left hand timer
                         else: left_hand_timer = 0
@@ -193,7 +208,7 @@ class Baxter_Controller:
 
     def choose_crane(self):
         rospy.logdebug("Calling choose_crane...")
-        self.user_starting_position = skeleton.torso.transform.translation
+
         self.img_switch.change_mode('crane_prep',3)
 
         left_queue = Queue.Queue()
@@ -226,7 +241,6 @@ class Baxter_Controller:
 
     def choose_mime(self):
         rospy.logdebug("Calling choose_crane...")
-        self.user_starting_position = skeleton.torso.transform.translation
         self.img_switch.change_mode('mime_prep', 3)
         left_queue = Queue.Queue()
         right_queue = Queue.Queue()

@@ -76,6 +76,7 @@ class Heartbeat_Monitor:
     #Start the main timer after the delay timer has been launched
     def start_main_timer(self, event=None):
         rospy.logdebug("Calling start_main_timer")
+        self._heartbeat_count = 0
         self.main_timer = rospy.Timer(rospy.Duration(self.heartbeat_period),
                                           self.heartbeat_timer_callback)
 
@@ -87,7 +88,7 @@ class Heartbeat_Monitor:
 
     # Callback for heartbeat timer calculation. Gets the current count and will
     # calculate the average. Keeps an updated list of the past n_moving_avg_filt
-    # frequencies and if its less than 25, shutdown and restart the processes
+    # frequencies and if its less than max_allowable_frequency, shutdown and restart the processes
     def heartbeat_timer_callback(self, event):
         rospy.logdebug("Calling heartbeat_timer_callback")
         # Calculate frequency
@@ -95,8 +96,8 @@ class Heartbeat_Monitor:
         self.freq_filter_list.push(ht_bt_freq)
         #Reset count
         self._heartbeat_count = 0
-        rospy.loginfo("Averaged tracker frequency: %d", self.freq_filter_list.sum/self.n_moving_avg_filt)
-        if self.freq_filter_list.sum/self.n_moving_avg_filt < self.max_allowable_frequency:
+        rospy.loginfo("Averaged tracker frequency: %d", self.freq_filter_list.get_average())
+        if self.freq_filter_list.get_average() < self.max_allowable_frequency:
             # self.shutdown_and_restart()
             # Now send a service request to change the mode so we can restart
             # kinect and stuff, then our callback on that will call
