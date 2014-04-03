@@ -1,31 +1,19 @@
 Things that need to be done for Baxter
 
-Adam - Bug with mime mode with new meta mode controller. Weird stuff. 
-Reset_booleans now is still called, it just calls the service change itself.
-
 More testing!
 
-Adam-
-Fix shutdown and restart of kinect
--May need to include something to check if the skeleton tracker can't start up properly. It may also just reset on its own, not sure.
+- May need to include something to check if the skeleton tracker can't start up properly. It may also just reset on its own, not sure.
 
-Adam-
-Meta-mode controller
-- Set up. Needs to be written into other files.
-- Written into tracker_heartbeat.py. Needs to be incorporated into baxter_controller.py (this will be the hardest to undertake). Done.
--Need to add the node to the launch file. added
+- Do everything with MOVEIT
 
-Jon-
-"Low-Pass filter" for hand raise to trigger baxter
--Wait ~0.5-1s and see if hand is raised the whole time
+- Pull changes into NxR-Baxter
 
-Jon-
-Have motors turn off in a 'better' position
+- Maybe replace crane game with memory game for now
 
-Jon-
-Speed up process of getting into each demo
--Arms move at the same time
--Remove 'clicking' of gripper etc
+-More modular? Crane prep and crane-go modes for example?
+
+-Include image for kinect restart mode
+
 
 Longer-term
 Smarter handling of Kinect
