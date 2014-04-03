@@ -16,6 +16,7 @@ find_package(catkin
   trajectory_msgs
   baxter_core_msgs
   skeletonmsgs_nu
+  nxr_baxter_msgs
   
   baxter_interface
 
@@ -26,7 +27,7 @@ find_package(catkin
 
 catkin_python_setup()
 
-generate_messages(DEPENDENCIES sensor_msgs std_msgs geometry_msgs control_msgs trajectory_msgs baxter_core_msgs skeletonmsgs_nu)
+# generate_messages(DEPENDENCIES sensor_msgs std_msgs geometry_msgs control_msgs trajectory_msgs baxter_core_msgs skeletonmsgs_nu)
 
 catkin_package(
   CATKIN_DEPENDS
@@ -42,6 +43,8 @@ catkin_package(
   trajectory_msgs
   baxter_core_msgs
   skeletonmsgs_nu
+  message_runtime
+  nxr_baxter_msgs
   
   baxter_interface
 

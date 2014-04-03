@@ -1,28 +1,19 @@
 Things that need to be done for Baxter
 
-Adam-
-Change things to use rospy.log instead of print - done for tracker_heartbeat.py
+More testing!
 
-Adam-
-Fix shutdown and restart of kinect
--Should probably change self.delay_start to 2 min or 3 min in tracker_heartbeat.py
+- May need to include something to check if the skeleton tracker can't start up properly. It may also just reset on its own, not sure.
 
-Adam-
-Meta-mode controller
--Service-based to change the mode, publishes a latched topic whenever mode is changed
--Modes are things like: baxter shutdown motors, baxter turn on motors, etc.
+- Do everything with MOVEIT
 
-Jon-
-"Low-Pass filter" for hand raise to trigger baxter
--Wait ~0.5-1s and see if hand is raised the whole time
+- Pull changes into NxR-Baxter
 
-Jon-
-Have motors turn off in a 'better' position
+- Maybe replace crane game with memory game for now
 
-Jon-
-Speed up process of getting into each demo
--Arms move at the same time
--Remove 'clicking' of gripper etc
+-More modular? Crane prep and crane-go modes for example?
+
+-Include image for kinect restart mode
+
 
 Longer-term
 Smarter handling of Kinect
