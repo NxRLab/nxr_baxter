@@ -119,12 +119,11 @@ class Baxter_Controller:
         self.skel_filt = sf.SkeletonFilter(sf.joints)
         self.first_filt_flag = True
 
-<<<<<<< variant A
         # Set up subscriber to meta-mode controller
         self.internal_mode = MetaMode.IDLE_ENABLED
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
->>>>>>> variant B
+    # what does timeout do?
     def setup_move_thread(self, limb, mode, queue, timeout=15.0):
         if mode == 'crane':
             if limb == 'left':
@@ -137,12 +136,11 @@ class Baxter_Controller:
             elif limb == 'right':
                 self.right_arm.move_to_joint_positions(self.mime_r_angles)
 
+    # What does tiemout do?
     def setup_gripper_thread(self, timeout=15.0):
         self.gripper.reboot()
         self.gripper.calibrate()
 
-####### Ancestor
-======= end
     def choose_user(self, skeletons):
         """
         Selects primary user to avoid ambiguity
@@ -152,23 +150,11 @@ class Baxter_Controller:
             lh = skeleton.left_hand.transform.translation.y
             rh = skeleton.right_hand.transform.translation.y
             h = skeleton.head.transform.translation.y
-<<<<<<< variant A
-            if h - lh > 0.11 or h - rh > 0.11: # What units are these? 
-                self.userid_almost_chosen = True
-                self.main_userid = skeleton.userid
-                # rospy.loginfo("Main user chosen.\nUser %s, please proceed", str(self.main_userid))
-                self.user_starting_position = skeleton.torso.transform.translation
-                if h - lh > 0.11:
-                    self.change_mode_service(MetaMode.CRANE)
-                elif h - rh > 0.11:
-                    self.change_mode_service(MetaMode.MIME)
->>>>>>> variant B
 
             # PersonX is raising a hand
             if h - lh > 0.11 or h - rh > 0.11: # What units are these? A: Meters (I think) - Jon
                 # PersonX is main user
                 if skeleton.userid == self.main_userid:
-
                     # PersonX is raising LEFT hand
                     if h - lh > 0.11:
                         # Makes sure that PersonX's right hand wasn't recently raised
@@ -177,39 +163,7 @@ class Baxter_Controller:
                             self.left_hand_timer += 0.1
                             if self.left_hand_timer > 3:
                                 self.left_hand_timer = 0
-                                self.user_starting_position = skeleton.torso.transform.translation
-                                self.img_switch.change_mode('crane_prep',3)
-
-                                left_queue = Queue.Queue()
-                                right_queue = Queue.Queue()
-                                gripper_queue = Queue.Queue()
-                                left_thread = threading.Thread(target=self.setup_move_thread,
-                                                               args=('left', 'crane', left_queue))
-                                right_thread = threading.Thread(target=self.setup_move_thread,
-                                                                args=('right', 'crane', right_queue))
-                                gripper_thread = threading.Thread(target=self.setup_gripper_thread)
-                                left_thread.daemon = True
-                                right_thread.daemon = True
-                                gripper_thread.daemon = True
-                                left_thread.start()
-                                right_thread.start()
-                                gripper_thread.start()
-                                baxter_dataflow.wait_for(
-                                    lambda: not (left_thread.is_alive() or
-                                                  right_thread.is_alive() or
-                                                   gripper_thread.is_alive()),
-                                    timeout=20.0,
-                                    timeout_msg=("Timeout while waiting for arm move threads"
-                                                 " to finish"),
-                                    rate=10,
-                                )
-                                left_thread.join()
-                                right_thread.join()
-                                gripper_thread.join()
-
-                                self.userid_chosen = True
-                                print "\n\nMain user chosen.\nUser %s, please proceed.\n" % str(self.main_userid)
-                                return 'left'
+                                self.change_mode_service(MetaMode.CRANE)
                         # LEFT hand is risen. Reset right hand timer
                         else: right_hand_timer = 0
 
@@ -221,33 +175,7 @@ class Baxter_Controller:
                             self.right_hand_timer += 0.1
                             if self.right_hand_timer > 3:
                                 self.right_hand_timer = 0
-                                self.user_starting_position = skeleton.torso.transform.translation
-                                self.img_switch.change_mode('mime_prep', 3)
-                                
-                                left_queue = Queue.Queue()
-                                right_queue = Queue.Queue()
-                                left_thread = threading.Thread(target=self.setup_move_thread,
-                                                               args=('left', 'mime', left_queue))
-                                right_thread = threading.Thread(target=self.setup_move_thread,
-                                                                args=('right', 'mime', right_queue))
-                                left_thread.daemon = True
-                                right_thread.daemon = True
-                                left_thread.start()
-                                right_thread.start()
-                                baxter_dataflow.wait_for(
-                                    lambda: not (left_thread.is_alive() or
-                                                  right_thread.is_alive()),
-                                    timeout=20.0,
-                                    timeout_msg=("Timeout while waiting for arm move threads"
-                                                 " to finish"),
-                                    rate=10,
-                                )
-                                left_thread.join()
-                                right_thread.join()
-
-                                self.userid_chosen = True
-                                print "\n\nMain user chosen.\nUser %s, please proceed.\n" % str(self.main_userid)
-                                return 'right'
+                                self.change_mode_service(MetaMode.MIME)
                         # RIGHT hand is risen. Reset left hand timer
                         else: left_hand_timer = 0
                     return
@@ -261,44 +189,69 @@ class Baxter_Controller:
             elif skeleton.userid == self.main_userid:
                 self.left_hand_timer = 0
                 self.right_hand_timer = 0
-
         return
-
-####### Ancestor
-            if h - lh > 0.11 or h - rh > 0.11: # What units are these? 
-                self.userid_almost_chosen = True
-                self.main_userid = skeleton.userid
-                print "\n\nMain user chosen.\nUser %s, please proceed.\n" % str(self.main_userid)
-                self.user_starting_position = skeleton.torso.transform.translation
-                if h - lh > 0.11:
-                    self.img_switch.change_mode('crane_prep',3)
-                    self.left_arm.move_to_joint_positions(self.crane_l_angles)
-                    self.right_arm.move_to_joint_positions(self.crane_r_angles)
-                    self.userid_chosen = True
-                    return 'left'
-                elif h - rh > 0.11:
-                    self.img_switch.change_mode('mime_prep', 3)
-                    #Let's try and speed this stuff up
-                    self.left_arm.move_to_joint_positions(self.mime_l_angles)
-                    self.right_arm.move_to_joint_positions(self.mime_r_angles)
-                    self.userid_chosen = True
-                    return 'right'
-======= end
 
     def choose_crane(self):
         rospy.logdebug("Calling choose_crane...")
+        self.user_starting_position = skeleton.torso.transform.translation
         self.img_switch.change_mode('crane_prep',3)
-        self.left_arm.move_to_joint_positions(self.crane_l_angles)
-        self.right_arm.move_to_joint_positions(self.crane_r_angles)
+
+        left_queue = Queue.Queue()
+        right_queue = Queue.Queue()
+        gripper_queue = Queue.Queue()
+        left_thread = threading.Thread(target=self.setup_move_thread,
+                                       args=('left', 'crane', left_queue))
+        right_thread = threading.Thread(target=self.setup_move_thread,
+                                        args=('right', 'crane', right_queue))
+        gripper_thread = threading.Thread(target=self.setup_gripper_thread)
+        left_thread.daemon = True
+        right_thread.daemon = True
+        gripper_thread.daemon = True
+        left_thread.start()
+        right_thread.start()
+        gripper_thread.start()
+        baxter_dataflow.wait_for(
+            lambda: not (left_thread.is_alive() or right_thread.is_alive() or
+                         gripper_thread.is_alive()), timeout=20.0,
+                         timeout_msg=(
+                            "Timeout while waiting for arm move threads to finish"),
+                            rate=10,
+            )
+        left_thread.join()
+        right_thread.join()
+        gripper_thread.join()
+
         self.userid_chosen = True
+        rospy.loginfo("Main user chosen.\nUser %s, please proceed.", str(self.main_userid))
 
     def choose_mime(self):
         rospy.logdebug("Calling choose_crane...")
+        self.user_starting_position = skeleton.torso.transform.translation
         self.img_switch.change_mode('mime_prep', 3)
-        #Let's try and speed this stuff up
-        self.left_arm.move_to_joint_positions(self.mime_l_angles)
-        self.right_arm.move_to_joint_positions(self.mime_r_angles)
+        left_queue = Queue.Queue()
+        right_queue = Queue.Queue()
+        left_thread = threading.Thread(target=self.setup_move_thread,
+                                       args=('left', 'mime', left_queue))
+        right_thread = threading.Thread(target=self.setup_move_thread,
+                                        args=('right', 'mime', right_queue))
+        left_thread.daemon = True
+        right_thread.daemon = True
+        left_thread.start()
+        right_thread.start()
+        baxter_dataflow.wait_for(
+            lambda: not (left_thread.is_alive() or
+                        right_thread.is_alive()),
+                        timeout=20.0,
+                        timeout_msg=(
+                            "Timeout while waiting for arm move threads to finish"
+                            ),
+                        rate=10,
+        )
+        left_thread.join()
+        right_thread.join()
+
         self.userid_chosen = True
+        rospy.loginfo("Main user chosen.\nUser %s, please proceed.", str(self.main_userid))
 
     def change_mode_service(self, mode_type):
         rospy.logdebug("Calling change_mode_service...")
@@ -400,76 +353,8 @@ class Baxter_Controller:
         rospy.logdebug("Calling reset_booleans")
         self.img_switch.change_mode('bool_reset',3)
 
-<<<<<<< variant A
         self.change_mode_service(MetaMode.IDLE_ENABLED)
->>>>>>> variant B
-        #
-        #+++++++ MOVE RJ TO DISABLE POSITION HERE ++++++
-        #
-        
-        left_queue = Queue.Queue()
-        right_queue = Queue.Queue()
-        
-        left_thread = threading.Thread(target=self.disable_move_thread, args=('left', 'mime', left_queue))
-        right_thread = threading.Thread(target=self.disable_move_thread, args=('right', 'mime', right_queue))
-        
-        left_thread.daemon = True
-        right_thread.daemon = True
-        
-        left_thread.start()
-        right_thread.start()
-        
-        baxter_dataflow.wait_for(
-            lambda: not (left_thread.is_alive() or right_thread.is_alive()),
-            timeout=20.0,
-            timeout_msg=("Timeout while waiting for arm move threads to finish"),
-            rate=10,
-        )
-        
-        left_thread.join()
-        right_thread.join()
 
-        #Why do we disable, reset, and enable when resetting user stuff?
-        self.rs.disable()
-        self.rs.reset()
-        self.rs.enable()
-
-        self.userid_chosen = False
-        self.user_positioned = False
-        self.action_chosen = False
-        self.action_id = 0
-        self.display_top = True
-        self.display_mime_prep = True
-        self.display_crane_prep = True
-        self.display_mime = True
-        self.display_crane = True
-        self.left_hand_timer = 0
-        self.right_hand_timer = 0
-        rospy.sleep(2.0)
-        
-        # Screen images
-        self.img_switch.change_mode('top',3)
-####### Ancestor
-        #Why do we disable, reset, and enable when resetting user stuff?
-        self.rs.disable()
-        self.rs.reset()
-        self.rs.enable()
-
-        self.userid_almost_chosen = False
-        self.userid_chosen = False
-        self.user_positioned = False
-        self.action_chosen = False
-        self.action_id = 0
-        self.display_top = True
-        self.display_mime_prep = True
-        self.display_crane_prep = True
-        self.display_mime = True
-        self.display_crane = True
-        rospy.sleep(2.0)
-        
-        # Screen images
-        self.img_switch.change_mode('top',3)
-======= end
 
     #=========================================================#
     #                        ACTIONS:                         #
@@ -652,6 +537,27 @@ class Baxter_Controller:
         rospy.logdebug("Calling enable...")
         #Enable motors
         rospy.loginfo("Enabling baxter_controller.py")
+        left_queue = Queue.Queue()
+        right_queue = Queue.Queue()
+        
+        left_thread = threading.Thread(target=self.disable_move_thread, args=('left', 'mime', left_queue))
+        right_thread = threading.Thread(target=self.disable_move_thread, args=('right', 'mime', right_queue))
+        
+        left_thread.daemon = True
+        right_thread.daemon = True
+        
+        left_thread.start()
+        right_thread.start()
+        
+        baxter_dataflow.wait_for(
+            lambda: not (left_thread.is_alive() or right_thread.is_alive()),
+            timeout=20.0,
+            timeout_msg=("Timeout while waiting for arm move threads to finish"),
+            rate=10,
+        )
+        
+        left_thread.join()
+        right_thread.join()
         self.rs.reset()
         self.rs.enable()
         rospy.sleep(2.0)
@@ -660,12 +566,12 @@ class Baxter_Controller:
 
     def bool_reset(self):
         rospy.loginfo("\n**Booleans reset**\n")
-        self.userid_almost_chosen = False
         self.userid_chosen = False
         self.user_positioned = False
         self.action_chosen = False
         self.action_id = 0
-        
+        self.left_hand_timer = 0
+        self.right_hand_timer = 0
 
 if __name__=='__main__':
     print("\nInitializing Baxter Controller node... ")
