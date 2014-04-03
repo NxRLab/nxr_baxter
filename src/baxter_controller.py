@@ -79,6 +79,7 @@ class Baxter_Controller:
 
         self.left_arm = baxter_interface.limb.Limb('left')
         self.right_arm = baxter_interface.limb.Limb('right')
+        self.gripper = baxter_interface.Gripper('right')
         self.mime_l_angles = {'left_s0': 0.35, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 0.00, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
         self.mime_r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 0.00, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
         self.crane_l_angles = {'left_s0': 0.35, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
@@ -129,6 +130,10 @@ class Baxter_Controller:
             elif limb == 'right':
                 self.right_arm.move_to_joint_positions(self.mime_r_angles)
 
+    def setup_gripper_thread(self, queue, timeout=15.0):
+        self.gripper.reboot()
+        self.gripper.calibrate()
+
     def choose_user(self, skeletons):
         """
         Selects primary user to avoid ambiguity
@@ -158,17 +163,23 @@ class Baxter_Controller:
 
                                 left_queue = Queue.Queue()
                                 right_queue = Queue.Queue()
+                                gripper_queue = Queue.Queue()
                                 left_thread = threading.Thread(target=self.setup_move_thread,
                                                                args=('left', 'crane', left_queue))
                                 right_thread = threading.Thread(target=self.setup_move_thread,
                                                                 args=('right', 'crane', right_queue))
+                                gripper_thread = threading.Thread(target=self.setup_gripper_thread,
+                                                                  args=(gripper_queue))
                                 left_thread.daemon = True
                                 right_thread.daemon = True
+                                gripper_thread.daemon = True
                                 left_thread.start()
                                 right_thread.start()
+                                gripper_thread.start()
                                 baxter_dataflow.wait_for(
                                     lambda: not (left_thread.is_alive() or
-                                                  right_thread.is_alive()),
+                                                  right_thread.is_alive() or
+                                                   gripper_thread.is_alive()),
                                     timeout=20.0,
                                     timeout_msg=("Timeout while waiting for arm move threads"
                                                  " to finish"),
@@ -176,6 +187,7 @@ class Baxter_Controller:
                                 )
                                 left_thread.join()
                                 right_thread.join()
+                                gripper_thread.join()
 
                                 self.userid_chosen = True
                                 print "\n\nMain user chosen.\nUser %s, please proceed.\n" % str(self.main_userid)
@@ -196,9 +208,9 @@ class Baxter_Controller:
                                 
                                 left_queue = Queue.Queue()
                                 right_queue = Queue.Queue()
-                                left_thread = threading.Thread(target=self.move_thread,
+                                left_thread = threading.Thread(target=self.setup_move_thread,
                                                                args=('left', 'mime', left_queue))
-                                right_thread = threading.Thread(target=self.move_thread,
+                                right_thread = threading.Thread(target=self.setup_move_thread,
                                                                 args=('right', 'mime', right_queue))
                                 left_thread.daemon = True
                                 right_thread.daemon = True
@@ -328,8 +340,8 @@ class Baxter_Controller:
         left_queue = Queue.Queue()
         right_queue = Queue.Queue()
         
-        left_thread = threading.Thread(target=self.move_thread, args=('left', 'mime', left_queue))
-        right_thread = threading.Thread(target=self.move_thread, args=('right', 'mime', right_queue))
+        left_thread = threading.Thread(target=self.disable_move_thread, args=('left', 'mime', left_queue))
+        right_thread = threading.Thread(target=self.disable_move_thread, args=('right', 'mime', right_queue))
         
         left_thread.daemon = True
         right_thread.daemon = True
