@@ -47,8 +47,6 @@ class Crane():
 		"""
 		self.arm = baxter_interface.Limb('right')
 		self.gripper = baxter_interface.Gripper('right')
-		self.gripper.reboot()
-		self.gripper.calibrate()
 		self.pub_rate = rospy.Publisher('/robot/joint_state_publish_rate', UInt16)
 		self.pub_rate.publish(500)
 		self.neutral_position = dict(zip(self.arm.joint_names(),
