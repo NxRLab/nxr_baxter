@@ -297,7 +297,8 @@ class Baxter_Controller:
             dy = math.fabs(tor_y - lh_y)
             dx = math.fabs(lh_x - tor_x)
             #These tolerances have been causing problems
-            if dy < 0.08 and dx > 0.4:
+            # if dy < 0.08 and dx > 0.4:
+            if dy < 0.1 and dx > 0.2
                 self.img_switch.change_mode('positioned',0)
                 rospy.sleep(0.5) # try a 1/2 second delay
                 return True
@@ -305,7 +306,8 @@ class Baxter_Controller:
         elif self.internal_mode == MetaMode.MIME:
             dy = math.fabs(tor_y - lh_y) + math.fabs(tor_y - rh_y)
             dx = math.fabs(lh_x - tor_x) + math.fabs(rh_x - tor_x)
-            if dy < 0.20 and dx > 0.8:
+            # if dy < 0.20 and dx > 0.8:
+            if dy < 0.22 and dx > 0.6
                 self.img_switch.change_mode('positioned',0)
                 rospy.sleep(0.5) # try 1/2 second delay
                 return True
