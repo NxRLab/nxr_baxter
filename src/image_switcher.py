@@ -98,11 +98,12 @@ class ImageSwitcher(object):
         even if neither of these change, the timer will be reset.
         """
         rospy.logdebug("Calling change_mode")
-        if newMode:
+        if newMode and newMode != self._mode:
             self._mode = newMode
-        if newPeriod:
             self._image_period = newPeriod
-        self._startTimer()
+            self._startTimer()
+        else:
+            rospy.logdebug("New image mode requested was already the image mode.")
 
     def _startTimer(self):
         """
