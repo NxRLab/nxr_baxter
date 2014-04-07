@@ -484,6 +484,7 @@ class Baxter_Controller:
                 self.enable()
             elif data.mode == MetaMode.RESTART_KINECT:
             #Disable everything while kinect is restarting?
+                self.img_switch.change_mode('kinect_reset',0)
                 self.disable()
             else:
                 rospy.logerr("Got a mode that doesn't exist...")

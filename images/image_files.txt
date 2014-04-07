@@ -11,3 +11,5 @@ crane /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Crane.png
 positioned /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-User-Positioned.png
 
 bool_reset /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Booleans-Reset.jpg
+
+kinect_reset /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Restarting.jpg
