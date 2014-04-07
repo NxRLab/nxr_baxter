@@ -4,15 +4,16 @@ More testing!
 
 - May need to include something to check if the skeleton tracker can't start up properly. It may also just reset on its own, not sure.
 
-- Do everything with MOVEIT
-
-- Pull changes into NxR-Baxter
+- Do everything with MOVEIT.
+-- Starting this now.
+-- Should be able to test with crane setup now.
 
 - Maybe replace crane game with memory game for now
 
 -More modular? Crane prep and crane-go modes for example?
 
--Include image for kinect restart mode
+- Weird slow-down mode
+
 
 
 Longer-term

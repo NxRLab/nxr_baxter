@@ -26,6 +26,12 @@ import Queue
 import math
 import numpy as np
 
+##################
+# MOVEIT Imports #
+##################
+import moveit_commander
+import moveit_msgs.msg
+
 ###############
 # NU IMPORTS: #
 ###############
@@ -125,13 +131,32 @@ class Baxter_Controller:
         self.internal_mode = MetaMode.IDLE_ENABLED
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
+        # From MOVEIT tutorial:
+        # First initialize moveit_commander and rospy
+        moveit_commander.roscpp_initialize(sys.argv)
+        rospy.init_node('move_group_python_interface', anonymous=True)
+
+        # Instantiate a RobotCommander object, interface to robot as a whole.
+        self.robot = moveit_commander.RobotCommander()
+        # Instantiate a PlanningSceneInterface object, interface to world
+        # surrounding robot
+        self.scene = moveit_commander.PlanningSceneInterface()
+        # Instantiate a MoveGroupCommander object, interface to left arm and
+        # right arm respectively
+        self.moveit_left_group = moveit_commander.MoveGroupCommander("left_arm")
+        self.moveit_right_group = moveit_commander.MoveGroupCommander("right_arm")
+
     # what does timeout do?
     def setup_move_thread(self, limb, mode, queue, timeout=15.0):
         if mode == 'crane':
             if limb == 'left':
-                self.left_arm.move_to_joint_positions(self.crane_l_angles)
+                self.moveit_left_group.clear_pose_targets()
+                self.moveit_left_group.set_joint_value_target(self.crane_l_angles)
+                # self.left_arm.move_to_joint_positions(self.crane_l_angles)
             elif limb == 'right':
-                self.right_arm.move_to_joint_positions(self.crane_r_angles)
+                self.moveit_right_group.clear_pose_targets()
+                self.moveit_right_group.set_joint_value_target(self.crane_r_angles)
+                # self.right_arm.move_to_joint_positions(self.crane_r_angles)
         elif mode == 'mime':
             if limb == 'left':
                 self.left_arm.move_to_joint_positions(self.mime_l_angles)
