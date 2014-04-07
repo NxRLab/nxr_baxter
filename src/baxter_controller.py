@@ -152,16 +152,25 @@ class Baxter_Controller:
             if limb == 'left':
                 self.moveit_left_group.clear_pose_targets()
                 self.moveit_left_group.set_joint_value_target(self.crane_l_angles)
+                # self.moveit_left_group.plan() # Do we need this?
+                self.moveit_left_group.go()
                 # self.left_arm.move_to_joint_positions(self.crane_l_angles)
             elif limb == 'right':
                 self.moveit_right_group.clear_pose_targets()
                 self.moveit_right_group.set_joint_value_target(self.crane_r_angles)
+                self.moveit_right_group.go()
                 # self.right_arm.move_to_joint_positions(self.crane_r_angles)
         elif mode == 'mime':
             if limb == 'left':
-                self.left_arm.move_to_joint_positions(self.mime_l_angles)
+                self.moveit_left_group.clear_pose_targets()
+                self.moveit_left_group.set_joint_value_target(self.mime_l_angles)
+                self.moveit_left_group.go()
+                # self.left_arm.move_to_joint_positions(self.mime_l_angles)
             elif limb == 'right':
-                self.right_arm.move_to_joint_positions(self.mime_r_angles)
+                self.moveit_right_group.clear_pose_targets()
+                self.moveit_right_group.set_joint_value_target(self.mime_l_angles)
+                self.moveit_right_group.go()
+                # self.right_arm.move_to_joint_positions(self.mime_r_angles)
 
     # What does tiemout do?
     def setup_gripper_thread(self, timeout=15.0):

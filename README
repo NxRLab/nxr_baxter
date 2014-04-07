@@ -6,7 +6,9 @@ More testing!
 
 - Do everything with MOVEIT.
 -- Starting this now.
--- Should be able to test with crane setup now.
+-- Might be done for setups?
+-- How can we use the "both_arms" group?
+-- Need to pass in the URDF/SRDF as a private parameter?
 
 - Maybe replace crane game with memory game for now
 
