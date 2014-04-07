@@ -272,9 +272,7 @@ class Baxter_Controller:
         rospy.wait_for_service('change_meta_mode')
         try:
             change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
-            # change_srv = ChangeMetaModeRequest()
-            # chagne_srv.mode = mode_type
-            # change_success = change_mode(change_srv)
+
             change_resp = change_mode(mode_type)
             # if not change_success.error:
             if not change_resp.error:
@@ -313,54 +311,6 @@ class Baxter_Controller:
                 return True
         return False
 
-
-
-    # def choose_action(self, skeleton, choice):
-    #     """
-    #     Determines which action for Baxter to perform based on gestures
-    #     """
-    #     # Action not chosen yet
-    #     rospy.logdebug("Calling choose_action")
-    #     if self.action_id == 0:
-    #         # MIME
-    #         if choice == 'right':
-    #             self.action_id = 1
-    #             action = 'Mime'
-    #         elif choice == 'left':
-    #             self.action_id = 2
-    #             action = 'Crane'
-    #         # ACTION CHOSEN
-    #         print "Action chosen: %s\nProceed?\n" % action
-    #         self.initialize_actions(self.action_id)
-
-    # # def initialize_actions(self, action):
-    # def initialize_actions(self)
-    #     """
-    #     Creates action objects and initializes their state
-    #     """
-    #     rospy.logdebug("Calling initialize_actions")
-    #     # self.actions = {1: self.mime_go,
-    #     #                 2: self.crane_go}
-    #     # if action==1:
-    #     if self.internal_mode == MetaMode.MIME
-    #         rospy.loginfo("    Action chosen: Mime\n")
-    #         self.mime = Mime()
-    #         self.action = 'mime_go'
-    #         self.mime_count = 0
-    #         self.action_chosen = True
-
-    #         # Screen images
-    #         self.img_switch.change_mode('mime',3)
-
-    #     # elif action == 2:
-    #     elif self.internal_mode == MetaMode.CRANE
-    #         rospy.loginfo("    Action chosen: Crane\n")
-    #         self.crane = Crane()
-    #         self.crane_count = 0
-    #         self.action_chosen = True
-
-    #         # Screen images
-    #         self.img_switch.change_mode('crane',3)
 
     def reset_booleans(self):
         """
