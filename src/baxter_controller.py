@@ -146,50 +146,34 @@ class Baxter_Controller:
         self.moveit_both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
 
     # what does timeout do?
-    def setup_move_thread(self, limb, mode, queue, timeout=15.0):
+    def setup_move_thread(self, mode):
         if mode == 'crane':
             self.moveit_both_arms_group.set_joint_value_target(
                 dict(self.crane_r_angles, **self.crane_l_angles))
-            self.moveit_both_arms_group.go()
-            # if limb == 'left':
-            #     self.moveit_left_group.clear_pose_targets()
-            #     # self.moveit_left_group.set_joint_value_target(self.crane_l_angles)
-            #     # self.moveit_left_group.go()
-            # elif limb == 'right':
-            #     self.moveit_right_group.clear_pose_targets()
-            #     self.moveit_right_group.set_joint_value_target(self.crane_r_angles)
-            #     self.moveit_right_group.go()
-            #     # self.right_arm.move_to_joint_positions(self.crane_r_angles)
+            self.moveit_both_arms_group.go(wait=True)
         elif mode == 'mime':
             self.moveit_both_arms_group.set_joint_value_target(
                 dict(self.mime_r_angles, **self.mime_l_angles))
-            self.moveit_both_arms_group.go()
-            # if limb == 'left':
-            #     self.moveit_left_group.clear_pose_targets()
-            #     self.moveit_left_group.set_joint_value_target(self.mime_l_angles)
-            #     self.moveit_left_group.go()
-            #     # self.left_arm.move_to_joint_positions(self.mime_l_angles)
-            # elif limb == 'right':
-            #     self.moveit_right_group.clear_pose_targets()
-            #     self.moveit_right_group.set_joint_value_target(self.mime_l_angles)
-            #     self.moveit_right_group.go()
-            #     # self.right_arm.move_to_joint_positions(self.mime_r_angles)
+            self.moveit_both_arms_group.go(wait=False)
 
     # What does tiemout do?
-    def setup_gripper_thread(self, timeout=15.0):
+    def setup_gripper_thread(self):
         self.gripper.reboot()
         self.gripper.calibrate()
 
-    def disable_move_thread(self, limb, queue, timeout=15.0):
+    def disable_move_thread(self):
         """
         Handles moving to disable position for each arm's thread
         """
-        l_angles = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
-        r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
-        if limb == 'left':
-            self.left_arm.move_to_joint_positions(l_angles)
-        elif limb == 'right':
-            self.right_arm.move_to_joint_positions(r_angles)
+        # l_angles = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
+        # r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
+        angles = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
+        self.moveit_both_arms_group.set_joint_value_target(angles)
+        self.moveit_both_arms_group.go(wait=False)
+        # if limb == 'left':
+        #     self.left_arm.move_to_joint_positions(l_angles)
+        # elif limb == 'right':
+        #     self.right_arm.move_to_joint_positions(r_angles)
 
     def choose_user(self, skeletons):
         """
@@ -245,62 +229,15 @@ class Baxter_Controller:
 
     def choose_crane(self):
         rospy.logdebug("Calling choose_crane...")
-
         self.img_switch.change_mode('crane_prep',3)
-
-        left_queue = Queue.Queue()
-        right_queue = Queue.Queue()
-        gripper_queue = Queue.Queue()
-        left_thread = threading.Thread(target=self.setup_move_thread,
-                                       args=('left', 'crane', left_queue))
-        right_thread = threading.Thread(target=self.setup_move_thread,
-                                        args=('right', 'crane', right_queue))
-        gripper_thread = threading.Thread(target=self.setup_gripper_thread)
-        left_thread.daemon = True
-        right_thread.daemon = True
-        gripper_thread.daemon = True
-        left_thread.start()
-        right_thread.start()
-        gripper_thread.start()
-        baxter_dataflow.wait_for(
-            lambda: not (left_thread.is_alive() or right_thread.is_alive() or
-                         gripper_thread.is_alive()), timeout=20.0,
-                         timeout_msg=(
-                            "Timeout while waiting for arm move threads to finish"),
-                            rate=10,
-            )
-        left_thread.join()
-        right_thread.join()
-        gripper_thread.join()
-
+        self.setup_move_thread('crane')
         self.userid_chosen = True
         rospy.loginfo("Main user chosen.\nUser %s, please proceed.", str(self.main_userid))
 
     def choose_mime(self):
-        rospy.logdebug("Calling choose_crane...")
+        rospy.logdebug("Calling choose_mime...")
         self.img_switch.change_mode('mime_prep', 3)
-        left_queue = Queue.Queue()
-        right_queue = Queue.Queue()
-        left_thread = threading.Thread(target=self.setup_move_thread,
-                                       args=('left', 'mime', left_queue))
-        right_thread = threading.Thread(target=self.setup_move_thread,
-                                        args=('right', 'mime', right_queue))
-        left_thread.daemon = True
-        right_thread.daemon = True
-        left_thread.start()
-        right_thread.start()
-        baxter_dataflow.wait_for(
-            lambda: not (left_thread.is_alive() or
-                        right_thread.is_alive()),
-                        timeout=20.0,
-                        timeout_msg=(
-                            "Timeout while waiting for arm move threads to finish"
-                            ),
-                        rate=10,
-        )
-        left_thread.join()
-        right_thread.join()
-
+        self.setup_move_thread('mime')
         self.userid_chosen = True
         rospy.loginfo("Main user chosen.\nUser %s, please proceed.", str(self.main_userid))
 
@@ -540,29 +477,10 @@ class Baxter_Controller:
         rospy.logdebug("Calling enable...")
         #Enable motors
         rospy.loginfo("Enabling baxter_controller.py")
-        left_queue = Queue.Queue()
-        right_queue = Queue.Queue()
-        
-        left_thread = threading.Thread(target=self.disable_move_thread, args=('left', 'mime', left_queue))
-        right_thread = threading.Thread(target=self.disable_move_thread, args=('right', 'mime', right_queue))
-        
-        left_thread.daemon = True
-        right_thread.daemon = True
-        
-        left_thread.start()
-        right_thread.start()
-        
-        baxter_dataflow.wait_for(
-            lambda: not (left_thread.is_alive() or right_thread.is_alive()),
-            timeout=20.0,
-            timeout_msg=("Timeout while waiting for arm move threads to finish"),
-            rate=10,
-        )
-        
-        left_thread.join()
-        right_thread.join()
+        self.disable_move_thread()
         self.rs.reset()
         self.rs.enable()
+        self.setup_gripper_thread()
         rospy.sleep(2.0)
         self.bool_reset()
         self.img_switch.change_mode('top',3)
