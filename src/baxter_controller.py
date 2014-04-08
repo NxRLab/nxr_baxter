@@ -93,8 +93,6 @@ class Baxter_Controller:
         self.crane_l_angles = {'left_s0': 0.35, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
         self.crane_r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 0.00, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
 
-        self.enable()
-
         # Booleans used throughout controller
         self.userid_almost_chosen = False
         self.userid_chosen = False
@@ -143,6 +141,7 @@ class Baxter_Controller:
         self.moveit_right_group = moveit_commander.MoveGroupCommander("right_arm")
         # I Think for this it goes right arm then left arm
         self.moveit_both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
+        self.enable()
 
     # what does timeout do?
     def setup_move_thread(self, mode):
