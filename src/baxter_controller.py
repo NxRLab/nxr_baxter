@@ -20,6 +20,7 @@ import baxter_dataflow
 # OTHER IMPORTS: #
 ####################
 import os
+import sys
 import traceback
 import threading
 import Queue
@@ -131,10 +132,7 @@ class Baxter_Controller:
         self.internal_mode = MetaMode.IDLE_ENABLED
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
-        # From MOVEIT tutorial:
-        # First initialize moveit_commander and rospy
-        moveit_commander.roscpp_initialize(sys.argv)
-        rospy.init_node('move_group_python_interface', anonymous=True)
+
 
         # Instantiate a RobotCommander object, interface to robot as a whole.
         self.robot = moveit_commander.RobotCommander()
@@ -577,8 +575,13 @@ class Baxter_Controller:
 if __name__=='__main__':
     print("\nInitializing Baxter Controller node... ")
     rospy.init_node('Baxter_Controller', log_level=rospy.INFO)
+    # From MOVEIT tutorial:
+    # First initialize moveit_commander and rospy
+    moveit_commander.roscpp_initialize(sys.argv)
+    # rospy.init_node('move_group_python_interface', anonymous=True)
     rospy.logdebug("node starting")
     Baxter_Controller()
+
 
     done = False # when does this get flipped?
     while not done and not rospy.is_shutdown():
