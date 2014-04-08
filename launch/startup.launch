@@ -2,6 +2,14 @@
 
 	<!-- <include file="$(find skeletontracker_nu)/launch/nu_skeletontracker.launch"/> -->
 
+	<include file="$(find baxter_moveit_config)/launch/planning_context.launch">
+	  <arg name="load_robot_description" value="true"/>
+	</include>
+
+	<include file="$(find baxter_moveit_config)/launch/move_group.launch">
+	  <arg name="allow_trajectory_execution" value="true"/>
+	</include>
+
 	<rosparam param="img_files_filename">'/home/nxr-baxter/groovyws/src/nxr_baxter/images/image_files.txt'</rosparam>
 	
 	<node pkg="nxr_baxter" type="meta_mode_controller.py" name="meta_mode" output="screen" respawn="true" />
