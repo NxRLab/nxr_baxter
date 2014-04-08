@@ -39,7 +39,7 @@ import moveit_msgs.msg
 ###############
 from skeletonmsgs_nu.msg import Skeletons
 from skeletonmsgs_nu.msg import Skeleton
-from skeletonmsgs_nu.msg import SkeletonJoint
+from skeletonmsgs_nu.msg import SkeletonJoint        
 from mimic import Mime
 from crane import Crane
 from vector_operations import (make_vector_from_POINTS,
@@ -83,15 +83,13 @@ class Baxter_Controller:
         """
         rospy.logdebug("Calling Baxter_Controller.__init__()")
         # print "Getting robot state..."
-        if rospy.is_shutdown():
-            rospy.logwarn("ROS is shutdown? What?")
         self.rs = baxter_interface.RobotEnable() #RS is a wrapper for the robot state
         # print "Enabling robot... "
         rospy.loginfo("Enabling motors...")
         self.rs.enable()
 
-        self.left_arm = baxter_interface.limb.Limb('left')
-        self.right_arm = baxter_interface.limb.Limb('right')
+        # self.left_arm = baxter_interface.limb.Limb('left')
+        # self.right_arm = baxter_interface.limb.Limb('right')
         self.gripper = baxter_interface.Gripper('right')
         self.mime_l_angles = {'left_s0': 0.35, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 0.00, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
         self.mime_r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 0.00, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
@@ -135,43 +133,47 @@ class Baxter_Controller:
         self.internal_mode = MetaMode.IDLE_ENABLED
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
-
-
         # Instantiate a RobotCommander object, interface to robot as a whole.
         self.robot = moveit_commander.RobotCommander()
         # Instantiate a PlanningSceneInterface object, interface to world
         # surrounding robot
         self.scene = moveit_commander.PlanningSceneInterface()
         # Instantiate a MoveGroupCommander object, interface to left arm and
-        # right arm respectively
+        # right arm respectively, and one to both arms
         self.moveit_left_group = moveit_commander.MoveGroupCommander("left_arm")
         self.moveit_right_group = moveit_commander.MoveGroupCommander("right_arm")
+        # I Think for this it goes right arm then left arm
+        self.moveit_both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
 
     # what does timeout do?
     def setup_move_thread(self, limb, mode, queue, timeout=15.0):
         if mode == 'crane':
-            if limb == 'left':
-                self.moveit_left_group.clear_pose_targets()
-                self.moveit_left_group.set_joint_value_target(self.crane_l_angles)
-                # self.moveit_left_group.plan() # Do we need this?
-                self.moveit_left_group.go()
-                # self.left_arm.move_to_joint_positions(self.crane_l_angles)
-            elif limb == 'right':
-                self.moveit_right_group.clear_pose_targets()
-                self.moveit_right_group.set_joint_value_target(self.crane_r_angles)
-                self.moveit_right_group.go()
-                # self.right_arm.move_to_joint_positions(self.crane_r_angles)
+            self.moveit_both_arms_group.set_joint_value_target(
+                dict(self.crane_r_angles, **self.crane_l_angles))
+            self.moveit_both_arms_group.go()
+            # if limb == 'left':
+            #     self.moveit_left_group.clear_pose_targets()
+            #     # self.moveit_left_group.set_joint_value_target(self.crane_l_angles)
+            #     # self.moveit_left_group.go()
+            # elif limb == 'right':
+            #     self.moveit_right_group.clear_pose_targets()
+            #     self.moveit_right_group.set_joint_value_target(self.crane_r_angles)
+            #     self.moveit_right_group.go()
+            #     # self.right_arm.move_to_joint_positions(self.crane_r_angles)
         elif mode == 'mime':
-            if limb == 'left':
-                self.moveit_left_group.clear_pose_targets()
-                self.moveit_left_group.set_joint_value_target(self.mime_l_angles)
-                self.moveit_left_group.go()
-                # self.left_arm.move_to_joint_positions(self.mime_l_angles)
-            elif limb == 'right':
-                self.moveit_right_group.clear_pose_targets()
-                self.moveit_right_group.set_joint_value_target(self.mime_l_angles)
-                self.moveit_right_group.go()
-                # self.right_arm.move_to_joint_positions(self.mime_r_angles)
+            self.moveit_both_arms_group.set_joint_value_target(
+                dict(self.mime_r_angles, **self.mime_l_angles))
+            self.moveit_both_arms_group.go()
+            # if limb == 'left':
+            #     self.moveit_left_group.clear_pose_targets()
+            #     self.moveit_left_group.set_joint_value_target(self.mime_l_angles)
+            #     self.moveit_left_group.go()
+            #     # self.left_arm.move_to_joint_positions(self.mime_l_angles)
+            # elif limb == 'right':
+            #     self.moveit_right_group.clear_pose_targets()
+            #     self.moveit_right_group.set_joint_value_target(self.mime_l_angles)
+            #     self.moveit_right_group.go()
+            #     # self.right_arm.move_to_joint_positions(self.mime_r_angles)
 
     # What does tiemout do?
     def setup_gripper_thread(self, timeout=15.0):
@@ -579,7 +581,7 @@ if __name__=='__main__':
     rospy.loginfo("Starting joint trajectory action server")
     cmd = 'rosrun baxter_interface joint_trajectory_action_server.py'
     subprocess.Popen(cmd,shell=True)
-    print("\nInitializing Baxter Controller node... ")
+    rospy.loginfo("\nInitializing Baxter Controller node... ")
     rospy.init_node('Baxter_Controller', log_level=rospy.INFO)
     # From MOVEIT tutorial:
     # First initialize moveit_commander and rospy
