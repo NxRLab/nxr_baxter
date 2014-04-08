@@ -502,7 +502,6 @@ class Baxter_Controller:
                 self.reset_booleans()
 
         elif not found:
-            rospy.loginfo("not found")
             self.reset_booleans()
 
     def meta_mode_callback(self, data):
