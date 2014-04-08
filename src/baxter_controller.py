@@ -26,6 +26,7 @@ import threading
 import Queue
 import math
 import numpy as np
+import subprocess
 
 ##################
 # MOVEIT Imports #
@@ -82,6 +83,8 @@ class Baxter_Controller:
         """
         rospy.logdebug("Calling Baxter_Controller.__init__()")
         # print "Getting robot state..."
+        if rospy.is_shutdown():
+            rospy.logwarn("ROS is shutdown? What?")
         self.rs = baxter_interface.RobotEnable() #RS is a wrapper for the robot state
         # print "Enabling robot... "
         rospy.loginfo("Enabling motors...")
@@ -573,11 +576,14 @@ class Baxter_Controller:
         self.right_hand_timer = 0
 
 if __name__=='__main__':
+    rospy.loginfo("Starting joint trajectory action server")
+    cmd = 'rosrun baxter_interface joint_trajectory_action_server.py'
+    subprocess.Popen(cmd,shell=True)
     print("\nInitializing Baxter Controller node... ")
     rospy.init_node('Baxter_Controller', log_level=rospy.INFO)
     # From MOVEIT tutorial:
     # First initialize moveit_commander and rospy
-    moveit_commander.roscpp_initialize(sys.argv)
+    # moveit_commander.roscpp_initialize(sys.argv)
     # rospy.init_node('move_group_python_interface', anonymous=True)
     rospy.logdebug("node starting")
     Baxter_Controller()
@@ -588,3 +594,4 @@ if __name__=='__main__':
         rospy.spin()
 
     print("\n\nDone.")
+    
