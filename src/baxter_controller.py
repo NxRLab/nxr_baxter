@@ -84,9 +84,6 @@ class Baxter_Controller:
         rospy.logdebug("Calling Baxter_Controller.__init__()")
         # print "Getting robot state..."
         self.rs = baxter_interface.RobotEnable() #RS is a wrapper for the robot state
-        # print "Enabling robot... "
-        rospy.loginfo("Enabling motors...")
-        self.rs.enable()
 
         # self.left_arm = baxter_interface.limb.Limb('left')
         # self.right_arm = baxter_interface.limb.Limb('right')
@@ -95,6 +92,8 @@ class Baxter_Controller:
         self.mime_r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 0.00, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
         self.crane_l_angles = {'left_s0': 0.35, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
         self.crane_r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 0.00, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
+
+        self.enable()
 
         # Booleans used throughout controller
         self.userid_almost_chosen = False
