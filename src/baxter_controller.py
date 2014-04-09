@@ -39,7 +39,7 @@ import moveit_msgs.msg
 ###############
 from skeletonmsgs_nu.msg import Skeletons
 from skeletonmsgs_nu.msg import Skeleton
-from skeletonmsgs_nu.msg import SkeletonJoint        
+from skeletonmsgs_nu.msg import SkeletonJoint
 from mimic import Mime
 from crane import Crane
 from vector_operations import (make_vector_from_POINTS,
@@ -84,6 +84,9 @@ class Baxter_Controller:
         rospy.logdebug("Calling Baxter_Controller.__init__()")
         # print "Getting robot state..."
         self.rs = baxter_interface.RobotEnable() #RS is a wrapper for the robot state
+        # print "Enabling robot... "
+        rospy.loginfo("Enabling motors...")
+        self.rs.enable()
 
         # self.left_arm = baxter_interface.limb.Limb('left')
         # self.right_arm = baxter_interface.limb.Limb('right')
@@ -165,6 +168,8 @@ class Baxter_Controller:
         """
         # l_angles = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
         # r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
+        self.rs.reset()
+        self.rs.enable()
         angles = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
         self.moveit_both_arms_group.set_joint_value_target(angles)
         self.moveit_both_arms_group.go(wait=False)
