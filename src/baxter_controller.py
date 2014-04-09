@@ -504,6 +504,8 @@ class Baxter_Controller:
         rospy.logdebug("Calling enable...")
         #Enable motors
         rospy.loginfo("Enabling baxter_controller.py")
+        self.rs.reset()
+        self.rs.enable()
         left_queue = Queue.Queue()
         right_queue = Queue.Queue()
         
