@@ -5,10 +5,10 @@ More testing!
 - May need to include something to check if the skeleton tracker can't start up properly. It may also just reset on its own, not sure.
 
 - Do everything with MOVEIT.
--- Starting this now.
--- Might be done for setups?
--- How can we use the "both_arms" group?
--- Need to pass in the URDF/SRDF as a private parameter?
+-- How can we use the "both_arms" group? - Done
+-- Need to speed up trajectories. Can rescale trajectories like guy in  moveit users group
+--- Can check if trajectories are based on joint limits in moveit_config
+--- Can look into C++ API for setting time for a trajectory.
 
 - Maybe replace crane game with memory game for now
 
