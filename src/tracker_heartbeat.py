@@ -35,7 +35,7 @@ def terminate_process_and_children(p):
     else:
         for pid_str in ps_output.split("\n")[:-1]:
             os.kill(int(pid_str), signal.SIGINT)
-        p.terminate()
+    p.terminate()
 
 class Heartbeat_Monitor:
     def __init__(self):
@@ -173,6 +173,7 @@ class Heartbeat_Monitor:
             self.openni_proc = subprocess.Popen(cmd,shell=True)
         else:
             rospy.logwarn("Trying to start openni thread while it is already running.")
+            rospy.loginfo("self.openni_proc.poll() returns %d " % self.openni_proc.poll())
 
         if self.skel_tracker_proc == None or self.skel_tracker_proc.poll() != None:
             rospy.loginfo("Launching skeleton tracker...")
@@ -180,6 +181,7 @@ class Heartbeat_Monitor:
             self.skel_tracker_proc = subprocess.Popen(cmd,shell=True)
         else:
             rospy.logwarn("Trying to start skeleton tracker thread while it is already running.")
+            rospy.loginfo("self.openni_proc.poll() returns %d " % self.openni_proc.poll())
 
 
 class Heartbeat_List:
