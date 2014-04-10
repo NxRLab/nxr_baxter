@@ -31,6 +31,12 @@ from vector_operations import (make_vector_from_POINTS,
 import operator
 import math
 
+###################
+# MOVEIT IMPORTS: #
+###################
+import moveit_commander
+import moveit_msgs.msg
+
 class Crane():
 	"""
 	Crane control class
@@ -47,18 +53,21 @@ class Crane():
 		"""
 		self.arm = baxter_interface.Limb('right')
 		self.gripper = baxter_interface.Gripper('right')
-		self.pub_rate = rospy.Publisher('/robot/joint_state_publish_rate', UInt16)
-		self.pub_rate.publish(500)
+		# self.pub_rate = rospy.Publisher('/robot/joint_state_publish_rate', UInt16)
+		# self.pub_rate.publish(500)
 		self.neutral_position = dict(zip(self.arm.joint_names(),
 			                             [0.00, 0.00, 1.57, 0.00, 0.00, 0.00, 0.00]))
 		self.gripper_state = True
 		self.gripper_state_timer = 0
+        self.right_arm = moveit_commander.MoveGroupCommander("right_arm")
 
 	def set_neutral(self):
 		"""
 		Moves Baxter's arm to neutral position
 		"""
-		self.arm.move_to_joint_positions(self.neutral_position)
+		# self.arm.move_to_joint_positions(self.neutral_position)
+        self.right_arm.set_joint_value_target(self.neutral_position)
+        self.right_arm.go(wait=False)
 
 	def is_neutral(self):
 		"""
@@ -83,9 +92,11 @@ class Crane():
 		else: self.gripper.open()
 
 
-		r_positions = dict(zip(self.arm.joint_names(),
+        r_positions = dict(zip(self.arm.joint_names(),
 				               [angles[0], angles[1], angles[2], angles[3], angles[4], angles[5], angles[6]]))
-		self.arm.set_joint_positions(r_positions)
+		# self.arm.set_joint_positions(r_positions)
+        self.right_arm.set_joint_value_target(r_positions)
+        self.right_arm.go(wait=False)
 
 	def human_to_baxter(self, l_sh, l_el, l_ha, r_sh, r_el, r_ha, a):
 		"""

@@ -24,6 +24,12 @@ from vector_operations import (make_vector_from_POINTS,
 	                           vector_projection_onto_plane,
 	                           shortest_vector_from_point_to_vector)
 
+###################
+# MOVEIT IMPORTS: #
+###################
+import moveit_commander
+import moveit_msgs.msg
+
 ##################
 # OTHER IMPORTS: #
 ##################
@@ -54,19 +60,23 @@ class Mime():
 		self.left_arm = baxter_interface.Limb('left')
 		self.right_arm = baxter_interface.Limb('right')
 
-		self.pub_rate = rospy.Publisher('/robot/joint_state_publish_rate', UInt16)
-		self.pub_rate.publish(500)
+		# self.pub_rate = rospy.Publisher('/robot/joint_state_publish_rate', UInt16)
+		# self.pub_rate.publish(500)
 		self.neutral_position_l = dict(zip(self.left_arm.joint_names(),
 			                               [0.60, 0.40, -2.90, 1.70, 1.57, 0.0, 0.0]))
 		self.neutral_position_r = dict(zip(self.right_arm.joint_names(),
 			                               [-0.60, 0.40, 2.90, 1.70, -1.57, 0.0, 0.0]))
+        self.both_arms = moveit_commander.MoveGroupCommander("both_arms")
 
 	def set_neutral(self):
 		"""
 		Moves Baxter's arms to neutral positions
 		"""
-		self.left_arm.move_to_joint_positions(self.neutral_position_l)
-		self.right_arm.move_to_joint_positions(self.neutral_position_r)
+		# self.left_arm.move_to_joint_positions(self.neutral_position_l)
+		# self.right_arm.move_to_joint_positions(self.neutral_position_r)
+        self.both_arms.set_joint_value_target(dict(self.neutral_position_l,
+                                                   **self.neutral_position_r))
+        self.both_arms.go(wait=False)
 
 	def is_neutral(self):
 		"""
@@ -82,18 +92,18 @@ class Mime():
 				return False
 		return True
 
-	def move_thread(self, limb, position, queue, timeout=15.0):
-		"""
-		Adds the points sent by threads to the trajectory path
-		"""
-		if limb == 'left':
-			l_positions = dict(zip(self.left_arm.joint_names(),
-				                   [position[0], position[1], position[2], position[3], position[4], position[5], position[6]]))
-			self.left_arm.set_joint_positions(l_positions)
-		elif limb == 'right':
-			r_positions = dict(zip(self.right_arm.joint_names(),
-				                   [position[0], position[1], position[2], position[3], position[4], position[5], position[6]]))
-			self.right_arm.set_joint_positions(r_positions)
+	# def move_thread(self, limb, position, queue, timeout=15.0):
+	# 	"""
+	# 	Adds the points sent by threads to the trajectory path
+	# 	"""
+	# 	if limb == 'left':
+	# 		l_positions = dict(zip(self.left_arm.joint_names(),
+	# 			                   [position[0], position[1], position[2], position[3], position[4], position[5], position[6]]))
+	# 		self.left_arm.set_joint_positions(l_positions)
+	# 	elif limb == 'right':
+	# 		r_positions = dict(zip(self.right_arm.joint_names(),
+	# 			                   [position[0], position[1], position[2], position[3], position[4], position[5], position[6]]))
+	# 		self.right_arm.set_joint_positions(r_positions)
 
 	def move(self, left_shoulder, left_elbow, left_hand,
 		     right_shoulder, right_elbow, right_hand):
@@ -104,28 +114,38 @@ class Mime():
 		angles = {'left': [], 'right': []}
 		self.human_to_baxter(left_shoulder, left_elbow, left_hand,
 		                     right_shoulder, right_elbow, right_hand, angles)
-		
+        l_positions = dict(zip(self.left_arm.joint_names(),
+				                   [position[0], position[1], position[2],
+                                    position[3], position[4], position[5],
+                                    position[6]]))
+        r_positions = dict(zip(self.right_arm.joint_names(),
+				                   [position[0], position[1], position[2],
+                                    position[3], position[4], position[5],
+                                    position[6]]))
+        self.both_arms.set_joint_value_target(dict(l_positions, **r_positions))
+        self.both_arms.go()
 		# Creates threads for each of Baxter's arms
-		left_queue = Queue.Queue()
-		right_queue = Queue.Queue()
-		left_thread = threading.Thread(target=self.move_thread,
-			                           args=('left', angles['left'], left_queue))
-		right_thread = threading.Thread(target=self.move_thread,
-			                            args=('right', angles['right'], right_queue))
-		left_thread.daemon = True
-		right_thread.daemon = True
-		left_thread.start()
-		right_thread.start()
-		baxter_dataflow.wait_for(
-			lambda: not (left_thread.is_alive() or
-				          right_thread.is_alive()),
-			timeout=20.0,
-			timeout_msg=("Timeout while waiting for arm move threads"
-				         " to finish"),
-			rate=10,
-		)
-		left_thread.join()
-		right_thread.join()
+		# left_queue = Queue.Queue()
+		# right_queue = Queue.Queue()
+		# left_thread = threading.Thread(target=self.move_thread,
+		# 	                           args=('left', angles['left'], left_queue))
+		# right_thread = threading.Thread(target=self.move_thread,
+		# 	                            args=('right', angles['right'], right_queue))
+		# left_thread.daemon = True
+		# right_thread.daemon = True
+		# left_thread.start()
+		# right_thread.start()
+		# baxter_dataflow.wait_for(
+		# 	lambda: not (left_thread.is_alive() or
+		# 		          right_thread.is_alive()),
+		# 	timeout=20.0,
+		# 	timeout_msg=("Timeout while waiting for arm move threads"
+		# 		         " to finish"),
+		# 	rate=10,
+		# )
+		# left_thread.join()
+		# right_thread.join()
+
 
 	def human_to_baxter(self, l_sh, l_el, l_ha, r_sh, r_el, r_ha, a):
 		"""

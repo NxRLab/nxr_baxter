@@ -2,19 +2,16 @@ Things that need to be done for Baxter
 
 More testing!
 
-- May need to include something to check if the skeleton tracker can't start up properly. It may also just reset on its own, not sure.
-
-- Do everything with MOVEIT.
+- Everything is now in Moveit
 -- How can we use the "both_arms" group? - Done
 -- Need to speed up trajectories. Can rescale trajectories like guy in  moveit users group
---- Can check if trajectories are based on joint limits in moveit_config
---- Can look into C++ API for setting time for a trajectory.
+--- Can check if trajectories are based on joint limits in moveit_config, they are. Which RDF do we use? SRDF/URDF or joint_limits.yaml?
 
 - Maybe replace crane game with memory game for now
 
 -More modular? Crane prep and crane-go modes for example?
 
-- Weird slow-down mode
+- Weird slow-down mode, other issues with skeleton tracker. Need a way to start it up right if it doesn't start up.
 
 
 
