@@ -130,7 +130,7 @@ class Baxter_Controller:
         self.first_filt_flag = True
 
         # Set up subscriber to meta-mode controller
-        self.internal_mode = MetaMode.IDLE_ENABLED
+        self.internal_mode = None
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
         # Instantiate a RobotCommander object, interface to robot as a whole.
@@ -295,7 +295,6 @@ class Baxter_Controller:
         """
         rospy.logdebug("Calling reset_booleans")
         self.img_switch.change_mode('bool_reset',3)
-
         self.change_mode_service(MetaMode.IDLE_ENABLED)
 
 
@@ -471,7 +470,6 @@ class Baxter_Controller:
         rospy.logdebug("Calling disable...")
         #Disable motors
         rospy.loginfo("Disabling baxter_controller.py")
-        rospy.loginfo("TODO: Make an image for being disabled")
         self.rs.disable()
         #Reset booleans, won't call the function because that does other stuff
         self.bool_reset()
