@@ -30,12 +30,14 @@ def terminate_process_and_children(p):
     ps_output = ps_command.stdout.read()
     retcode = ps_command.wait()
     # assert retcode == 0, "ps command returned %d" % retcode
+    if retcode == None:
+        rospy.loginfo("Retcode is 'none' which means that the proc hasn't terminated yet.")
     if retcode == 0:
-        rospy.loginfo("Process doesn't exist, ps command returned %d", retcode)
+        rospy.loginfo("Process doesn't exist, ps command returned %d for pid %d", retcode, p.pid)
     else:
         for pid_str in ps_output.split("\n")[:-1]:
             os.kill(int(pid_str), signal.SIGINT)
-    p.terminate()
+    p.kill()
 
 class Heartbeat_Monitor:
     def __init__(self):
@@ -171,6 +173,7 @@ class Heartbeat_Monitor:
             rospy.loginfo("Launching openni processes...")
             cmd = 'roslaunch openni_launch openni.launch'
             self.openni_proc = subprocess.Popen(cmd,shell=True)
+            rospy.sleep(2.0)
         else:
             rospy.logwarn("Trying to start openni thread while it is already running.")
             rospy.loginfo("self.openni_proc.poll() returns %d " % self.openni_proc.poll())
@@ -179,6 +182,7 @@ class Heartbeat_Monitor:
             rospy.loginfo("Launching skeleton tracker...")
             cmd = 'rosrun skeletontracker_nu skeletontracker'
             self.skel_tracker_proc = subprocess.Popen(cmd,shell=True)
+            rospy.sleep(2.0)
         else:
             rospy.logwarn("Trying to start skeleton tracker thread while it is already running.")
             rospy.loginfo("self.openni_proc.poll() returns %d " % self.openni_proc.poll())
@@ -194,7 +198,7 @@ class Heartbeat_List:
 
     def __init__(self,length=1):
         rospy.logdebug("Calling Heartbeat_List.__init__()")
-        self._list = [0]*length
+        self._list = [0.0]*length
         self.sum = 0.0
         self._oldest_index = 0
         self._max_index = length - 1
@@ -225,7 +229,7 @@ class Heartbeat_List:
 
 if __name__=='__main__':
     rospy.loginfo("Starting Heartbeat Tracker Node...")
-    rospy.init_node('Heartbeat_Tracker', log_level=rospy.INFO)
+    rospy.init_node('Heartbeat_Tracker', log_level=rospy.DEBUG)
     rospy.logdebug("node starting")
     hm = Heartbeat_Monitor()
 
