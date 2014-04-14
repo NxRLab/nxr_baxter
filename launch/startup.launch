@@ -3,6 +3,8 @@
 	
 	<!-- <node name="" pkg="" type="" args="" respawn="true" /> -->
 
+	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="1.28 0.10 0.19 0 0 0 base camera_link 100" />
+
 	<include file="$(find baxter_moveit_config)/launch/planning_context.launch">
 	  <arg name="load_robot_description" value="true"/>
 	</include>
