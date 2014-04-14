@@ -2,17 +2,20 @@ Things that need to be done for Baxter
 
 More testing!
 
-- Everything is now in Moveit
--- How can we use the "both_arms" group? - Done
--- Need to speed up trajectories. Can rescale trajectories like guy in  moveit users group. Done for now.
---- Can check if trajectories are based on joint limits in moveit_config, they are. Which RDF do we use? SRDF/URDF or joint_limits.yaml?
+- Everything is now in Moveit - How can we use the "both_arms" group? - Done 
+
+--Need to speed up trajectories. Can rescale trajectories like guy in
+  moveit-users group. Done for now.
+
+--Can check if trajectories are based on joint-limits in moveit_config, they
+  are. Which RDF do we use? SRDF/URDF or joint_limits.yaml?
 
 - Maybe replace crane game with memory game for now
 
--More modular? Crane prep and crane-go modes for example?
+- More modular? Crane prep and crane-go modes for example?
 
-- Weird slow-down mode, other issues with skeleton tracker. Need a way to start it up right if it doesn't start up.
-
+- Weird slow-down mode, other issues with skeleton tracker. Need a way to start
+  it up right if it doesn't start up.
 
 
 Longer-term
