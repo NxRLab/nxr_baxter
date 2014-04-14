@@ -542,7 +542,7 @@ class Baxter_Controller:
 
 if __name__=='__main__':
     print("\nInitializing Baxter Controller node... ")
-    rospy.init_node('Baxter_Controller', log_level=rospy.DEBUG)
+    rospy.init_node('Baxter_Controller', log_level=rospy.INFO)
     rospy.logdebug("node starting")
     Baxter_Controller()
 

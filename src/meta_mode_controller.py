@@ -55,7 +55,7 @@ class MetaMode_Controller:
 
 
 if __name__=='__main__':
-    rospy.init_node('meta_mode_controller', log_level = rospy.DEBUG)
+    rospy.init_node('meta_mode_controller', log_level = rospy.INFO)
     rospy.loginfo("Initializing meta_mode controller...")
     controller = MetaMode_Controller()
     rospy.spin()

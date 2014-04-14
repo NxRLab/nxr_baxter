@@ -229,7 +229,7 @@ class Heartbeat_List:
 
 if __name__=='__main__':
     rospy.loginfo("Starting Heartbeat Tracker Node...")
-    rospy.init_node('Heartbeat_Tracker', log_level=rospy.DEBUG)
+    rospy.init_node('Heartbeat_Tracker', log_level=rospy.INFO)
     rospy.logdebug("node starting")
     hm = Heartbeat_Monitor()
 
