@@ -50,11 +50,11 @@ import skeleton_filter as sf
 import image_switcher as imgswitch
 from trajectory_speed_up import traj_speed_up
 
-#Messages for meat-mode
+#Messages for meta-mode
 from nxr_baxter_msgs.msg import MetaMode
 from nxr_baxter_msgs.srv import ChangeMetaMode
 
-DOWN_SAMPLE = 5
+DOWN_SAMPLE = 15
 
 class Baxter_Controller:
     """
@@ -150,13 +150,15 @@ class Baxter_Controller:
     # what does timeout do?
     def setup_move_thread(self, mode):
         if mode == 'crane':
+            self.moveit_both_arms_group.stop()
             self.moveit_both_arms_group.set_joint_value_target(
                 dict(self.crane_r_angles, **self.crane_l_angles))
             traj = self.moveit_both_arms_group.plan()
             new_traj = traj_speed_up(traj, spd=3.0)
-            # self.moveit_both_arms_group.go(wait=True)
+            # self.moveit_both_arms_group.go(wait=True)            
             self.moveit_both_arms_group.execute(new_traj)
         elif mode == 'mime':
+            self.moveit_both_arms_group.stop()
             self.moveit_both_arms_group.set_joint_value_target(
                 dict(self.mime_r_angles, **self.mime_l_angles))
             traj = self.moveit_both_arms_group.plan()
