@@ -59,15 +59,15 @@ class Crane():
 			                             [0.00, 0.00, 1.57, 0.00, 0.00, 0.00, 0.00]))
 		self.gripper_state = True
 		self.gripper_state_timer = 0
-        self.right_arm = moveit_commander.MoveGroupCommander("right_arm")
+		self.right_arm = moveit_commander.MoveGroupCommander("right_arm")
 
 	def set_neutral(self):
 		"""
 		Moves Baxter's arm to neutral position
 		"""
 		# self.arm.move_to_joint_positions(self.neutral_position)
-        self.right_arm.set_joint_value_target(self.neutral_position)
-        self.right_arm.go(wait=False)
+		self.right_arm.set_joint_value_target(self.neutral_position)
+		self.right_arm.go(wait=False)
 
 	def is_neutral(self):
 		"""
@@ -92,11 +92,11 @@ class Crane():
 		else: self.gripper.open()
 
 
-        r_positions = dict(zip(self.arm.joint_names(),
+		r_positions = dict(zip(self.arm.joint_names(),
 				               [angles[0], angles[1], angles[2], angles[3], angles[4], angles[5], angles[6]]))
 		# self.arm.set_joint_positions(r_positions)
-        self.right_arm.set_joint_value_target(r_positions)
-        self.right_arm.go(wait=False)
+		self.right_arm.set_joint_value_target(r_positions)
+		self.right_arm.go(wait=False)
 
 	def human_to_baxter(self, l_sh, l_el, l_ha, r_sh, r_el, r_ha, a):
 		"""
@@ -142,11 +142,11 @@ class Crane():
 	def check_angles(self, s0, s1, e0, e1, w0, w1, w2, angles):
 		# Max Joint Range
 		#     (  s0,      s1,    e0,     e1,     w0,     w1,      w2)
-    	#     ( 1.701,  1.047,  3.054,  2.618,  3.059,  2.094,  3.059)
-    	# Min Joint Range
-    	#     (  s0,     s1,     e0,     e1,      w0,    w1,     w2) 
-    	#     (-1.701, -2.147, -3.054, -0.050, -3.059, -1.571, -3.059)
-    	# s0 assignment in safe range
+		#     ( 1.701,  1.047,  3.054,  2.618,  3.059,  2.094,  3.059)
+		# Min Joint Range
+		#     (  s0,     s1,     e0,     e1,      w0,    w1,     w2) 
+		#     (-1.701, -2.147, -3.054, -0.050, -3.059, -1.571, -3.059)
+		# s0 assignment in safe range
 		if -0.25 < s0 and s0 < 1.60:
 			angles.append(s0)
 		elif -0.25 < s0:

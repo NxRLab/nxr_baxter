@@ -53,7 +53,7 @@ class Mime():
 	published by the skeletontracker_nu script.
 	"""
 
-	def __init__(self):
+	def __init__(self,):
 		"""
 		Mime constructor
 		"""
@@ -66,7 +66,7 @@ class Mime():
 			                               [0.60, 0.40, -2.90, 1.70, 1.57, 0.0, 0.0]))
 		self.neutral_position_r = dict(zip(self.right_arm.joint_names(),
 			                               [-0.60, 0.40, 2.90, 1.70, -1.57, 0.0, 0.0]))
-        self.both_arms = moveit_commander.MoveGroupCommander("both_arms")
+		self.both_arms = moveit_commander.MoveGroupCommander("both_arms")
 
 	def set_neutral(self):
 		"""
@@ -74,9 +74,9 @@ class Mime():
 		"""
 		# self.left_arm.move_to_joint_positions(self.neutral_position_l)
 		# self.right_arm.move_to_joint_positions(self.neutral_position_r)
-        self.both_arms.set_joint_value_target(dict(self.neutral_position_l,
+		self.both_arms.set_joint_value_target(dict(self.neutral_position_l,
                                                    **self.neutral_position_r))
-        self.both_arms.go(wait=False)
+		self.both_arms.go(wait=False)
 
 	def is_neutral(self):
 		"""
@@ -114,37 +114,18 @@ class Mime():
 		angles = {'left': [], 'right': []}
 		self.human_to_baxter(left_shoulder, left_elbow, left_hand,
 		                     right_shoulder, right_elbow, right_hand, angles)
-        l_positions = dict(zip(self.left_arm.joint_names(),
+		position = angles['left']
+		l_positions = dict(zip(self.left_arm.joint_names(),
 				                   [position[0], position[1], position[2],
                                     position[3], position[4], position[5],
                                     position[6]]))
-        r_positions = dict(zip(self.right_arm.joint_names(),
+		position = angles['right']
+		r_positions = dict(zip(self.right_arm.joint_names(),
 				                   [position[0], position[1], position[2],
                                     position[3], position[4], position[5],
                                     position[6]]))
-        self.both_arms.set_joint_value_target(dict(l_positions, **r_positions))
-        self.both_arms.go()
-		# Creates threads for each of Baxter's arms
-		# left_queue = Queue.Queue()
-		# right_queue = Queue.Queue()
-		# left_thread = threading.Thread(target=self.move_thread,
-		# 	                           args=('left', angles['left'], left_queue))
-		# right_thread = threading.Thread(target=self.move_thread,
-		# 	                            args=('right', angles['right'], right_queue))
-		# left_thread.daemon = True
-		# right_thread.daemon = True
-		# left_thread.start()
-		# right_thread.start()
-		# baxter_dataflow.wait_for(
-		# 	lambda: not (left_thread.is_alive() or
-		# 		          right_thread.is_alive()),
-		# 	timeout=20.0,
-		# 	timeout_msg=("Timeout while waiting for arm move threads"
-		# 		         " to finish"),
-		# 	rate=10,
-		# )
-		# left_thread.join()
-		# right_thread.join()
+		self.both_arms.set_joint_value_target(dict(l_positions, **r_positions))
+		self.both_arms.go()
 
 
 	def human_to_baxter(self, l_sh, l_el, l_ha, r_sh, r_el, r_ha, a):
@@ -153,10 +134,10 @@ class Mime():
 		"""
 		# Max Joint Range
 		#     (  s0,      s1,    e0,     e1,     w0,     w1,      w2)
-    	#     ( 1.701,  1.047,  3.054,  2.618,  3.059,  2.094,  3.059)
-    	# Min Joint Range
-    	#     (  s0,     s1,     e0,     e1,      w0,    w1,     w2) 
-    	#     (-1.701, -2.147, -3.054, -0.050, -3.059, -1.571, -3.059)
+		#     ( 1.701,  1.047,  3.054,  2.618,  3.059,  2.094,  3.059)
+		# Min Joint Range
+		#     (  s0,     s1,     e0,     e1,      w0,    w1,     w2) 
+		#     (-1.701, -2.147, -3.054, -0.050, -3.059, -1.571, -3.059)
 
 		for arm in ['left', 'right']:
 			if arm=='left':

@@ -38,7 +38,7 @@ def traj_speed_up(traj, spd=3.0):
     for i in range(n_points):
         point = JointTrajectoryPoint()
         point.time_from_start = traj.joint_trajectory.points[i].time_from_start / spd
-        point.velocities = list(traj.joint_trjaectory.points[i].velocities)
+        point.velocities = list(traj.joint_trajectory.points[i].velocities)
         point.accelerations = list(traj.joint_trajectory.points[i].accelerations)
         point.positions = traj.joint_trajectory.points[i].positions
 

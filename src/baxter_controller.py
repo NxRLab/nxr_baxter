@@ -519,6 +519,6 @@ if __name__=='__main__':
     done = False # when does this get flipped?
     while not done and not rospy.is_shutdown():
         rospy.spin()
-
-    print("\n\nDone.")
+    
+    rospy.loginfo("Baxter Controller shutting down.")
     
