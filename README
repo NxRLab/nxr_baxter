@@ -4,7 +4,7 @@ More testing!
 
 - Everything is now in Moveit
 -- How can we use the "both_arms" group? - Done
--- Need to speed up trajectories. Can rescale trajectories like guy in  moveit users group
+-- Need to speed up trajectories. Can rescale trajectories like guy in  moveit users group. Done for now.
 --- Can check if trajectories are based on joint limits in moveit_config, they are. Which RDF do we use? SRDF/URDF or joint_limits.yaml?
 
 - Maybe replace crane game with memory game for now
