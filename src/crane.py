@@ -7,7 +7,6 @@
 # ROS IMPORTS: #
 ################
 import roslib
-roslib.load_manifest('nxr_baxter')
 import rospy
 from std_msgs.msg import UInt16
 
@@ -37,7 +36,7 @@ import math
 import moveit_commander
 import moveit_msgs.msg
 
-from trajectory_speed_up import traj_speed_up
+# from trajectory_speed_up import traj_speed_up
 
 class Crane():
     """
@@ -59,28 +58,50 @@ class Crane():
         # self.pub_rate.publish(500)
         self.neutral_position = dict(zip(self.arm.joint_names(),
                                          [0.00, 0.00, 1.57, 0.00, 0.00, 0.00, 0.00]))
+        self.crane_l_angles = {'left_s0': 0.35, 'left_s1': 0.00,
+                               'left_e0': 0.00, 'left_e1': 1.57,
+                               'left_w0': 0.00, 'left_w1': 0.00,
+                               'left_w2': 0.00}
         self.gripper_state = True
         self.gripper_state_timer = 0
         self.right_arm = moveit_commander.MoveGroupCommander("right_arm")
 
-    def set_neutral(self):
-        """
-        Moves Baxter's arm to neutral position
-        """
-        # self.arm.move_to_joint_positions(self.neutral_position)
-        self.right_arm.set_joint_value_target(self.neutral_position)
-        self.right_arm.go(wait=False)
+    # def set_neutral(self):
+    #     """
+    #     Moves Baxter's arm to neutral position
+    #     """
+    #     # self.arm.move_to_joint_positions(self.neutral_position)
+    #     self.right_arm.set_joint_value_target(self.neutral_position)
+    #     self.right_arm.go(wait=False)
 
-    def is_neutral(self):
+    # def is_neutral(self):
+    #     """
+    #     Checks if Baxter has reached neutral position
+    #     """
+    #     errors = map(operator.sub, self.arm.joint_angles().values(),
+    #                  self.neutral_position.values())
+    #     for error in errors:
+    #         if math.fabs(error) > 0.06:
+    #             return False
+    #         return True
+
+    def desired_joint_vals(self, left_shoulder, left_elbow, left_hand,
+                           right_shoulder, right_elbow, right_hand):
         """
-        Checks if Baxter has reached neutral position
+        Returns the joint values based on the human skeleton.
         """
-        errors = map(operator.sub, self.arm.joint_angles().values(),
-                     self.neutral_position.values())
-        for error in errors:
-            if math.fabs(error) > 0.06:
-                return False
-            return True
+        angles = []
+        if self.human_to_baxter(left_shoulder, left_elbow, left_hand,
+                                right_shoulder, right_elbow, right_hand, angles):
+            self.gripper.close()
+        else:
+            self.gripper.open()
+
+        r_positions = dict(zip(self.arm.joint_names(),
+                                [angles[0], angles[1], angles[2], angles[3],
+                                angles[4], angles[5], angles[6]]))
+
+        return dict(self.crane_l_angles, **r_positions)
 
     def move(self, left_shoulder, left_elbow, left_hand, right_shoulder, right_elbow, right_hand):
         """

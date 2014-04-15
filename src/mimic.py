@@ -68,10 +68,10 @@ class Mime():
         #                                    [0.60, 0.40, -2.90, 1.70, 1.57, 0.0, 0.0]))
         # self.neutral_position_r = dict(zip(self.right_arm.joint_names(),
         #                                    [-0.60, 0.40, 2.90, 1.70, -1.57, 0.0, 0.0]))
-        self.both_arms = moveit_commander.MoveGroupCommander("both_arms")
-        self.both_arms.set_planning_time(0.2)
-        self.both_arms.allow_replanning(False)
-        self.both_arms.set_goal_joint_tolerance(0.05)
+        # self.both_arms = moveit_commander.MoveGroupCommander("both_arms")
+        # self.both_arms.set_planning_time(0.2)
+        # self.both_arms.allow_replanning(False)
+        # self.both_arms.set_goal_joint_tolerance(0.05)
 
     # def set_neutral(self):
     #     """
@@ -98,6 +98,26 @@ class Mime():
     #         if math.fabs(error) > 0.06:
     #             return False
     #     return True
+
+    def desired_joint_vals(self, left_shoulder, left_elbow, left_hand,
+                           right_shoulder, right_elbow, right_hand):
+        """
+        Returns the desired joint values given the skeleton values
+        """
+        angles = {'left': [], 'right': []}
+        self.human_to_baxter(left_shoulder, left_elbow, left_hand,
+                             right_shoulder, right_elbow, right_hand, angles)
+        position = angles['left']
+        l_positions = dict(zip(self.left_arm.joint_names(),
+                               [position[0], position[1], position[2],
+                                    position[3], position[4], position[5],
+                                    position[6]]))
+        position = angles['right']
+        r_positions = dict(zip(self.right_arm.joint_names(),
+                               [position[0], position[1], position[2],
+                                    position[3], position[4], position[5],
+                                    position[6]]))
+        return dict(l_positions, **r_positions)
 
     def move(self, left_shoulder, left_elbow, left_hand,
              right_shoulder, right_elbow, right_hand):

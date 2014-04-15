@@ -48,11 +48,13 @@ from vector_operations import (make_vector_from_POINTS,
                                shortest_vector_from_point_to_vector)
 import skeleton_filter as sf
 import image_switcher as imgswitch
-from trajectory_speed_up import traj_speed_up
 
 #Messages for meta-mode
 from nxr_baxter_msgs.msg import MetaMode
-from nxr_baxter_msgs.srv import ChangeMetaMode
+# from nxr_baxter_msgs.srv import ChangeMetaMode
+
+#Service for providing desired joint values
+from nxr_baxter_msgs.srv import *
 
 DOWN_SAMPLE = 30
 
@@ -134,37 +136,46 @@ class Baxter_Controller:
         self.internal_mode = None
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
-        # Instantiate a RobotCommander object, interface to robot as a whole.
-        self.robot = moveit_commander.RobotCommander()
-        # Instantiate a PlanningSceneInterface object, interface to world
-        # surrounding robot
-        self.scene = moveit_commander.PlanningSceneInterface()
-        # Instantiate a MoveGroupCommander object, interface to left arm and
-        # right arm respectively, and one to both arms
-        self.moveit_left_group = moveit_commander.MoveGroupCommander("left_arm")
-        self.moveit_right_group = moveit_commander.MoveGroupCommander("right_arm")
-        # I Think for this it goes right arm then left arm
-        self.moveit_both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
+        # # Instantiate a RobotCommander object, interface to robot as a whole.
+        # self.robot = moveit_commander.RobotCommander()
+        # # Instantiate a PlanningSceneInterface object, interface to world
+        # # surrounding robot
+        # self.scene = moveit_commander.PlanningSceneInterface()
+        # # Instantiate a MoveGroupCommander object, interface to left arm and
+        # # right arm respectively, and one to both arms
+        # self.moveit_left_group = moveit_commander.MoveGroupCommander("left_arm")
+        # self.moveit_right_group = moveit_commander.MoveGroupCommander("right_arm")
+        # # I Think for this it goes right arm then left arm
+        # self.moveit_both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
+
+        # Set up the joint value service
+        self.new_vals = True
+        self.joints = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
+        self.joint_val_service = rospy.Service('joint_values', JointValues, self.joint_values_callback)
         self.enable()
 
     # what does timeout do?
     def setup_move_thread(self, mode):
         if mode == 'crane':
-            self.moveit_both_arms_group.stop()
-            self.moveit_both_arms_group.set_joint_value_target(
-                dict(self.crane_r_angles, **self.crane_l_angles))
-            # traj = self.moveit_both_arms_group.plan()
-            # new_traj = traj_speed_up(traj, spd=3.0)
-            self.moveit_both_arms_group.go(wait=False)
-            # self.moveit_both_arms_group.execute(new_traj)
+            self.joints = dict(self.crane_r_angles, **self.crane_l_angles)
+            self.new_vals = True
+            # self.moveit_both_arms_group.stop()
+            # self.moveit_both_arms_group.set_joint_value_target(
+            #     dict(self.crane_r_angles, **self.crane_l_angles))
+            # # traj = self.moveit_both_arms_group.plan()
+            # # new_traj = traj_speed_up(traj, spd=3.0)
+            # self.moveit_both_arms_group.go(wait=False)
+            # # self.moveit_both_arms_group.execute(new_traj)
         elif mode == 'mime':
-            self.moveit_both_arms_group.stop()
-            self.moveit_both_arms_group.set_joint_value_target(
-                dict(self.mime_r_angles, **self.mime_l_angles))
-            # traj = self.moveit_both_arms_group.plan()
-            # new_traj = traj_speed_up(traj, spd=3.0)
-            self.moveit_both_arms_group.go(wait=False)
-            # self.moveit_both_arms_group.execute(new_traj)
+            self.joints = dict(self.mime_r_angles, **self.mime_l_angles)
+            self.new_vals = True
+            # self.moveit_both_arms_group.stop()
+            # self.moveit_both_arms_group.set_joint_value_target(
+            #     dict(self.mime_r_angles, **self.mime_l_angles))
+            # # traj = self.moveit_both_arms_group.plan()
+            # # new_traj = traj_speed_up(traj, spd=3.0)
+            # self.moveit_both_arms_group.go(wait=False)
+            # # self.moveit_both_arms_group.execute(new_traj)
 
     # What does tiemout do?
     def setup_gripper_thread(self):
@@ -179,9 +190,9 @@ class Baxter_Controller:
         # r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
         self.rs.reset()
         self.rs.enable()
-        angles = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
-        self.moveit_both_arms_group.set_joint_value_target(angles)
-        self.moveit_both_arms_group.go(wait=False)
+        self.joints = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
+        self.new_vals = True
+        rospy.sleep(2.0)
         # if limb == 'left':
         #     self.left_arm.move_to_joint_positions(l_angles)
         # elif limb == 'right':
@@ -328,7 +339,10 @@ class Baxter_Controller:
         
 
         if self.mime_count % DOWN_SAMPLE == 0:
-            self.mime.move(l_sh, l_el, l_ha, r_sh, r_el, r_ha)
+            # self.mime.move(l_sh, l_el, l_ha, r_sh, r_el, r_ha)
+            self.joints = self.mime.desired_joint_vals(l_sh, l_el, l_ha,
+                                                       r_sh, r_el, r_ha)
+            self.new_vals = True
             self.mime_count = 0
 
     def crane_go(self, skeleton):
@@ -347,9 +361,10 @@ class Baxter_Controller:
         r_ha = skeleton.right_hand.transform.translation
 
         if self.crane_count % DOWN_SAMPLE == 0:
-            self.crane.move(l_sh, l_el, l_ha, r_sh, r_el, r_ha)
+            # self.crane.move(l_sh, l_el, l_ha, r_sh, r_el, r_ha)
+            self.joints = self.crane.desired_joint_vals(l_sh, l_el, l_ha,
+                                                        r_sh, r_el, r_ha)
             self.crane_count = 0
-    
 
     #######################
     # SUBSCRIBER CALLBACK #
@@ -434,7 +449,7 @@ class Baxter_Controller:
             p2_z = skel.torso.transform.translation.z
 
             y_LH = skel.left_hand.transform.translation.y
-            y_RH = skel.right_hand.transform.translation.y
+         pp   y_RH = skel.right_hand.transform.translation.y
             y_torso = skel.torso.transform.translation.y
             left_ratio = (y_LH - y_torso) / y_torso
             right_ratio = (y_RH - y_torso) / y_torso
@@ -504,6 +519,23 @@ class Baxter_Controller:
         self.left_hand_timer = 0
         self.right_hand_timer = 0
 
+    def joint_values_callback(self, req)
+        """
+        This callback handles publishing the most recent joint values
+        """
+        resp = JointValuesResponse()
+        if self.new_vals:
+            # Publish the new values
+            resp.new_values = True
+            resp.joint_names = self.joints.keys()
+            resp.joint_values = self.joint.values()
+            self.new_vals = False
+        else:
+            resp.new_values = False
+            resp.joint_names = []
+            resp.joint_values = []
+        return resp
+
 if __name__=='__main__':
     rospy.loginfo("Starting joint trajectory action server")
     cmd = 'rosrun baxter_interface joint_trajectory_action_server.py'
@@ -517,9 +549,7 @@ if __name__=='__main__':
     rospy.logdebug("node starting")
     Baxter_Controller()
 
-
-    done = False # when does this get flipped?
-    while not done and not rospy.is_shutdown():
+    while not rospy.is_shutdown():
         rospy.spin()
     
     rospy.loginfo("Baxter Controller shutting down.")
