@@ -364,6 +364,7 @@ class Baxter_Controller:
             # self.crane.move(l_sh, l_el, l_ha, r_sh, r_el, r_ha)
             self.joints = self.crane.desired_joint_vals(l_sh, l_el, l_ha,
                                                         r_sh, r_el, r_ha)
+            self.new_vals = True
             self.crane_count = 0
 
     #######################
