@@ -7,17 +7,112 @@
 
 import rospy
 import sys
-import copy
+import Queue
+import threading
 import moveit_commander
 import moveit_msgs.msg
+
+from moveit_msgs.msg import RobotTrajectory
+from trajectory_msgs.msg import JointTrajectoryPoint
+
+import baxter_interface
 # import geometry_msg.msg
 from nxr_baxter_msgs.srv import *
+
+class Trajectory_Controller:
+    """
+    Trajectory Controller
+
+    This class takes in new trajectories whenever they are available, and
+    continues to use the old-style controller of calling each arm by itself
+    with threading.
+    """
+
+    def __init__(self):
+        rospy.logdebug("Calling Trajectory_Controller.__init__()")
+        self.left_arm = baxter_interface.Limb('left')
+        self.right_arm = baxter_interface.Limb('right')
+
+        # self.pub_rate = rospy.Publisher('/robot/joint_state_publish_rate', UInt16)
+        # self.pub_rate.publish(500)
+        rospy.Timer(0.25, self.timer_callback, oneshot=False)
+
+    def timer_callback(self, event):
+        if self.traj != None:
+            # Find the time in the trajectory
+            time_from_start = rospy.get_time() - self.traj.header.stamp.to_sec()
+            # Send the points at that time to move
+            traj_point = interpolate_trajectory(time_from_start)
+
+            # joints are left7 then right7.
+            joints = {"left": [], "right": []}
+            joints["left"] = traj_point.positions[0:7]
+            joints["right"] = traj_point.positions[8:]
+            self.move(joints)
+        else:
+            pass
+
+    def move_thread(self, limb, position, queue, timeout=15.0)
+        if limb == 'left':
+            l_positions = dict(zip(self.left_arm.joint_names(), position[0:7]))
+            self.left_arm.set_joint_positions(l_positions)
+        elif limb == 'right':
+            r_positions = dict(zip(self.right_arm.joint_names(), position[0:7]))
+            self.right_arm.set_joint_positions(r_positions)
+
+    def move(self, joints)
+        left_queue = Queue.Queue()
+        right_queue = Queue.Queue()
+        left_thread = threading.Thread(target=self.move_thread,
+                                       args=('left', joints['left'], left_queue))
+        right_thread = threading.Thread(target=self.move_thread,
+                                       args=('right', joints['right'], left_queue))
+        left_thread.daemon = True
+        right_thread.daemon = True
+        left_thread.start()
+        right_thread.start()
+        baxter_dataflow.wait_for(
+            lambda: not (left_thread.is_alive() or
+                         right_thread.is_alive()),
+            timeout=20.0,
+            timeout_msg=("Timeout while waiting for arm move threads"
+                         " to finish"),
+            rate=10,
+        )
+        left_thread.join()
+        right_thread.join()
+
+    def push(self, new_traj)
+        self.traj = new_traj
+    
+
+    def interpolate_trajectory(self, time_from_start):
+        for j in range(len(self.traj.points)):
+            point = self.traj.points[j]
+            if time_from_start <= point.time_from_start.to_sec:
+                # We are passed our time, good sign, now we interpolate
+                if j = 0:
+                    # First point is after us, lets use that one
+                    rospy.logwarn("Somehow the first point is in the future")
+                    return point
+                else:
+                    prev_point = self.traj.points[j-1]
+                    for i in range(len(point.positions)):
+                        point.positions[i] = (point.position[i]
+                                              - prev_point.position[i])
+                        *(time_from_start - prev_point.time_from_start.to_sec())
+                        /(point.time_from_start.to_sec()
+                          - prev_point.time_from_start.to_sec())
+                    self.traj.points = self.traj.points[j:]
+                    return point
 
 if __name__=='__main__':
     rospy.loginfo("Starting moveit_interface node")
     rospy.init_node('moveit_interface', log_level=rospy.INFO)
 
     both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
+
+    traj_controller = Trajectory_Controller()
 
     while not rospy.is_shutdown():
         rospy.wait_for_service('joint_values')
@@ -28,7 +123,8 @@ if __name__=='__main__':
                 joints = dict(zip(joint_resp.joint_names,
                                   joint_resp.joint_values))
                 both_arms_group.set_joint_value_target(joints)
-                both_arms_group.go()
+                traj_controller.push(both_arms_group.plan())
+                # both_arms_group.go()
             else:
                 rospy.logdebug('Got old values')
                 rospy.sleep(0.001)
