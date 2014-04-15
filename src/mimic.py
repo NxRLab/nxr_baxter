@@ -64,37 +64,40 @@ class Mime():
 
         # self.pub_rate = rospy.Publisher('/robot/joint_state_publish_rate', UInt16)
         # self.pub_rate.publish(500)
-        self.neutral_position_l = dict(zip(self.left_arm.joint_names(),
-                                           [0.60, 0.40, -2.90, 1.70, 1.57, 0.0, 0.0]))
-        self.neutral_position_r = dict(zip(self.right_arm.joint_names(),
-                                           [-0.60, 0.40, 2.90, 1.70, -1.57, 0.0, 0.0]))
+        # self.neutral_position_l = dict(zip(self.left_arm.joint_names(),
+        #                                    [0.60, 0.40, -2.90, 1.70, 1.57, 0.0, 0.0]))
+        # self.neutral_position_r = dict(zip(self.right_arm.joint_names(),
+        #                                    [-0.60, 0.40, 2.90, 1.70, -1.57, 0.0, 0.0]))
         self.both_arms = moveit_commander.MoveGroupCommander("both_arms")
-        self.both_arms.set_planning_time(0.01)
+        self.both_arms.set_planning_time(0.2)
+        self.both_arms.allow_replanning(False)
+        self.both_arms.set_goal_joint_tolerance(0.05)
 
-    def set_neutral(self):
-        """
-        Moves Baxter's arms to neutral positions
-        """
-        self.both_arms.stop()
-        self.both_arms.set_joint_value_target(dict(self.neutral_position_l,
-                                                   **self.neutral_position_r))
-        traj = self.both_arms.plan()
-        new_traj = traj_speed_up(traj, spd=3.0)
-        self.moveit_both_arms.execute(new_traj)
+    # def set_neutral(self):
+    #     """
+    #     Moves Baxter's arms to neutral positions
+    #     """
+    #     self.both_arms.stop()
+    #     self.both_arms.set_joint_value_target(dict(self.neutral_position_l,
+    #                                                **self.neutral_position_r))
+    #     # traj = self.both_arms.plan()
+    #     # new_traj = traj_speed_up(traj, spd=3.0)
+    #     # self.moveit_both_arms.execute(new_traj)
+	# 	self.both_arms.go()
 
-    def is_neutral(self):
-        """
-        Checks if Baxter has reached neutral positions
-        """
-        errors_l = map(operator.sub, self.left_arm.joint_angles().values(),
-                       self.neutral_position_l.values())
-        errors_r = map(operator.sub, self.right_arm.joint_angles().values(),
-                       self.neutral_position_r.values())
-        errors_l.extend(errors_r)
-        for error in errors_l:
-            if math.fabs(error) > 0.06:
-                return False
-        return True
+    # def is_neutral(self):
+    #     """
+    #     Checks if Baxter has reached neutral positions
+    #     """
+    #     errors_l = map(operator.sub, self.left_arm.joint_angles().values(),
+    #                    self.neutral_position_l.values())
+    #     errors_r = map(operator.sub, self.right_arm.joint_angles().values(),
+    #                    self.neutral_position_r.values())
+    #     errors_l.extend(errors_r)
+    #     for error in errors_l:
+    #         if math.fabs(error) > 0.06:
+    #             return False
+    #     return True
 
     def move(self, left_shoulder, left_elbow, left_hand,
              right_shoulder, right_elbow, right_hand):
@@ -114,11 +117,16 @@ class Mime():
                                [position[0], position[1], position[2],
                                     position[3], position[4], position[5],
                                     position[6]]))
-        self.both_arms.stop()
-        self.both_arms.set_joint_value_target(dict(l_positions, **r_positions))
-        traj = self.both_arms.plan()
-        new_traj = traj_speed_up(traj, spd=3.0)
-        self.both_arms.execute(new_traj)
+        # self.both_arms.stop()
+        # self.both_arms.set_joint_value_target(dict(l_positions, **r_positions))
+        # traj = self.both_arms.plan()
+        rospy.logwarn('Pre-go')
+        # self.both_arms.execute(traj)
+        self.both_arms.go(joints=dict(l_positions, **r_positions), wait=True)
+        rospy.logwarn('Post-go')
+        # traj = self.both_arms.plan()
+        # new_traj = traj_speed_up(traj, spd=3.0)
+        # self.both_arms.execute(new_traj)
 
     def human_to_baxter(self, l_sh, l_el, l_ha, r_sh, r_el, r_ha, a):
         """
