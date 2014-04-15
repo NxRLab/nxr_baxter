@@ -21,7 +21,7 @@
 
 	<node pkg="nxr_baxter" type="baxter_controller.py" name="bax_controller" output="screen" respawn="true" />
 
-	<node pkg="nxr_baxter" type="moveit_interface.py" name="moveit_interface" output="screen" respawn="true" />
+	<!-- <node pkg="nxr_baxter" type="moveit_interface.py" name="moveit_interface" output="screen" respawn="true" launch-prefix="xterm -e " args=" > /home/adam/ros_log_4_15 "/> -->
 
 
 </launch>

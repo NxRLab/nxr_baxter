@@ -56,7 +56,7 @@ from nxr_baxter_msgs.msg import MetaMode
 #Service for providing desired joint values
 from nxr_baxter_msgs.srv import *
 
-DOWN_SAMPLE = 30
+DOWN_SAMPLE = 10
 
 class Baxter_Controller:
     """
