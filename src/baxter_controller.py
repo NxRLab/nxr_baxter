@@ -450,7 +450,7 @@ class Baxter_Controller:
             p2_z = skel.torso.transform.translation.z
 
             y_LH = skel.left_hand.transform.translation.y
-         pp   y_RH = skel.right_hand.transform.translation.y
+            y_RH = skel.right_hand.transform.translation.y
             y_torso = skel.torso.transform.translation.y
             left_ratio = (y_LH - y_torso) / y_torso
             right_ratio = (y_RH - y_torso) / y_torso
@@ -520,7 +520,7 @@ class Baxter_Controller:
         self.left_hand_timer = 0
         self.right_hand_timer = 0
 
-    def joint_values_callback(self, req)
+    def joint_values_callback(self, req):
         """
         This callback handles publishing the most recent joint values
         """
@@ -529,7 +529,7 @@ class Baxter_Controller:
             # Publish the new values
             resp.new_values = True
             resp.joint_names = self.joints.keys()
-            resp.joint_values = self.joint.values()
+            resp.joint_values = self.joints.values()
             self.new_vals = False
         else:
             resp.new_values = False
