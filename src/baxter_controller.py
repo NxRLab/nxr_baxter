@@ -28,11 +28,11 @@ import math
 import numpy as np
 import subprocess
 
-##################
-# MOVEIT Imports #
-##################
-import moveit_commander
-import moveit_msgs.msg
+# ##################
+# # MOVEIT Imports #
+# ##################
+# import moveit_commander
+# import moveit_msgs.msg
 
 ###############
 # NU IMPORTS: #
@@ -56,7 +56,8 @@ from nxr_baxter_msgs.msg import MetaMode
 #Service for providing desired joint values
 from nxr_baxter_msgs.srv import *
 
-DOWN_SAMPLE = 10
+# Don't need to down sample, we are sort of already doing that by default.
+DOWN_SAMPLE = 1
 
 class Baxter_Controller:
     """
@@ -91,8 +92,6 @@ class Baxter_Controller:
         rospy.loginfo("Enabling motors...")
         self.rs.enable()
 
-        # self.left_arm = baxter_interface.limb.Limb('left')
-        # self.right_arm = baxter_interface.limb.Limb('right')
         self.gripper = baxter_interface.Gripper('right')
         self.mime_l_angles = {'left_s0': 0.35, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 0.00, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
         self.mime_r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 0.00, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
@@ -136,18 +135,6 @@ class Baxter_Controller:
         self.internal_mode = None
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
-        # # Instantiate a RobotCommander object, interface to robot as a whole.
-        # self.robot = moveit_commander.RobotCommander()
-        # # Instantiate a PlanningSceneInterface object, interface to world
-        # # surrounding robot
-        # self.scene = moveit_commander.PlanningSceneInterface()
-        # # Instantiate a MoveGroupCommander object, interface to left arm and
-        # # right arm respectively, and one to both arms
-        # self.moveit_left_group = moveit_commander.MoveGroupCommander("left_arm")
-        # self.moveit_right_group = moveit_commander.MoveGroupCommander("right_arm")
-        # # I Think for this it goes right arm then left arm
-        # self.moveit_both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
-
         # Set up the joint value service
         self.new_vals = True
         self.joints = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
@@ -159,23 +146,9 @@ class Baxter_Controller:
         if mode == 'crane':
             self.joints = dict(self.crane_r_angles, **self.crane_l_angles)
             self.new_vals = True
-            # self.moveit_both_arms_group.stop()
-            # self.moveit_both_arms_group.set_joint_value_target(
-            #     dict(self.crane_r_angles, **self.crane_l_angles))
-            # # traj = self.moveit_both_arms_group.plan()
-            # # new_traj = traj_speed_up(traj, spd=3.0)
-            # self.moveit_both_arms_group.go(wait=False)
-            # # self.moveit_both_arms_group.execute(new_traj)
         elif mode == 'mime':
             self.joints = dict(self.mime_r_angles, **self.mime_l_angles)
             self.new_vals = True
-            # self.moveit_both_arms_group.stop()
-            # self.moveit_both_arms_group.set_joint_value_target(
-            #     dict(self.mime_r_angles, **self.mime_l_angles))
-            # # traj = self.moveit_both_arms_group.plan()
-            # # new_traj = traj_speed_up(traj, spd=3.0)
-            # self.moveit_both_arms_group.go(wait=False)
-            # # self.moveit_both_arms_group.execute(new_traj)
 
     # What does tiemout do?
     def setup_gripper_thread(self):
@@ -186,17 +159,11 @@ class Baxter_Controller:
         """
         Handles moving to disable position for each arm's thread
         """
-        # l_angles = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
-        # r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
         self.rs.reset()
         self.rs.enable()
         self.joints = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
         self.new_vals = True
         rospy.sleep(2.0)
-        # if limb == 'left':
-        #     self.left_arm.move_to_joint_positions(l_angles)
-        # elif limb == 'right':
-        #     self.right_arm.move_to_joint_positions(r_angles)
 
     def choose_user(self, skeletons):
         """
@@ -287,17 +254,15 @@ class Baxter_Controller:
         rh_x = skeleton.right_hand.transform.translation.y
         tor_y = skeleton.torso.transform.translation.y
         tor_x = skeleton.torso.transform.translation.x
-        # if choice == 'left':
         if self.internal_mode == MetaMode.CRANE:
             dy = math.fabs(tor_y - lh_y)
             dx = math.fabs(lh_x - tor_x)
             #These tolerances have been causing problems
-            # if dy < 0.08 and dx > 0.4:
-            if dy < 0.1 and dx > 0.2:
+            if dy < 0.08 and dx > 0.4:
+            # if dy < 0.1 and dx > 0.2:
                 self.img_switch.change_mode('positioned',0)
                 rospy.sleep(0.5) # try a 1/2 second delay
                 return True
-        # elif (choice == 'right'):
         elif self.internal_mode == MetaMode.MIME:
             dy = math.fabs(tor_y - lh_y) + math.fabs(tor_y - rh_y)
             dx = math.fabs(lh_x - tor_x) + math.fabs(rh_x - tor_x)
@@ -339,7 +304,6 @@ class Baxter_Controller:
         
 
         if self.mime_count % DOWN_SAMPLE == 0:
-            # self.mime.move(l_sh, l_el, l_ha, r_sh, r_el, r_ha)
             self.joints = self.mime.desired_joint_vals(l_sh, l_el, l_ha,
                                                        r_sh, r_el, r_ha)
             self.new_vals = True
@@ -361,7 +325,6 @@ class Baxter_Controller:
         r_ha = skeleton.right_hand.transform.translation
 
         if self.crane_count % DOWN_SAMPLE == 0:
-            # self.crane.move(l_sh, l_el, l_ha, r_sh, r_el, r_ha)
             self.joints = self.crane.desired_joint_vals(l_sh, l_el, l_ha,
                                                         r_sh, r_el, r_ha)
             self.new_vals = True
@@ -396,7 +359,6 @@ class Baxter_Controller:
         # Chooses and sticks to one main user throughout
         if self.userid_chosen == False:
             # We haven't previously chosen a user.
-            # self.choice = self.choose_user(data.skeletons)
             self.choose_user(data.skeletons)
             # Don't think we need self.choice
             self.first_filt_flag = True
@@ -414,7 +376,6 @@ class Baxter_Controller:
             left_ratio = (y_LH - y_torso) / y_torso
             right_ratio = (y_RH - y_torso) / y_torso
 
-
             dx = p2_x - p1_x
             dz = p2_z - p1_z
             if not (math.fabs(dx) > 0.10 and math.fabs(dz) > 0.10 and left_ratio > 0.5 and right_ratio > 0.5):
@@ -426,7 +387,6 @@ class Baxter_Controller:
         # Instead of self.userid_choice == False
         elif self.action_chosen == False and found:
             #There is a user, they are in position, time to start the actual action
-            # self.choose_action(skel, self.choice)
             if self.internal_mode == MetaMode.MIME:
                 rospy.loginfo("    Action chosen: Mime\n")
                 self.mime = Mime()
@@ -543,10 +503,6 @@ if __name__=='__main__':
     subprocess.Popen(cmd,shell=True)
     rospy.loginfo("\nInitializing Baxter Controller node... ")
     rospy.init_node('Baxter_Controller', log_level=rospy.INFO)
-    # From MOVEIT tutorial:
-    # First initialize moveit_commander and rospy
-    # moveit_commander.roscpp_initialize(sys.argv)
-    # rospy.init_node('move_group_python_interface', anonymous=True)
     rospy.logdebug("node starting")
     Baxter_Controller()
 

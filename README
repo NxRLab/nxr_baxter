@@ -2,13 +2,16 @@ Things that need to be done for Baxter
 
 More testing!
 
-- Everything is now in Moveit - How can we use the "both_arms" group? - Done 
+Run this command to get the correct URDF,
+fork the moveit repo and update it with the changes I've made.
+rosparam get -p /robot_description | tail -n +2 > baxter.urdf
 
---Need to speed up trajectories. Can rescale trajectories like guy in
-  moveit-users group. Done for now.
+May be an issue with using the _gripper_base jiont or link
+https://groups.google.com/a/rethinkrobotics.com/forum/#!searchin/brr-users/baxter$20srdf/brr-users/-GnnPFXAPbc/vYpUsaI55qoJ
 
---Can check if trajectories are based on joint-limits in moveit_config, they
-  are. Which RDF do we use? SRDF/URDF or joint_limits.yaml?
+Also, use IKFast plugins instead of KDL solver?
+See here: https://github.com/RethinkRobotics/sdk-docs/wiki/MoveIt-Tutorial#ikfast
+Make sure to set goal tolerance
 
 - Maybe replace crane game with memory game for now
 

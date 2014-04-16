@@ -17,7 +17,7 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 
 import baxter_interface
 import baxter_dataflow
-# import geometry_msg.msg
+from geometry_msg.msg import PoseStamped
 # from std_msgs.msg import Header
 from nxr_baxter_msgs.srv import *
 
@@ -114,6 +114,25 @@ if __name__=='__main__':
     rospy.init_node('moveit_interface', log_level=rospy.INFO)
 
     both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
+
+    planning_scene = moveit_commander.PlanningSceneInterface()
+
+    robot = moveit_commander.RobotCommander()
+
+    # Add in objects
+    p = PoseStamped()
+    p.header.frame_id = robot.get_planning_frame()
+    # Table
+    p.pose.position.x = (23.5 + 4.25 + 12)*2.54/100.0
+    p.pose.position.y = 0.0
+    p.pose.position.z = (-13.0625)*2.54/100.0
+    scene.add_box("table", p, (24*2.54/100.0, 48*2.54/100.0, 1.125*2.54*100))
+    p.pose.position.x = 0.0
+    p.pose.position.y = -52.5*2.54/100.0
+    p.pose.position.z = 0.0
+    scene.add_plane("right_wall", p, normal=(0, 1, 0))
+    p.pose.position.y = 54*2.54/100.0
+    scene.add_plane("left_wall", p, normal=(0, -1, 0))
 
     traj_controller = Trajectory_Controller()
 
