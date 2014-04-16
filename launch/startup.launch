@@ -3,7 +3,7 @@
 	
 	<!-- <node name="" pkg="" type="" args="" respawn="true" /> -->
 
-	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="1.28 0.10 0.19 0 0 0 base camera_link 100" />
+	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="1.28 0.10 0.19 0 0 0 base camera_link 1000" />
 
 	<include file="$(find baxter_moveit_config)/launch/planning_context.launch">
 	  <arg name="load_robot_description" value="true"/>
@@ -21,7 +21,7 @@
 
 	<node pkg="nxr_baxter" type="baxter_controller.py" name="bax_controller" output="screen" respawn="true" />
 
-	<!-- <node pkg="nxr_baxter" type="moveit_interface.py" name="moveit_interface" output="screen" respawn="true" launch-prefix="xterm -e " args=" > /home/adam/ros_log_4_15 "/> -->
+	<node pkg="nxr_baxter" type="moveit_interface.py" name="moveit_interface" output="screen" respawn="true" />
 
 
 </launch>
