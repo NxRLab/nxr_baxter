@@ -83,12 +83,12 @@ class Trajectory_Controller:
         # self.right_goal.trajectory.joint_names = self.right_joint_names
         # self.left_client.send_goal(self.left_goal)
         # self.right_client.send_goal(self.right_goal)
-        self.timer = rospy.Timer(rospy.Duration(0.2), self.timer_callback, oneshot=True)
+        self.timer = rospy.Timer(rospy.Duration(0.2), self.timer_callback, oneshot=False)
         # while not rospy.is_shutdown():
         #     self.timer_callback()
         #     rospy.sleep(0.001)
 
-    def timer_callback(self):
+    def timer_callback(self,event):
         if self.traj != None:
             # Find the time in the trajectory
             time_from_start = rospy.get_time() - self.traj.header.stamp.to_sec()
@@ -101,7 +101,6 @@ class Trajectory_Controller:
             joints["left"] = traj_point.positions[0:7]
             joints["right"] = traj_point.positions[7:]
             self.move(joints)
-        else:
 
     def push(self, new_plan):
         # self.new_traj = True
@@ -117,8 +116,6 @@ class Trajectory_Controller:
             # print "point.time_from_start: ", type(point.time_from_start)
             time_to_use = point.time_from_start
             if type(time_from_start) != type(time_to_use):
-                print "Time from start: ", type(time_from_start)
-                print "Point Time from Start: ", type(time_to_use)
                 time_to_use = time_to_use.to_sec()
             if time_from_start <= time_to_use:
                 # We are passed our time, good sign, now we interpolate
@@ -145,6 +142,7 @@ class Trajectory_Controller:
             self.right_arm.set_joint_positions(r_positions)
 
     def move(self, joints):
+        # rospy.loginfo('move')
         left_queue = Queue.Queue()
         right_queue = Queue.Queue()
         left_thread = threading.Thread(target=self.move_thread,
@@ -178,8 +176,7 @@ if __name__=='__main__':
     rospy.sleep(3.0)
 
     robot = moveit_commander.RobotCommander()
-    rospy.loginfo("I'm sitting here.")
-    rospy.sleep(3.0)
+
     # Add in objects
     p = PoseStamped()
     p.header.frame_id = robot.get_planning_frame()
@@ -188,13 +185,21 @@ if __name__=='__main__':
     p.pose.position.z = -0.6
     # scene.add_box("table", p, (0.8, 1.25, 0.8)) # Bigger box
 
-    scene.add_box("table", p, (0.7, 1.25, 0.71))
-    p.pose.position.x = 0.0
-    p.pose.position.y = -52.5*2.54/100.0
-    p.pose.position.z = 0.0
-    scene.add_plane("right_wall", p, normal=(0, 1, 0))
-    p.pose.position.y = 54*2.54/100.0
-    scene.add_plane("left_wall", p, normal=(0, -1, 0))
+    scene.add_box("table", p, (0.75, 1.25, 0.68))
+    # p = PoseStamped()
+    # p.header.frame_id = robot.get_planning_frame()
+    # p.pose.position.x = 0.0
+    # p.pose.position.y = -52.5*2.54/100.0 - 0.02
+    # p.pose.position.z = 0.0
+    # scene.add_box("right_wall", p, (2.0, 0.04, 2.0))
+    # p = PoseStamped()
+    # p.header.frame_id = robot.get_planning_frame()
+    # p.pose.position.x = 0.0
+    # p.pose.position.y = -54*2.54/100.0 - 0.02
+    # p.pose.position.z = 0.0
+    # scene.add_box("left_wall", p, (2.0, 0.04, 2.0))
+    # # p.pose.position.y = 54*2.54/100.0
+    # # scene.add_plane("left_wall", p, normal=(0, -1, 0))
 
     traj_controller = Trajectory_Controller()
 
@@ -217,4 +222,4 @@ if __name__=='__main__':
         except rospy.ServiceException, e:
             rospy.logerr('Service call failed: %s', e)
  
-   rospy.loginfo("moveit_interface shutting down")
+    rospy.loginfo("moveit_interface shutting down")
