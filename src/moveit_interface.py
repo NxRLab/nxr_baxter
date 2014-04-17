@@ -24,6 +24,7 @@ from control_msgs.msg import (
 
 import baxter_interface
 import baxter_dataflow
+from copy import deepcopy
 from geometry_msgs.msg import PoseStamped
 # from std_msgs.msg import Header
 from nxr_baxter_msgs.srv import *
@@ -42,6 +43,11 @@ class Trajectory_Controller:
         self.left_arm = baxter_interface.Limb('left')
         self.right_arm = baxter_interface.Limb('right')
 
+        self.left_joint_names = ['left_s0', 'left_s1', 'left_e0', 'left_e1',
+                                 'left_w0', 'left_w1', 'left_w2']
+        self.right_joint_names = ['right_s0', 'right_s1', 'right_e0', 'right_e1',
+                                 'right_w0', 'right_w1', 'right_w2']
+
         ns_left = 'robot/limb/left/'
         ns_right = 'robot/limb/right/'
 
@@ -54,77 +60,91 @@ class Trajectory_Controller:
             FollowJointTrajectoryAction,
         )
 
-        self._goal = FollowJointTrajectoryGoal()
-        server_up = self._client.wait_for_server(timeout=rospy.Duration(10.0))
-        if not server_up:
+        self.left_goal = FollowJointTrajectoryGoal()
+        self.right_goal = FollowJointTrajectoryGoal()
+        server_up_left = self.left_client.wait_for_server(timeout=rospy.Duration(10.0))
+        server_up_right = self.right_client.wait_for_server(timeout=rospy.Duration(10.0))
+        if not server_up_left or not server_up_right:
             rospy.logerr("Timeout waiting for JTAS")
             rospy.signal_shutdown("Timed out waiting...")
             sys.exit(1)
-        
 
         # self.pub_rate = rospy.Publisher('/robot/joint_state_publish_rate', UInt16)
         # self.pub_rate.publish(500)
         self.new_traj = False
         self.traj = None
-        rospy.Timer(rospy.Duration(0.1), self.timer_callback, oneshot=False)
+
+        # self.left_goal.trajectory = self.split_traj(traj, 0, 7)
+        # self.right_goal.trajectory = self.split_traj(traj, 7, 0)
+        # self.left_goal.trajectory.header.stamp = rospy.Time.now()
+        # self.right_goal.trajectory.header.stamp = rospy.Time.now()
+        # for i in range(len(self.left_goal.trajectory.points)):
+        #     self.left_goal.trajectory.points[i].time_from_start = rospy.Duration(self.left_goal.trajectory.points[i].time_from_start)
+        #     self.right_goal.trajectory.points[i].time_from_start = rospy.Duration(self.right_goal.trajectory.points[i].time_from_start)
+        # self.left_goal.trajectory.joint_names = self.left_joint_names
+        # self.right_goal.trajectory.joint_names = self.right_joint_names
+        # self.left_client.send_goal(self.left_goal)
+        # self.right_client.send_goal(self.right_goal)
+        rospy.Timer(rospy.Duration(0.5), self.timer_callback, oneshot=False)
 
     def timer_callback(self, event):
-        if self.traj != None && self.new_traj:
+        if self.traj != None and self.new_traj:
             # Find the time in the trajectory
             time_from_start = rospy.get_time() - self.traj.header.stamp.to_sec()
             # Send the points at that time to move
             traj_to_send = self.interpolate_trajectory(time_from_start)
             if traj_to_send == None:
                 rospy.logwarn("timer_callback")
+                self.new_traj = False
                 return
             # joints = {"left": [], "right": []}
-            joints["left"] = traj_point.positions[0:7]
-            joints["right"] = traj_point.positions[7:]
-            self._goal.trajector.header.stamp = rospy.Time.now()
-            self._client.send_goal(traj_to_send)
-            self.move(joints)
+            self.left_goal = FollowJointTrajectoryGoal()
+            self.right_goal = FollowJointTrajectoryGoal()
+            self.left_goal.trajectory = self.split_traj(traj_to_send,0,7)
+            self.right_goal.trajectory = self.split_traj(traj_to_send,7,0)
+            # joints["left"] = traj_point.positions[0:7]
+            # joints["right"] = traj_point.positions[7:]
+            # self._goal.trajectory.header.stamp = rospy.Time.now()
+            self.left_goal.trajectory.header.stamp = rospy.Time.now()
+            self.right_goal.trajectory.header.stamp = rospy.Time.now()
+            self.left_goal.trajectory.joint_names = self.left_joint_names
+            self.right_goal.trajectory.joint_names = self.right_joint_names
+            # rospy.logerr("%f", self.left_goal.trajectory.header.stamp.secs)
+            # rospy.logerr("%f", self.right_goal.trajectory.header.stamp.secs)
+            self.left_client.send_goal(self.left_goal)
+            self.right_client.send_goal(self.right_goal)
+            # self.move(joints)
         else:
+            self.new_traj = False
             return
+        self.new_traj = False
 
-    # def move_thread(self, limb, position, queue, timeout=15.0):
-    #     if limb == 'left':
-    #         l_positions = dict(zip(self.left_arm.joint_names(), position[0:7]))
-    #         self.left_arm.set_joint_positions(l_positions)
-    #     elif limb == 'right':
-    #         r_positions = dict(zip(self.right_arm.joint_names(), position[0:7]))
-    #         self.right_arm.set_joint_positions(r_positions)
+    def split_traj(self, traj, start, end):
+        new_traj = deepcopy(traj)
+        if end == 0:
+            for i in range(len(new_traj.points)):
+                new_traj.points[i].positions = new_traj.points[i].positions[start:]
+                new_traj.points[i].velocities = new_traj.points[i].velocities[start:]
+                new_traj.points[i].accelerations = new_traj.points[i].accelerations[start:]
+        else:
+            for i in range(len(new_traj.points)):
+                new_traj.points[i].positions = new_traj.points[i].positions[start:end]
+                new_traj.points[i].velocities = new_traj.points[i].velocities[start:end]
+                new_traj.points[i].accelerations = new_traj.points[i].accelerations[start:end]
+        return new_traj
 
-    # def move(self, joints):
-    #     left_queue = Queue.Queue()
-    #     right_queue = Queue.Queue()
-    #     left_thread = threading.Thread(target=self.move_thread,
-    #                                    args=('left', joints['left'], left_queue))
-    #     right_thread = threading.Thread(target=self.move_thread,
-    #                                    args=('right', joints['right'], right_queue))
-    #     left_thread.daemon = True
-    #     right_thread.daemon = True
-    #     left_thread.start()
-    #     right_thread.start()
-    #     baxter_dataflow.wait_for(
-    #         lambda: not (left_thread.is_alive() or
-    #                      right_thread.is_alive()),
-    #         timeout=20.0,
-    #         timeout_msg=("Timeout while waiting for arm move threads"
-    #                      " to finish"),
-    #         rate=10,
-    #     )
-    #     left_thread.join()
-    #     right_thread.join()
-
-    def push(self, new_traj):
+    def push(self, new_plan):
         self.new_traj = True
-        self.traj = new_traj.joint_trajectory
+        self.traj = deepcopy(new_plan.joint_trajectory)
     
     def interpolate_trajectory(self, time_from_start):
         if len(self.traj.points) == 0:
+            rospy.info("Traj length is 0")
             return None
         for j in range(len(self.traj.points)):
             point = self.traj.points[j]
+            # print "time_from_start: ", type(time_from_start)
+            # print "point.time_from_start: ", type(point.time_from_start)
             if time_from_start <= point.time_from_start:
                 # We are passed our time, good sign, now we interpolate
                 if j == 0:
@@ -132,16 +152,14 @@ class Trajectory_Controller:
                     rospy.logwarn("Somehow the first point is in the future")
                     return self.traj
                 else:
-                    prev_point = self.traj.points[j-1]
-                    for i in range(len(point.positions)):
-                        point.positions[i] = (point.position[i] - prev_point.position[i])*(time_from_start - prev_point.time_from_start.to_sec())/(point.time_from_start.to_sec() - prev_point.time_from_start.to_sec())
                     self.traj.points = self.traj.points[j:]
-                    temp_time = self.traj.points[0].time_from_start
+                    temp_time = self.traj.points[0].time_from_start.to_sec()
                     for i in range(len(self.traj.points)):
                         self.traj.points[i].time_from_start -= temp_time
-                    return self.traj_point
+                        self.traj.points[i].time_from_start = rospy.Duration(self.traj.points[i].time_from_start)
+                    return self.traj
         self.traj.points = [self.traj.points[-1]]
-        self.traj.points[0].time_from_start = 0.0
+        self.traj.points[0].time_from_start = rospy.Duration(0.0)
         return self.traj
 
 if __name__=='__main__':
@@ -177,7 +195,7 @@ if __name__=='__main__':
 
     # both_arms_group.set_goal_joint_tolerance(0.05)
 
-    # traj_controller = Trajectory_Controller()
+    traj_controller = Trajectory_Controller()
 
     while not rospy.is_shutdown():
         rospy.wait_for_service('joint_values')
@@ -188,12 +206,10 @@ if __name__=='__main__':
                 joints = dict(zip(joint_resp.joint_names,
                                   joint_resp.joint_values))
                 try:
-                    # both_arms_group.set_joint_value_target(joints)
-                    # both_arms_group.go()
-                    traj_controller.push(both_arms_group.plan(joints))
-                except MoveitCommanderException, e:
+                    traj = both_arms_group.plan(joints)
+                    traj_controller.push(traj)
+                except moveit_commander.MoveItCommanderException, e:
 	                rospy.logwarn("Error setting joint target, target not within bounds.")
-                # both_arms_group.go()
             else:
                 rospy.logdebug('Got old values')
                 rospy.sleep(0.001)

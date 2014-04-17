@@ -57,7 +57,7 @@ from nxr_baxter_msgs.msg import MetaMode
 from nxr_baxter_msgs.srv import *
 
 # Don't need to down sample, we are sort of already doing that by default.
-DOWN_SAMPLE = 1
+DOWN_SAMPLE = 15
 
 class Baxter_Controller:
     """
