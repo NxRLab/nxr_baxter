@@ -85,9 +85,17 @@ class Trajectory_Controller:
         # self.right_goal.trajectory.joint_names = self.right_joint_names
         # self.left_client.send_goal(self.left_goal)
         # self.right_client.send_goal(self.right_goal)
-        rospy.Timer(rospy.Duration(0.5), self.timer_callback, oneshot=False)
+        self.timer = rospy.Timer(rospy.Duration(0.1), self.timer_callback_start, oneshot=True)
+        # while not rospy.is_shutdown():
+        #     self.timer_callback()
+        #     rospy.sleep(0.001)
 
-    def timer_callback(self, event):
+    def timer_callback_start(self, event):
+        while not rospy.is_shutdown():
+            self.timer_callback()
+            rospy.sleep(0.001)
+
+    def timer_callback(self):
         if self.traj != None and self.new_traj:
             # Find the time in the trajectory
             time_from_start = rospy.get_time() - self.traj.header.stamp.to_sec()
@@ -96,28 +104,28 @@ class Trajectory_Controller:
             if traj_to_send == None:
                 rospy.logwarn("timer_callback")
                 self.new_traj = False
-                return
-            # joints = {"left": [], "right": []}
-            self.left_goal = FollowJointTrajectoryGoal()
-            self.right_goal = FollowJointTrajectoryGoal()
-            self.left_goal.trajectory = self.split_traj(traj_to_send,0,7)
-            self.right_goal.trajectory = self.split_traj(traj_to_send,7,0)
-            # joints["left"] = traj_point.positions[0:7]
-            # joints["right"] = traj_point.positions[7:]
-            # self._goal.trajectory.header.stamp = rospy.Time.now()
-            self.left_goal.trajectory.header.stamp = rospy.Time.now()
-            self.right_goal.trajectory.header.stamp = rospy.Time.now()
-            self.left_goal.trajectory.joint_names = self.left_joint_names
-            self.right_goal.trajectory.joint_names = self.right_joint_names
-            # rospy.logerr("%f", self.left_goal.trajectory.header.stamp.secs)
-            # rospy.logerr("%f", self.right_goal.trajectory.header.stamp.secs)
-            self.left_client.send_goal(self.left_goal)
-            self.right_client.send_goal(self.right_goal)
-            # self.move(joints)
-        else:
-            self.new_traj = False
-            return
+            else:
+                # joints = {"left": [], "right": []}
+                self.left_goal = FollowJointTrajectoryGoal()
+                self.right_goal = FollowJointTrajectoryGoal()
+                self.left_goal.trajectory = self.split_traj(traj_to_send,0,7)
+                self.right_goal.trajectory = self.split_traj(traj_to_send,7,0)
+                # joints["left"] = traj_point.positions[0:7]
+                # joints["right"] = traj_point.positions[7:]
+                # self._goal.trajectory.header.stamp = rospy.Time.now()
+                self.left_goal.trajectory.header.stamp = rospy.Time.now()
+                self.right_goal.trajectory.header.stamp = rospy.Time.now()
+                self.left_goal.trajectory.joint_names = self.left_joint_names
+                self.right_goal.trajectory.joint_names = self.right_joint_names
+                # rospy.logerr("%f", self.left_goal.trajectory.header.stamp.secs)
+                # rospy.logerr("%f", self.right_goal.trajectory.header.stamp.secs)
+                self.left_client.send_goal(self.left_goal)
+                self.right_client.send_goal(self.right_goal)
+                self.left_client.wait_for_result(timeout=rospy.Duration(5.0))
+                self.right_client.wait_for_result(timeout=rospy.Duration(5.0))
+                # self.move(joints)
         self.new_traj = False
+
 
     def split_traj(self, traj, start, end):
         new_traj = deepcopy(traj)
@@ -139,12 +147,15 @@ class Trajectory_Controller:
     
     def interpolate_trajectory(self, time_from_start):
         if len(self.traj.points) == 0:
-            rospy.info("Traj length is 0")
+            rospy.loginfo("Traj length is 0")
             return None
         for j in range(len(self.traj.points)):
             point = self.traj.points[j]
             # print "time_from_start: ", type(time_from_start)
             # print "point.time_from_start: ", type(point.time_from_start)
+            if type(time_from_start) != type(point.time_from_start):
+                print "Time from start: ", type(time_from_start)
+                print "Point Time from Start: ", type(point.time_from_start)
             if time_from_start <= point.time_from_start:
                 # We are passed our time, good sign, now we interpolate
                 if j == 0:
