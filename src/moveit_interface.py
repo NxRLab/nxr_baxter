@@ -17,7 +17,7 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 
 import baxter_interface
 import baxter_dataflow
-from geometry_msg.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped
 # from std_msgs.msg import Header
 from nxr_baxter_msgs.srv import *
 
@@ -47,7 +47,7 @@ class Trajectory_Controller:
             # Send the points at that time to move
             traj_point = self.interpolate_trajectory(time_from_start)
             if traj_point == None:
-                rospy.logwarn("timer_callback")
+                # rospy.logwarn("timer_callback")
                 return
             joints = {"left": [], "right": []}
             joints["left"] = traj_point.positions[0:7]
@@ -115,7 +115,7 @@ if __name__=='__main__':
 
     both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
 
-    planning_scene = moveit_commander.PlanningSceneInterface()
+    scene = moveit_commander.PlanningSceneInterface()
 
     rospy.loginfo('Sitting here.')
     rospy.sleep(3.0)
@@ -155,7 +155,7 @@ if __name__=='__main__':
                 try:
                     both_arms_group.set_joint_value_target(joints)
                     traj_controller.push(both_arms_group.plan())
-                except MoveitCommanderException, e:
+                except moveit_commander.MoveItCommanderException, e:
 	                rospy.logwarn("Error setting joint target, target not within bounds.")
                 # both_arms_group.go()
             else:
