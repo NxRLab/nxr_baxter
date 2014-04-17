@@ -154,13 +154,15 @@ class Mime():
                 else:
                     s1 = -theta
                 angles = a['right']
+                # Assume moveit will avoid wall
+                angles.append(s0)
                 # s0 assignment in safe range
-                if -0.25 < s0 and s0 < 1.60:
-                    angles.append(s0)
-                elif -0.25 < s0:
-                    angles.append(1.60)
-                else:
-                    angles.append(-0.25)
+                # if -0.25 < s0 and s0 < 1.60:
+                #     angles.append(s0)
+                # elif -0.25 < s0:
+                #     angles.append(1.60)
+                # else:
+                #     angles.append(-0.25)
 
 
             elif arm=='right':
@@ -178,13 +180,15 @@ class Mime():
                 w0 = -w0
                 w2 = -w2
                 angles = a['left']
-                # s0 assignment in safe range
-                if -1.60 < s0 and s0 < 0.25:
-                    angles.append(s0)
-                elif -1.60 < s0:
-                    angles.append(0.25)
-                else:
-                    angles.append(-1.60)
+                # Assume moveit will avoid walls
+                angles.append(s0)
+                # # s0 assignment in safe range
+                # if -1.60 < s0 and s0 < 0.25:
+                #     angles.append(s0)
+                # elif -1.60 < s0:
+                #     angles.append(0.25)
+                # else:
+                #     angles.append(-1.60)
 
             # s1 assignment in safe range
             if -2.00 < s1 and s1 < 0.90:
