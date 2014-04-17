@@ -117,6 +117,9 @@ if __name__=='__main__':
 
     planning_scene = moveit_commander.PlanningSceneInterface()
 
+    rospy.loginfo('Sitting here.')
+    rospy.sleep(3.0)
+
     robot = moveit_commander.RobotCommander()
 
     # Add in objects
@@ -132,12 +135,12 @@ if __name__=='__main__':
     # p.pose.position.y = 0.0
     # p.pose.position.z = (-13.0625)*2.54/100.0
     # scene.add_box("table", p, (24*2.54/100.0, 48*2.54/100.0, 1.125*2.54*100))
-    p.pose.position.x = 0.0
-    p.pose.position.y = -52.5*2.54/100.0
-    p.pose.position.z = 0.0
-    scene.add_plane("right_wall", p, normal=(0, 1, 0))
-    p.pose.position.y = 54*2.54/100.0
-    scene.add_plane("left_wall", p, normal=(0, -1, 0))
+    # p.pose.position.x = 0.0
+    # p.pose.position.y = -52.5*2.54/100.0
+    # p.pose.position.z = 0.0
+    # scene.add_plane("right_wall", p, normal=(0, 1, 0))
+    # p.pose.position.y = 54*2.54/100.0
+    # scene.add_plane("left_wall", p, normal=(0, -1, 0))
 
     traj_controller = Trajectory_Controller()
 
