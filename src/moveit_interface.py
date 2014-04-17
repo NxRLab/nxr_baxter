@@ -51,14 +51,12 @@ class Trajectory_Controller:
         ns_left = 'robot/limb/left/'
         ns_right = 'robot/limb/right/'
 
-        self.left_client = actionlib.SimpleActionClient(
-            ns_left + "follow_joint_trajectory",
-            FollowJointTrajectoryAction,
-        )
-        self.right_client = actionlib.SimpleActionClient(
-            ns_right + "follow_joint_trajectory",
-            FollowJointTrajectoryAction,
-        )
+        self.left_client = actionlib.SimpleActionClient(ns_left +
+                                                        "follow_joint_trajectory",
+                                                        FollowJointTrajectoryAction)
+        self.right_client = actionlib.SimpleActionClient(ns_right +
+                                                         "follow_joint_trajectory",
+                                                         FollowJointTrajectoryAction)
 
         self.left_goal = FollowJointTrajectoryGoal()
         self.right_goal = FollowJointTrajectoryGoal()
@@ -85,7 +83,7 @@ class Trajectory_Controller:
         # self.right_goal.trajectory.joint_names = self.right_joint_names
         # self.left_client.send_goal(self.left_goal)
         # self.right_client.send_goal(self.right_goal)
-        self.timer = rospy.Timer(rospy.Duration(0.1), self.timer_callback_start, oneshot=True)
+        self.timer = rospy.Timer(rospy.Duration(0.2), self.timer_callback_start, oneshot=True)
         # while not rospy.is_shutdown():
         #     self.timer_callback()
         #     rospy.sleep(0.001)
@@ -119,10 +117,12 @@ class Trajectory_Controller:
                 self.right_goal.trajectory.joint_names = self.right_joint_names
                 # rospy.logerr("%f", self.left_goal.trajectory.header.stamp.secs)
                 # rospy.logerr("%f", self.right_goal.trajectory.header.stamp.secs)
+                self.left_client.cancel_goal()
+                self.right_client.cancel_goal()
                 self.left_client.send_goal(self.left_goal)
                 self.right_client.send_goal(self.right_goal)
-                self.left_client.wait_for_result(timeout=rospy.Duration(5.0))
-                self.right_client.wait_for_result(timeout=rospy.Duration(5.0))
+                self.left_client.wait_for_result(timeout=rospy.Duration(0.2))
+                self.right_client.wait_for_result(timeout=rospy.Duration(0.2))
                 # self.move(joints)
         self.new_traj = False
 
@@ -153,10 +153,12 @@ class Trajectory_Controller:
             point = self.traj.points[j]
             # print "time_from_start: ", type(time_from_start)
             # print "point.time_from_start: ", type(point.time_from_start)
-            if type(time_from_start) != type(point.time_from_start):
+            time_to_use = point.time_from_start
+            if type(time_from_start) != type(time_to_use):
                 print "Time from start: ", type(time_from_start)
-                print "Point Time from Start: ", type(point.time_from_start)
-            if time_from_start <= point.time_from_start:
+                print "Point Time from Start: ", type(time_to_use)
+                time_to_use = time_to_use.to_sec()
+            if time_from_start <= time_to_use:
                 # We are passed our time, good sign, now we interpolate
                 if j == 0:
                     # First point is after us, lets use that one
