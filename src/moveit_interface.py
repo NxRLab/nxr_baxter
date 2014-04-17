@@ -122,11 +122,16 @@ if __name__=='__main__':
     # Add in objects
     p = PoseStamped()
     p.header.frame_id = robot.get_planning_frame()
-    # Table
-    p.pose.position.x = (23.5 + 4.25 + 12)*2.54/100.0
-    p.pose.position.y = 0.0
-    p.pose.position.z = (-13.0625)*2.54/100.0
-    scene.add_box("table", p, (24*2.54/100.0, 48*2.54/100.0, 1.125*2.54*100))
+
+    p.pose.position.x = 1.0
+    p.pose.position.y = 0.025
+    p.pose.position.z = -0.6
+    scene.add_box("table", p, (0.8, 1.25, 0.8))
+    # # Table
+    # p.pose.position.x = (23.5 + 4.25 + 12)*2.54/100.0
+    # p.pose.position.y = 0.0
+    # p.pose.position.z = (-13.0625)*2.54/100.0
+    # scene.add_box("table", p, (24*2.54/100.0, 48*2.54/100.0, 1.125*2.54*100))
     p.pose.position.x = 0.0
     p.pose.position.y = -52.5*2.54/100.0
     p.pose.position.z = 0.0
