@@ -506,8 +506,9 @@ if __name__=='__main__':
     rospy.logdebug("node starting")
     Baxter_Controller()
 
-    while not rospy.is_shutdown():
-        rospy.spin()
+    # while not rospy.is_shutdown():
+    #     rospy.spin()
+    rospy.spin()
     
     rospy.loginfo("Baxter Controller shutting down.")
     
