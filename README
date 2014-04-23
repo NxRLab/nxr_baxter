@@ -2,17 +2,23 @@ Things that need to be done for Baxter
 
 More testing!
 
-- May need to include something to check if the skeleton tracker can't start up properly. It may also just reset on its own, not sure.
+Run this command to get the correct URDF,
+fork the moveit repo and update it with the changes I've made.
+rosparam get -p /robot_description | tail -n +2 > baxter.urdf
 
-- Do everything with MOVEIT
+May be an issue with using the _gripper_base jiont or link
+https://groups.google.com/a/rethinkrobotics.com/forum/#!searchin/brr-users/baxter$20srdf/brr-users/-GnnPFXAPbc/vYpUsaI55qoJ
 
-- Pull changes into NxR-Baxter
+Also, use IKFast plugins instead of KDL solver?
+See here: https://github.com/RethinkRobotics/sdk-docs/wiki/MoveIt-Tutorial#ikfast
+Make sure to set goal tolerance
 
 - Maybe replace crane game with memory game for now
 
--More modular? Crane prep and crane-go modes for example?
+- More modular? Crane prep and crane-go modes for example?
 
--Include image for kinect restart mode
+- Weird slow-down mode, other issues with skeleton tracker. Need a way to start
+  it up right if it doesn't start up.
 
 
 Longer-term

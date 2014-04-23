@@ -20,11 +20,19 @@ import baxter_dataflow
 # OTHER IMPORTS: #
 ####################
 import os
+import sys
 import traceback
 import threading
 import Queue
 import math
 import numpy as np
+import subprocess
+
+# ##################
+# # MOVEIT Imports #
+# ##################
+# import moveit_commander
+# import moveit_msgs.msg
 
 ###############
 # NU IMPORTS: #
@@ -41,11 +49,15 @@ from vector_operations import (make_vector_from_POINTS,
 import skeleton_filter as sf
 import image_switcher as imgswitch
 
-#Messages for meat-mode
+#Messages for meta-mode
 from nxr_baxter_msgs.msg import MetaMode
-from nxr_baxter_msgs.srv import ChangeMetaMode
+# from nxr_baxter_msgs.srv import ChangeMetaMode
 
-DOWN_SAMPLE = 5
+#Service for providing desired joint values
+from nxr_baxter_msgs.srv import *
+
+# Don't need to down sample, we are sort of already doing that by default.
+DOWN_SAMPLE = 15
 
 class Baxter_Controller:
     """
@@ -80,8 +92,6 @@ class Baxter_Controller:
         rospy.loginfo("Enabling motors...")
         self.rs.enable()
 
-        self.left_arm = baxter_interface.limb.Limb('left')
-        self.right_arm = baxter_interface.limb.Limb('right')
         self.gripper = baxter_interface.Gripper('right')
         self.mime_l_angles = {'left_s0': 0.35, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 0.00, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
         self.mime_r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 0.00, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
@@ -125,34 +135,35 @@ class Baxter_Controller:
         self.internal_mode = None
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
+        # Set up the joint value service
+        self.new_vals = True
+        self.joints = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
+        self.joint_val_service = rospy.Service('joint_values', JointValues, self.joint_values_callback)
+        self.enable()
+
     # what does timeout do?
-    def setup_move_thread(self, limb, mode, queue, timeout=15.0):
+    def setup_move_thread(self, mode):
         if mode == 'crane':
-            if limb == 'left':
-                self.left_arm.move_to_joint_positions(self.crane_l_angles)
-            elif limb == 'right':
-                self.right_arm.move_to_joint_positions(self.crane_r_angles)
+            self.joints = dict(self.crane_r_angles, **self.crane_l_angles)
+            self.new_vals = True
         elif mode == 'mime':
-            if limb == 'left':
-                self.left_arm.move_to_joint_positions(self.mime_l_angles)
-            elif limb == 'right':
-                self.right_arm.move_to_joint_positions(self.mime_r_angles)
+            self.joints = dict(self.mime_r_angles, **self.mime_l_angles)
+            self.new_vals = True
 
     # What does tiemout do?
-    def setup_gripper_thread(self, timeout=15.0):
+    def setup_gripper_thread(self):
         self.gripper.reboot()
         self.gripper.calibrate()
 
-    def disable_move_thread(self, limb, queue, timeout=15.0):
+    def disable_move_thread(self):
         """
         Handles moving to disable position for each arm's thread
         """
-        l_angles = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
-        r_angles = {'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
-        if limb == 'left':
-            self.left_arm.move_to_joint_positions(l_angles)
-        elif limb == 'right':
-            self.right_arm.move_to_joint_positions(r_angles)
+        self.rs.reset()
+        self.rs.enable()
+        self.joints = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
+        self.new_vals = True
+        rospy.sleep(2.0)
 
     def choose_user(self, skeletons):
         """
@@ -208,62 +219,15 @@ class Baxter_Controller:
 
     def choose_crane(self):
         rospy.logdebug("Calling choose_crane...")
-
         self.img_switch.change_mode('crane_prep',3)
-
-        left_queue = Queue.Queue()
-        right_queue = Queue.Queue()
-        gripper_queue = Queue.Queue()
-        left_thread = threading.Thread(target=self.setup_move_thread,
-                                       args=('left', 'crane', left_queue))
-        right_thread = threading.Thread(target=self.setup_move_thread,
-                                        args=('right', 'crane', right_queue))
-        gripper_thread = threading.Thread(target=self.setup_gripper_thread)
-        left_thread.daemon = True
-        right_thread.daemon = True
-        gripper_thread.daemon = True
-        left_thread.start()
-        right_thread.start()
-        gripper_thread.start()
-        baxter_dataflow.wait_for(
-            lambda: not (left_thread.is_alive() or right_thread.is_alive() or
-                         gripper_thread.is_alive()), timeout=20.0,
-                         timeout_msg=(
-                            "Timeout while waiting for arm move threads to finish"),
-                            rate=10,
-            )
-        left_thread.join()
-        right_thread.join()
-        gripper_thread.join()
-
+        self.setup_move_thread('crane')
         self.userid_chosen = True
         rospy.loginfo("Main user chosen.\nUser %s, please proceed.", str(self.main_userid))
 
     def choose_mime(self):
-        rospy.logdebug("Calling choose_crane...")
+        rospy.logdebug("Calling choose_mime...")
         self.img_switch.change_mode('mime_prep', 3)
-        left_queue = Queue.Queue()
-        right_queue = Queue.Queue()
-        left_thread = threading.Thread(target=self.setup_move_thread,
-                                       args=('left', 'mime', left_queue))
-        right_thread = threading.Thread(target=self.setup_move_thread,
-                                        args=('right', 'mime', right_queue))
-        left_thread.daemon = True
-        right_thread.daemon = True
-        left_thread.start()
-        right_thread.start()
-        baxter_dataflow.wait_for(
-            lambda: not (left_thread.is_alive() or
-                        right_thread.is_alive()),
-                        timeout=20.0,
-                        timeout_msg=(
-                            "Timeout while waiting for arm move threads to finish"
-                            ),
-                        rate=10,
-        )
-        left_thread.join()
-        right_thread.join()
-
+        self.setup_move_thread('mime')
         self.userid_chosen = True
         rospy.loginfo("Main user chosen.\nUser %s, please proceed.", str(self.main_userid))
 
@@ -290,17 +254,15 @@ class Baxter_Controller:
         rh_x = skeleton.right_hand.transform.translation.y
         tor_y = skeleton.torso.transform.translation.y
         tor_x = skeleton.torso.transform.translation.x
-        # if choice == 'left':
         if self.internal_mode == MetaMode.CRANE:
             dy = math.fabs(tor_y - lh_y)
             dx = math.fabs(lh_x - tor_x)
             #These tolerances have been causing problems
-            # if dy < 0.08 and dx > 0.4:
-            if dy < 0.1 and dx > 0.2:
+            if dy < 0.08 and dx > 0.4:
+            # if dy < 0.1 and dx > 0.2:
                 self.img_switch.change_mode('positioned',0)
                 rospy.sleep(0.5) # try a 1/2 second delay
                 return True
-        # elif (choice == 'right'):
         elif self.internal_mode == MetaMode.MIME:
             dy = math.fabs(tor_y - lh_y) + math.fabs(tor_y - rh_y)
             dx = math.fabs(lh_x - tor_x) + math.fabs(rh_x - tor_x)
@@ -342,7 +304,9 @@ class Baxter_Controller:
         
 
         if self.mime_count % DOWN_SAMPLE == 0:
-            self.mime.move(l_sh, l_el, l_ha, r_sh, r_el, r_ha)
+            self.joints = self.mime.desired_joint_vals(l_sh, l_el, l_ha,
+                                                       r_sh, r_el, r_ha)
+            self.new_vals = True
             self.mime_count = 0
 
     def crane_go(self, skeleton):
@@ -361,9 +325,10 @@ class Baxter_Controller:
         r_ha = skeleton.right_hand.transform.translation
 
         if self.crane_count % DOWN_SAMPLE == 0:
-            self.crane.move(l_sh, l_el, l_ha, r_sh, r_el, r_ha)
+            self.joints = self.crane.desired_joint_vals(l_sh, l_el, l_ha,
+                                                        r_sh, r_el, r_ha)
+            self.new_vals = True
             self.crane_count = 0
-    
 
     #######################
     # SUBSCRIBER CALLBACK #
@@ -394,7 +359,6 @@ class Baxter_Controller:
         # Chooses and sticks to one main user throughout
         if self.userid_chosen == False:
             # We haven't previously chosen a user.
-            # self.choice = self.choose_user(data.skeletons)
             self.choose_user(data.skeletons)
             # Don't think we need self.choice
             self.first_filt_flag = True
@@ -412,7 +376,6 @@ class Baxter_Controller:
             left_ratio = (y_LH - y_torso) / y_torso
             right_ratio = (y_RH - y_torso) / y_torso
 
-
             dx = p2_x - p1_x
             dz = p2_z - p1_z
             if not (math.fabs(dx) > 0.10 and math.fabs(dz) > 0.10 and left_ratio > 0.5 and right_ratio > 0.5):
@@ -424,7 +387,6 @@ class Baxter_Controller:
         # Instead of self.userid_choice == False
         elif self.action_chosen == False and found:
             #There is a user, they are in position, time to start the actual action
-            # self.choose_action(skel, self.choice)
             if self.internal_mode == MetaMode.MIME:
                 rospy.loginfo("    Action chosen: Mime\n")
                 self.mime = Mime()
@@ -464,7 +426,6 @@ class Baxter_Controller:
                 self.reset_booleans()
 
         elif not found:
-            rospy.loginfo("not found")
             self.reset_booleans()
 
     def meta_mode_callback(self, data):
@@ -502,31 +463,10 @@ class Baxter_Controller:
         rospy.logdebug("Calling enable...")
         #Enable motors
         rospy.loginfo("Enabling baxter_controller.py")
+        self.disable_move_thread()
         self.rs.reset()
         self.rs.enable()
-        left_queue = Queue.Queue()
-        right_queue = Queue.Queue()
-        
-        left_thread = threading.Thread(target=self.disable_move_thread, args=('left', 'mime', left_queue))
-        right_thread = threading.Thread(target=self.disable_move_thread, args=('right', 'mime', right_queue))
-        
-        left_thread.daemon = True
-        right_thread.daemon = True
-        
-        left_thread.start()
-        right_thread.start()
-        
-        baxter_dataflow.wait_for(
-            lambda: not (left_thread.is_alive() or right_thread.is_alive()),
-            timeout=20.0,
-            timeout_msg=("Timeout while waiting for arm move threads to finish"),
-            rate=10,
-        )
-        
-        left_thread.join()
-        right_thread.join()
-        self.rs.reset()
-        self.rs.enable()
+        self.setup_gripper_thread()
         rospy.sleep(2.0)
         self.bool_reset()
         self.img_switch.change_mode('top',3)
@@ -540,14 +480,34 @@ class Baxter_Controller:
         self.left_hand_timer = 0
         self.right_hand_timer = 0
 
+    def joint_values_callback(self, req):
+        """
+        This callback handles publishing the most recent joint values
+        """
+        resp = JointValuesResponse()
+        if self.new_vals:
+            # Publish the new values
+            resp.new_values = True
+            resp.joint_names = self.joints.keys()
+            resp.joint_values = self.joints.values()
+            self.new_vals = False
+        else:
+            resp.new_values = False
+            resp.joint_names = []
+            resp.joint_values = []
+        return resp
+
 if __name__=='__main__':
-    print("\nInitializing Baxter Controller node... ")
+    rospy.loginfo("Starting joint trajectory action server")
+    cmd = 'rosrun baxter_interface joint_trajectory_action_server.py'
+    subprocess.Popen(cmd,shell=True)
+    rospy.loginfo("\nInitializing Baxter Controller node... ")
     rospy.init_node('Baxter_Controller', log_level=rospy.INFO)
     rospy.logdebug("node starting")
     Baxter_Controller()
 
-    done = False # when does this get flipped?
-    while not done and not rospy.is_shutdown():
+    while not rospy.is_shutdown():
         rospy.spin()
-
-    print("\n\nDone.")
+    
+    rospy.loginfo("Baxter Controller shutting down.")
+    

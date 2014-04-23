@@ -1,7 +1,13 @@
 <launch>
 
 	<!-- <include file="$(find skeletontracker_nu)/launch/nu_skeletontracker.launch"/> -->
+	<include file="$(find baxter_moveit_config)/launch/planning_context.launch">
+	  <arg name="load_robot_description" value="true"/>
+	</include>
 
-	<node pkg="nxr_baxter" type="tracker_heartbeat.py" name="skel_tracker_heartbeat" output="screen" respawn="true" />
-
+	<include file="$(find baxter_moveit_config)/launch/move_group.launch">
+	  <arg name="allow_trajectory_execution" value="true"/>
+	</include>
+	
+	<node pkg="nxr_baxter" type="test_plan_speeds.py" name="planning_test" output="screen"/>
 </launch>
