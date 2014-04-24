@@ -6,8 +6,13 @@ May be an issue with using the _gripper_base jiont or link
 https://groups.google.com/a/rethinkrobotics.com/forum/#!searchin/brr-users/baxter$20srdf/brr-users/-GnnPFXAPbc/vYpUsaI55qoJ
 
 Set up sudo service udev reload to run without sudo
+
 Check if skeleton tracker is starting up properly
+-Starting to do this now
+
 Update "baxter sleeping" image
+
+Crane game with Cartesian space controls and orientation DOWN, no roll, 90degree down pitch, no yaw.
 
 - Maybe replace crane game with memory game for now
 
