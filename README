@@ -2,16 +2,12 @@ Things that need to be done for Baxter
 
 More testing!
 
-Run this command to get the correct URDF,
-fork the moveit repo and update it with the changes I've made.
-rosparam get -p /robot_description | tail -n +2 > baxter.urdf
-
 May be an issue with using the _gripper_base jiont or link
 https://groups.google.com/a/rethinkrobotics.com/forum/#!searchin/brr-users/baxter$20srdf/brr-users/-GnnPFXAPbc/vYpUsaI55qoJ
 
-Also, use IKFast plugins instead of KDL solver?
-See here: https://github.com/RethinkRobotics/sdk-docs/wiki/MoveIt-Tutorial#ikfast
-Make sure to set goal tolerance
+Max_x = 1.27
+Min_x = -1.48
+Clip using these?
 
 - Maybe replace crane game with memory game for now
 
