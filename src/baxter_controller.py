@@ -344,8 +344,14 @@ class Baxter_Controller:
         if self.userid_chosen == True:
             #A user has been chosen by a previous run
             found = False
-            #Check if they are still in the frame by running through all the skeletons in the frame
+            #Check if they are still in the frame by running through all the
+            #skeletons in the frame
             for skeleton in data.skeletons:
+                #Check if out of bounds
+                if skel_out_of_bounds(skeleton):
+                    rospy.logdebug("Skeleton %d is out of bounds and being clipped.",
+                                   skeleton.userid)
+                    continue
                 if skeleton.userid == self.main_userid:
                     skel_raw = skeleton
                     if self.first_filt_flag:
@@ -496,6 +502,15 @@ class Baxter_Controller:
             resp.joint_names = []
             resp.joint_values = []
         return resp
+
+def skel_out_of_bounds(skel):
+    MAX_X = 1.1 #Meters, taken from empirical testing
+    MIN_X = -1.2
+    x = skel.torso.transform.translation.x
+    if x < MIN_X or x > MAX_X:
+        return True
+    else:
+        return False
 
 if __name__=='__main__':
     rospy.loginfo("Starting joint trajectory action server")
