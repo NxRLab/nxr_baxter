@@ -43,50 +43,10 @@ class Trajectory_Controller:
         self.left_arm = baxter_interface.Limb('left')
         self.right_arm = baxter_interface.Limb('right')
 
-        # self.left_joint_names = ['left_s0', 'left_s1', 'left_e0', 'left_e1',
-        #                          'left_w0', 'left_w1', 'left_w2']
-        # self.right_joint_names = ['right_s0', 'right_s1', 'right_e0', 'right_e1',
-        #                          'right_w0', 'right_w1', 'right_w2']
-
-        # ns_left = 'robot/limb/left/'
-        # ns_right = 'robot/limb/right/'
-
-        # self.left_client = actionlib.SimpleActionClient(ns_left +
-        #                                                 "follow_joint_trajectory",
-        #                                                 FollowJointTrajectoryAction)
-        # self.right_client = actionlib.SimpleActionClient(ns_right +
-        #                                                  "follow_joint_trajectory",
-        #                                                  FollowJointTrajectoryAction)
-
-        # self.left_goal = FollowJointTrajectoryGoal()
-        # self.right_goal = FollowJointTrajectoryGoal()
-        # server_up_left = self.left_client.wait_for_server(timeout=rospy.Duration(10.0))
-        # server_up_right = self.right_client.wait_for_server(timeout=rospy.Duration(10.0))
-        # if not server_up_left or not server_up_right:
-        #     rospy.logerr("Timeout waiting for JTAS")
-        #     rospy.signal_shutdown("Timed out waiting...")
-        #     sys.exit(1)
-
-        # # self.pub_rate = rospy.Publisher('/robot/joint_state_publish_rate', UInt16)
-        # # self.pub_rate.publish(500)
-        # self.new_traj = False
         self.traj = None
 
-        # self.left_goal.trajectory = self.split_traj(traj, 0, 7)
-        # self.right_goal.trajectory = self.split_traj(traj, 7, 0)
-        # self.left_goal.trajectory.header.stamp = rospy.Time.now()
-        # self.right_goal.trajectory.header.stamp = rospy.Time.now()
-        # for i in range(len(self.left_goal.trajectory.points)):
-        #     self.left_goal.trajectory.points[i].time_from_start = rospy.Duration(self.left_goal.trajectory.points[i].time_from_start)
-        #     self.right_goal.trajectory.points[i].time_from_start = rospy.Duration(self.right_goal.trajectory.points[i].time_from_start)
-        # self.left_goal.trajectory.joint_names = self.left_joint_names
-        # self.right_goal.trajectory.joint_names = self.right_joint_names
-        # self.left_client.send_goal(self.left_goal)
-        # self.right_client.send_goal(self.right_goal)
         self.timer = rospy.Timer(rospy.Duration(0.2), self.timer_callback, oneshot=False)
-        # while not rospy.is_shutdown():
-        #     self.timer_callback()
-        #     rospy.sleep(0.001)
+
 
     def timer_callback(self,event):
         if self.traj != None:

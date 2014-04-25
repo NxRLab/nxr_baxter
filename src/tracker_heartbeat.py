@@ -21,6 +21,7 @@ from nxr_baxter_msgs.srv import *
 import os
 import signal
 import subprocess
+import threading
 
 # Function taken from Jarvis/Jon's script to kill all child processes
 def terminate_process_and_children(p):
@@ -68,6 +69,7 @@ class Heartbeat_Monitor:
         # We will launch openni and start the skeleton tracker here.
         self.openni_proc = None
         self.skel_tracker_proc = None
+        self.passthrough_thread = None
         self.launch_processes()
 
 
@@ -182,17 +184,24 @@ class Heartbeat_Monitor:
             rospy.loginfo("Launching skeleton tracker...")
             cmd = 'rosrun skeletontracker_nu skeletontracker'
             self.skel_tracker_proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE)
+            if self.passthrough_thread == None:
+                self.passthrough_thread = threading.Thread(target=self.passthrough)
+                self.passthrough_thread.start()
             rospy.sleep(2.0)
-            if self.skel_tracker_proc.poll():
-                rospy.logerr("stdout: %s",self.skel_tracker_proc.stdout.readline())
-            else:
-                # self.skel_tracker_proc.stdout = None
-                rospy.logerr("Skeletontracker is running")
-                for l in self.skel_tracker_proc.stdout.readlines():
-                    print l
+            # if self.skel_tracker_proc.poll():
+            #     rospy.logerr("stdout: %s",self.skel_tracker_proc.stdout.readline())
+            # else:
+            #     # self.skel_tracker_proc.stdout = None
+            #     rospy.logerr("Skeletontracker is running")
+            #     for l in self.skel_tracker_proc.stdout.readlines():
+            #         print l
         else:
             rospy.logwarn("Trying to start skeleton tracker thread while it is already running.")
             rospy.loginfo("self.openni_proc.poll() returns %d " % self.openni_proc.poll())
+
+    def passthrough(self):
+        while not rospy.is_shutdown() and self.skel_tracker_proc != None and self.skel_tracker_proc.poll() == None:
+            rospy.loginfo("skel tracker: %s", self.skel_tracker_proc.stdout.readline())
 
 
 class Heartbeat_List:
