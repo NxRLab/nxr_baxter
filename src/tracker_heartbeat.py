@@ -181,10 +181,15 @@ class Heartbeat_Monitor:
         if self.skel_tracker_proc == None or self.skel_tracker_proc.poll() != None:
             rospy.loginfo("Launching skeleton tracker...")
             cmd = 'rosrun skeletontracker_nu skeletontracker'
-            self.skel_tracker_proc = subprocess.Popen(cmd,shell=True,stdout=PIPE,stderr=PIPE)
+            self.skel_tracker_proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE)
             rospy.sleep(2.0)
-            rospy.logerr("stdout: %s",self.skel_tracker_proc.stdout.read())
-            rospy.logerr("stdout: %s",self.skel_tracker_proc.stderr.read())
+            if self.skel_tracker_proc.poll():
+                rospy.logerr("stdout: %s",self.skel_tracker_proc.stdout.readline())
+            else:
+                # self.skel_tracker_proc.stdout = None
+                rospy.logerr("Skeletontracker is running")
+                for l in self.skel_tracker_proc.stdout.readlines():
+                    print l
         else:
             rospy.logwarn("Trying to start skeleton tracker thread while it is already running.")
             rospy.loginfo("self.openni_proc.poll() returns %d " % self.openni_proc.poll())

@@ -9,6 +9,7 @@ Set up sudo service udev reload to run without sudo
 
 Check if skeleton tracker is starting up properly
 -Starting to do this now
+-- Need to constantly print that output I think...
 
 Update "baxter sleeping" image
 
