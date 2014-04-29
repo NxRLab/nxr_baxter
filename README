@@ -6,10 +6,12 @@ May be an issue with using the _gripper_base jiont or link
 https://groups.google.com/a/rethinkrobotics.com/forum/#!searchin/brr-users/baxter$20srdf/brr-users/-GnnPFXAPbc/vYpUsaI55qoJ
 
 Set up sudo service udev reload to run without sudo
+-Check back on that askubuntu thread
 
 Check if skeleton tracker is starting up properly
 -Starting to do this now
 -- Need to constantly print that output I think...
+-- Look at pexpect or doing this in C++, can also just check if the process terminated.
 
 Update "baxter sleeping" image
 

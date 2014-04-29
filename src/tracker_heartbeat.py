@@ -183,7 +183,11 @@ class Heartbeat_Monitor:
         if self.skel_tracker_proc == None or self.skel_tracker_proc.poll() != None:
             rospy.loginfo("Launching skeleton tracker...")
             cmd = 'rosrun skeletontracker_nu skeletontracker'
-            self.skel_tracker_proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE)
+            # self.skel_tracker_proc = subprocess.Popen(cmd,shell=True)
+            self.skel_tracker_proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,
+                                                      stderr=subprocess.PIPE,
+                                                      universal_newlines=True,
+                                                      bufsize=2)
             if self.passthrough_thread == None:
                 self.passthrough_thread = threading.Thread(target=self.passthrough)
                 self.passthrough_thread.start()
@@ -200,8 +204,13 @@ class Heartbeat_Monitor:
             rospy.loginfo("self.openni_proc.poll() returns %d " % self.openni_proc.poll())
 
     def passthrough(self):
-        while not rospy.is_shutdown() and self.skel_tracker_proc != None and self.skel_tracker_proc.poll() == None:
+        while not rospy.is_shutdown() and self.skel_tracker_proc != None:
+            # (stdoutdata, stderrdata) = self.skel_tracker_proc.communicate()
+            # self.skel_tracker_proc.poll()
+            # sys.stdout.flush()
             rospy.loginfo("skel tracker: %s", self.skel_tracker_proc.stdout.readline())
+            # sys.stdout.flush()
+            # rospy.loginfo("skel tracker: %s, %s", stdoutdata.decode(), stderrdata)
 
 
 class Heartbeat_List:
