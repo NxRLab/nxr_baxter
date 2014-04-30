@@ -136,7 +136,7 @@ class Baxter_Controller:
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
         # Set up the joint value service
-        self.new_vals = True
+        self.new_vals_joints = True
         self.joints = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
         self.joint_val_service = rospy.Service('joint_values', JointValues, self.joint_values_callback)
         self.enable()
@@ -145,10 +145,10 @@ class Baxter_Controller:
     def setup_move_thread(self, mode):
         if mode == 'crane':
             self.joints = dict(self.crane_r_angles, **self.crane_l_angles)
-            self.new_vals = True
+            self.new_vals_joints = True
         elif mode == 'mime':
             self.joints = dict(self.mime_r_angles, **self.mime_l_angles)
-            self.new_vals = True
+            self.new_vals_joints = True
 
     # What does tiemout do?
     def setup_gripper_thread(self):
@@ -162,7 +162,7 @@ class Baxter_Controller:
         self.rs.reset()
         self.rs.enable()
         self.joints = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
-        self.new_vals = True
+        self.new_vals_joints = True
         rospy.sleep(2.0)
 
     def choose_user(self, skeletons):
@@ -306,7 +306,7 @@ class Baxter_Controller:
         if self.mime_count % DOWN_SAMPLE == 0:
             self.joints = self.mime.desired_joint_vals(l_sh, l_el, l_ha,
                                                        r_sh, r_el, r_ha)
-            self.new_vals = True
+            self.new_vals_joints = True
             self.mime_count = 0
 
     def crane_go(self, skeleton):
@@ -323,12 +323,17 @@ class Baxter_Controller:
         r_sh = skeleton.right_shoulder.transform.translation
         r_el = skeleton.right_elbow.transform.translation
         r_ha = skeleton.right_hand.transform.translation
+        torso = skeleton.torso.transform.translation
 
         if self.crane_count % DOWN_SAMPLE == 0:
-            self.joints = self.crane.desired_joint_vals(l_sh, l_el, l_ha,
-                                                        r_sh, r_el, r_ha)
-            self.new_vals = True
-            self.crane_count = 0
+            # self.joints = self.crane.desired_joint_vals(l_sh, l_el, l_ha,
+            #                                             r_sh, r_el, r_ha)
+            # self.new_vals_joints = True
+            # self.crane_count = 0
+            self.pose = self.crane.desired_end_pose(l_sh, l_el, l_ha,
+                                                        r_sh, r_el, r_ha, torso)
+            self.new_vals_pose = True
+            self.crane_count
 
     #######################
     # SUBSCRIBER CALLBACK #
@@ -491,12 +496,19 @@ class Baxter_Controller:
         This callback handles publishing the most recent joint values
         """
         resp = JointValuesResponse()
-        if self.new_vals:
+        if self.new_vals_joints:
             # Publish the new values
             resp.new_values = True
+            resp.val_type = 'joints'
             resp.joint_names = self.joints.keys()
             resp.joint_values = self.joints.values()
-            self.new_vals = False
+            self.new_vals_joints = False
+        elif: self.new_vals_pose:
+            # Publish the new values
+            resp.new_values = True
+            resp.val_type = 'pose'
+            resp.joint_names = self.pose.keys()
+            resp.joint_values = self.pose.values()
         else:
             resp.new_values = False
             resp.joint_names = []

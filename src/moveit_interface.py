@@ -159,13 +159,25 @@ if __name__=='__main__':
             joint_service_proxy = rospy.ServiceProxy('joint_values', JointValues)
             joint_resp = joint_service_proxy()
             if joint_resp.new_values:
-                joints = dict(zip(joint_resp.joint_names,
-                                  joint_resp.joint_values))
-                try:
-                    both_arms_group.set_joint_value_target(joints)
-                    traj_controller.push(both_arms_group.plan())
-                except moveit_commander.MoveItCommanderException, e:
-	                rospy.logwarn("Error setting joint target, target not within bounds.")
+                if "joints" in joint_resp.val_type:
+                    joints = dict(zip(joint_resp.joint_names,
+                                      joint_resp.joint_values))
+                    try:
+                        both_arms_group.set_joint_value_target(joints)
+                        traj_controller.push(both_arms_group.plan())
+                    except moveit_commander.MoveItCommanderException, e:
+                        rospy.logwarn("Error setting joint target, target not within bounds.")
+                elif "pose" in joint_resp.val_type:
+                    try:
+                        joints = dict(zip(joint_resp.joint_names,
+                                          joint_resp.joint_values))
+                        pose = [joints['x'], joints['y'], joints['z'],
+                                joints['roll'], joints['pitch'], joints['yaw']]
+                        both_arms_group.set_pose_target(pose, "eef")
+                        traj_controller.push(both_arms_group.plan())
+                    except moveit_commander.MoveItCommanderException, e:
+                        rospy.logwarn("Error setting cartesian pose target.")
+                    
             else:
                 rospy.logdebug('Got old values')
                 rospy.sleep(0.001)

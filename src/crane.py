@@ -66,25 +66,6 @@ class Crane():
         self.gripper_state_timer = 0
         self.right_arm = moveit_commander.MoveGroupCommander("right_arm")
 
-    # def set_neutral(self):
-    #     """
-    #     Moves Baxter's arm to neutral position
-    #     """
-    #     # self.arm.move_to_joint_positions(self.neutral_position)
-    #     self.right_arm.set_joint_value_target(self.neutral_position)
-    #     self.right_arm.go(wait=False)
-
-    # def is_neutral(self):
-    #     """
-    #     Checks if Baxter has reached neutral position
-    #     """
-    #     errors = map(operator.sub, self.arm.joint_angles().values(),
-    #                  self.neutral_position.values())
-    #     for error in errors:
-    #         if math.fabs(error) > 0.06:
-    #             return False
-    #         return True
-
     def desired_joint_vals(self, left_shoulder, left_elbow, left_hand,
                            right_shoulder, right_elbow, right_hand):
         """
@@ -102,6 +83,35 @@ class Crane():
                                 angles[4], angles[5], angles[6]]))
 
         return dict(self.crane_l_angles, **r_positions)
+
+    def desired_pose_vals(self, left_shoulder, left_elbow, left_hand,
+                          right_shoulder, right_elbow, right_hand, torso)
+        # Find distance from shoulder to hand for human
+        # Total arm length:
+        arm_length = (math.sqrt((left_shoulder.x - left_elbow.x)^2 +
+                                (left_shoulder.y - left_elbow.y)^2 +
+                                (left_shoulder.z - left_elbow.z)^2) +
+                        math.sqrt((left_elbow.x - left_hand.x)^2 +
+                                (left_elbow.y - left_hand.y)^2 +
+                                (left_elbow.z - left_hand.z)^2))
+        RJ_ARM_LENGTH = 41*2.54/100.0
+        #From URDF,
+        x_offset = 0.055695
+        y_offset = 0
+        z_offset = 0.011038
+        # Use left values
+        x = (left_hand.x - left_shoulder.x - torso.x)*RJ_ARM_LENGTH/arm_length + x_offset
+        y = (left_hand.y - left_shoulder.y - torso.y)*RJ_ARM_LENGTH/arm_length + y_offset
+        z = (left_hand.z - left_shoulder.z - torso.z)*RJ_ARM_LENGTH/arm_length + z_offset
+
+        # Set orientation
+        roll = 0 # Could be defined to be in line with the arm or something
+        pitch = math.pi/2.0 # Could be defined to be in line with the arm or something
+        yaw = 0
+        pose = {'x': x, 'y': y, 'z': z, 'roll': roll, 'pitch': pitch, 'yaw': yaw}
+
+        return pose
+        
 
     def move(self, left_shoulder, left_elbow, left_hand, right_shoulder, right_elbow, right_hand):
         """
