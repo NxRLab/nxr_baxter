@@ -63,14 +63,13 @@ class Heartbeat_Monitor:
         rospy.Subscriber("tracker_heartbeat", Empty, self.empty_skel_callback)
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
-        #Start the delay, and launch the regular timer after the delay_start
-        self.start_delay_timer()
-
         # We will launch openni and start the skeleton tracker here.
         self.openni_proc = None
         self.skel_tracker_proc = None
-        self.passthrough_thread = None
         self.launch_processes()
+        #Start the delay, and launch the regular timer after the delay_start and
+        #after processes have started
+        self.start_delay_timer()
 
 
     #Start the delay timer
@@ -112,9 +111,6 @@ class Heartbeat_Monitor:
             rospy.wait_for_service('change_meta_mode')
             try:
                 change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
-                # change_srv = ChangeMetaModeRequest()
-                # change_srv.mode = change_srv.RESTART_KINECT
-                # change_success = change_mode(change_srv)
                 change_resp = change_mode(ChangeMetaModeRequest.RESTART_KINECT)
                 if not change_resp.error:
                     rospy.logerr("Tried to restart Kinect, but mode change request failed.")
@@ -131,9 +127,6 @@ class Heartbeat_Monitor:
             rospy.wait_for_service('change_meta_mode')
             try:
                 change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
-                # change_srv = ChangeMetaModeRequest()
-                # change_srv.mode = change_srv.IDLE_ENABLED
-                # change_success = change_mode(change_srv)
                 change_resp = change_mode(ChangeMetaModeResponse.IDLE_ENABLED)
                 if not change_resp.error:
                     rospy.logerr("Tried to go back to idle mode, failed!")
@@ -183,34 +176,27 @@ class Heartbeat_Monitor:
         if self.skel_tracker_proc == None or self.skel_tracker_proc.poll() != None:
             rospy.loginfo("Launching skeleton tracker...")
             cmd = 'rosrun skeletontracker_nu skeletontracker'
-            # self.skel_tracker_proc = subprocess.Popen(cmd,shell=True)
-            self.skel_tracker_proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,
-                                                      stderr=subprocess.PIPE,
-                                                      universal_newlines=True,
-                                                      bufsize=2)
-            if self.passthrough_thread == None:
-                self.passthrough_thread = threading.Thread(target=self.passthrough)
-                self.passthrough_thread.start()
-            rospy.sleep(2.0)
-            # if self.skel_tracker_proc.poll():
-            #     rospy.logerr("stdout: %s",self.skel_tracker_proc.stdout.readline())
-            # else:
-            #     # self.skel_tracker_proc.stdout = None
-            #     rospy.logerr("Skeletontracker is running")
-            #     for l in self.skel_tracker_proc.stdout.readlines():
-            #         print l
+            self.skel_tracker_proc = subprocess.Popen(cmd,shell=True)
+            # self.skel_tracker_proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,
+            #                                           stderr=subprocess.PIPE,
+            #                                           universal_newlines=True,
+            #                                           bufsize=2)
+            # if self.passthrough_thread == None:
+            #     self.passthrough_thread = threading.Thread(target=self.passthrough)
+            #     self.passthrough_thread.start()
+            rospy.sleep(20.0)
+            # Check if skeleton tracker is running:
+            self.skel_tracker_proc.poll()
+            while self.skel_tracker_proc.returncode != None:
+                # Skeleton tracker has terminated
+                terminate_process_and_children(self.skel_tracker_proc)
+                rospy.sleep(2.0)
+                self.skel_tracker_proc = subprocess.Popen(cmd, shell=True)
+                rospy.sleep(20.0)
         else:
             rospy.logwarn("Trying to start skeleton tracker thread while it is already running.")
             rospy.loginfo("self.openni_proc.poll() returns %d " % self.openni_proc.poll())
 
-    def passthrough(self):
-        while not rospy.is_shutdown() and self.skel_tracker_proc != None:
-            # (stdoutdata, stderrdata) = self.skel_tracker_proc.communicate()
-            # self.skel_tracker_proc.poll()
-            # sys.stdout.flush()
-            rospy.loginfo("skel tracker: %s", self.skel_tracker_proc.stdout.readline())
-            # sys.stdout.flush()
-            # rospy.loginfo("skel tracker: %s, %s", stdoutdata.decode(), stderrdata)
 
 
 class Heartbeat_List:
