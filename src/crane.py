@@ -110,6 +110,16 @@ class Crane():
         yaw = 0
         pose = {'x': x, 'y': y, 'z': z, 'roll': roll, 'pitch': pitch, 'yaw': yaw}
 
+        # Gripper Control Arm
+        r_upper_arm = make_vector_from_POINTS(right_shoulder, right_elbow)
+        r_forearm = make_vector_from_POINTS(right_elbow, right_hand)
+        # Event
+        theta = angle_between_vectors(r_upper_arm, r_forearm)
+        if theta > 0.8:
+            gripper.close()
+        else:
+            gripper.open()
+
         return pose
         
 
