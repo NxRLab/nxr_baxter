@@ -129,11 +129,15 @@ if __name__=='__main__':
     rospy.init_node('moveit_interface', log_level=rospy.INFO)
 
     both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
+    both_arms_group.allow_replanning(True)
+
+    #Try setting workspace bounds, instead of maybe checking joint limits.
+    both_arms_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
 
     scene = moveit_commander.PlanningSceneInterface()
 
     rospy.loginfo('Sitting here.')
-    rospy.sleep(3.0)
+    rospy.sleep(10.0)
 
     robot = moveit_commander.RobotCommander()
 
@@ -146,20 +150,6 @@ if __name__=='__main__':
     # scene.add_box("table", p, (0.8, 1.25, 0.8)) # Bigger box
 
     scene.add_box("table", p, (0.75, 1.25, 0.68))
-    # p = PoseStamped()
-    # p.header.frame_id = robot.get_planning_frame()
-    # p.pose.position.x = 0.0
-    # p.pose.position.y = -52.5*2.54/100.0 - 0.02
-    # p.pose.position.z = 0.0
-    # scene.add_box("right_wall", p, (2.0, 0.04, 2.0))
-    # p = PoseStamped()
-    # p.header.frame_id = robot.get_planning_frame()
-    # p.pose.position.x = 0.0
-    # p.pose.position.y = -54*2.54/100.0 - 0.02
-    # p.pose.position.z = 0.0
-    # scene.add_box("left_wall", p, (2.0, 0.04, 2.0))
-    # # p.pose.position.y = 54*2.54/100.0
-    # # scene.add_plane("left_wall", p, normal=(0, -1, 0))
 
     traj_controller = Trajectory_Controller()
 
