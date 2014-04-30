@@ -157,6 +157,20 @@ class Heartbeat_Monitor:
         cmd = "/home/adam-baxter/adam_groovy_ws/src/nxr_baxter_demo_package/src/restart_usb.sh"
         subprocess.call(cmd, shell=True)
 
+        #Set the flag in udev_reload.txt for the cron job to fix it
+        file_name = '/home/nxr-baxter/src/udev_reload.txt'
+        checked = False
+        while not checked:
+            try:
+                fo = open(file_name, 'w+')
+                fo.write("1")
+                fo.close()
+                checked = True
+            except IOError:
+                # file cannot be opened
+                rospy.sleep(1.0)
+                pass
+
         rospy.sleep(10.0)
         #restart processes
         self.launch_processes()
