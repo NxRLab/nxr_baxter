@@ -173,7 +173,7 @@ if __name__=='__main__':
                                           joint_resp.joint_values))
                         pose = [joints['x'], joints['y'], joints['z'],
                                 joints['roll'], joints['pitch'], joints['yaw']]
-                        both_arms_group.set_pose_target(pose, "eef")
+                        both_arms_group.set_pose_target(pose, "right_hand_eef")
                         traj_controller.push(both_arms_group.plan())
                     except moveit_commander.MoveItCommanderException, e:
                         rospy.logwarn("Error setting cartesian pose target.")

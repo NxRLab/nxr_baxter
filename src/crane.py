@@ -85,15 +85,15 @@ class Crane():
         return dict(self.crane_l_angles, **r_positions)
 
     def desired_pose_vals(self, left_shoulder, left_elbow, left_hand,
-                          right_shoulder, right_elbow, right_hand, torso)
+                          right_shoulder, right_elbow, right_hand, torso):
         # Find distance from shoulder to hand for human
         # Total arm length:
-        arm_length = (math.sqrt((left_shoulder.x - left_elbow.x)^2 +
-                                (left_shoulder.y - left_elbow.y)^2 +
-                                (left_shoulder.z - left_elbow.z)^2) +
-                        math.sqrt((left_elbow.x - left_hand.x)^2 +
-                                (left_elbow.y - left_hand.y)^2 +
-                                (left_elbow.z - left_hand.z)^2))
+        arm_length = (math.sqrt(math.pow((left_shoulder.x - left_elbow.x),2) +
+                                math.pow((left_shoulder.y - left_elbow.y),2) +
+                                math.pow((left_shoulder.z - left_elbow.z),2)) +
+                        math.sqrt(math.pow((left_elbow.x - left_hand.x),2) +
+                                math.pow((left_elbow.y - left_hand.y),2) +
+                                math.pow((left_elbow.z - left_hand.z),2)))
         RJ_ARM_LENGTH = 41*2.54/100.0
         #From URDF,
         x_offset = 0.055695
@@ -116,9 +116,9 @@ class Crane():
         # Event
         theta = angle_between_vectors(r_upper_arm, r_forearm)
         if theta > 0.8:
-            gripper.close()
+            self.gripper.close()
         else:
-            gripper.open()
+            self.gripper.open()
 
         return pose
         

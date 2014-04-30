@@ -137,6 +137,7 @@ class Baxter_Controller:
 
         # Set up the joint value service
         self.new_vals_joints = True
+        self.new_vals_pose = False
         self.joints = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
         self.joint_val_service = rospy.Service('joint_values', JointValues, self.joint_values_callback)
         self.enable()
@@ -330,7 +331,7 @@ class Baxter_Controller:
             #                                             r_sh, r_el, r_ha)
             # self.new_vals_joints = True
             # self.crane_count = 0
-            self.pose = self.crane.desired_end_pose(l_sh, l_el, l_ha,
+            self.pose = self.crane.desired_pose_vals(l_sh, l_el, l_ha,
                                                         r_sh, r_el, r_ha, torso)
             self.new_vals_pose = True
             self.crane_count
@@ -503,7 +504,7 @@ class Baxter_Controller:
             resp.joint_names = self.joints.keys()
             resp.joint_values = self.joints.values()
             self.new_vals_joints = False
-        elif: self.new_vals_pose:
+        elif self.new_vals_pose:
             # Publish the new values
             resp.new_values = True
             resp.val_type = 'pose'
