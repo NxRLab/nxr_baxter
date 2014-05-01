@@ -5,24 +5,12 @@ More testing!
 May be an issue with using the _gripper_base jiont or link
 https://groups.google.com/a/rethinkrobotics.com/forum/#!searchin/brr-users/baxter$20srdf/brr-users/-GnnPFXAPbc/vYpUsaI55qoJ
 
-Set up sudo service udev reload to run without sudo
--Check back on that askubuntu thread
-
 Check if skeleton tracker is starting up properly
--Starting to do this now
--- Need to constantly print that output I think...
--- Look at pexpect or doing this in C++, can also just check if the process terminated.
-
-Update "baxter sleeping" image
+-Done, now we are checking after a certain amount of time if the tracker is still running, then writing to a file if its not. If the startup service in rc.local sees a 1, it runs sudo service udev reload, then writes a 0. Need to make sure drivers are shut down before dont this whic is not the case.
 
 Crane game with Cartesian space controls and orientation DOWN, no roll, 90degree down pitch, no yaw.
+-Pose stuff does not work. Instead, lets use IK services to find joint values for crane game and solve those.
 
-- Maybe replace crane game with memory game for now
-
-- More modular? Crane prep and crane-go modes for example?
-
-- Weird slow-down mode, other issues with skeleton tracker. Need a way to start
-  it up right if it doesn't start up.
 
 
 Longer-term
