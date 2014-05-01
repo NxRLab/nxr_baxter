@@ -15,7 +15,7 @@ import moveit_msgs.msg
 import actionlib
 
 from moveit_msgs.msg import RobotTrajectory
-from trajectory_msgs.msg import JointTrajectoryPoint
+from trajectory_msgs.msg import (JointTrajectoryPoint, JointTrajectory)
 
 from control_msgs.msg import (
     FollowJointTrajectoryAction,
@@ -65,6 +65,21 @@ class Trajectory_Controller:
     def push(self, new_plan):
         # self.new_traj = True
         self.traj = new_plan.joint_trajectory
+        
+
+    def push_one_arm(self, new_plan, left_arm_joints):
+        # Build a new joint trajectory with left_arm_joint values at those times
+        temp_traj = JointTrajectory()
+        new_traj = new_plan.joint_trajectory
+        temp_traj.header = new_traj.header
+        temp_traj.joint_names = self.traj.joint_names
+        zero_vec = [0.0]*7
+        for i in range(len(new_traj.points)):
+            temp_traj.points[i].positions = left_arm_joints.values() + new_traj.points[i].positions
+            temp_traj.points[i].velocities = zero_vec + new_traj.points[i].velocities
+            temp_traj.points[i].accelerations = zero_vec + new_traj.points[i].accelerations
+            temp_traj.points[i].time_from_start = new_traj.points[i].time_from_start
+        self.traj = temp_traj
     
     def interpolate_trajectory(self, time_from_start):
         if len(self.traj.points) == 0:
@@ -129,10 +144,16 @@ if __name__=='__main__':
     rospy.init_node('moveit_interface', log_level=rospy.INFO)
 
     both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
+    right_arm_group = moveit_commander.MoveGroupCommander("right_arm")
+    left_arm_group = moveit_commander.MoveGroupCommander("left_arm")
     both_arms_group.allow_replanning(True)
+    right_arm_group.allow_replanning(True)
+    left_arm_group.allow_replanning(True)
 
     #Try setting workspace bounds, instead of maybe checking joint limits.
     both_arms_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
+    right_arm_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
+    left_arm_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
 
     scene = moveit_commander.PlanningSceneInterface()
 
@@ -171,10 +192,15 @@ if __name__=='__main__':
                     try:
                         joints = dict(zip(joint_resp.joint_names,
                                           joint_resp.joint_values))
-                        pose = [joints['x'], joints['y'], joints['z'],
-                                joints['roll'], joints['pitch'], joints['yaw']]
-                        both_arms_group.set_pose_target(pose, "right_hand_eef")
-                        traj_controller.push(both_arms_group.plan())
+                        # pose = [joints['x'], joints['y'], joints['z'],
+                        #         joints['roll'], joints['pitch'], joints['yaw']]
+                        print right_arm_group.get_current_pose()
+                        # print both_arms_group.get_current_pose()
+                        # pose = [0.805, -1.02, 0.318, 0.276, 0.649, -0.27, 0.656]
+                        # right_arm_group.clear_path_constraints()
+                        # right_arm_group.set_pose_target(pose)
+                        # # right_arm_group.set_pose_target(right_arm_group.get_current_pose())
+                        # traj_controller.push_one_arm(right_arm_group.plan(), left_arm_group.get_current_joint_values)
                     except moveit_commander.MoveItCommanderException, e:
                         rospy.logwarn("Error setting cartesian pose target.")
                     
