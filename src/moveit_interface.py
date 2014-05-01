@@ -192,15 +192,18 @@ if __name__=='__main__':
                     try:
                         joints = dict(zip(joint_resp.joint_names,
                                           joint_resp.joint_values))
-                        # pose = [joints['x'], joints['y'], joints['z'],
-                        #         joints['roll'], joints['pitch'], joints['yaw']]
-                        print right_arm_group.get_current_pose()
+                        pose = [joints['x'], joints['y'], joints['z'],
+                                joints['roll'], joints['pitch'], joints['yaw']]
+                        # print right_arm_group.get_current_pose()
                         # print both_arms_group.get_current_pose()
                         # pose = [0.805, -1.02, 0.318, 0.276, 0.649, -0.27, 0.656]
                         # right_arm_group.clear_path_constraints()
-                        # right_arm_group.set_pose_target(pose)
+                        # both_arms_group.clear_pose_target()
+                        right_arm_group.clear_pose_target("right_gripper")
+                        # both_arms_group.clear
+                        right_arm_group.set_pose_target(pose)
                         # # right_arm_group.set_pose_target(right_arm_group.get_current_pose())
-                        # traj_controller.push_one_arm(right_arm_group.plan(), left_arm_group.get_current_joint_values)
+                        traj_controller.push_one_arm(right_arm_group.plan(), left_arm_group.get_current_joint_values)
                     except moveit_commander.MoveItCommanderException, e:
                         rospy.logwarn("Error setting cartesian pose target.")
                     
