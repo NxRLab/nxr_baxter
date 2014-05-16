@@ -199,6 +199,10 @@ if __name__=='__main__':
                         # pose = [0.805, -1.02, 0.318, 0.276, 0.649, -0.27, 0.656]
                         # right_arm_group.clear_path_constraints()
                         # both_arms_group.clear_pose_target()
+
+                        """
+                        Plan for the right arm with the pose, then pull out the last config in joint space, and go with that??? I think that would work. Seems like actually pulling from IKFast is super hard.
+                        """
                         right_arm_group.clear_pose_target("right_gripper")
                         # both_arms_group.clear
                         right_arm_group.set_pose_target(pose)
