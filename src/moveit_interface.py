@@ -17,6 +17,12 @@ import actionlib
 from moveit_msgs.msg import RobotTrajectory
 from trajectory_msgs.msg import (JointTrajectoryPoint, JointTrajectory)
 
+from std_msgs.msg import Header
+
+from baxter_core_msgs.srv import (
+    SolvePositionIK
+    SolvePositionIKRequest)
+
 from control_msgs.msg import (
     FollowJointTrajectoryAction,
     FollowJointTrajectoryGoal,
@@ -28,6 +34,8 @@ import baxter_dataflow
 from geometry_msgs.msg import PoseStamped
 # from std_msgs.msg import Header
 from nxr_baxter_msgs.srv import *
+
+from tf.transformations import createQuaternionFromRPY
 
 class Trajectory_Controller:
     """
@@ -138,6 +146,22 @@ class Trajectory_Controller:
         )
         left_thread.join()
         right_thread.join()
+
+# def inverse_kin(des_pose):
+#     limb = "left_arm"
+#     ns = "ExternalTools/" + limb + "/PositionKinematicsNode/IKService"
+#     iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
+#     ikreq = SolvePositionIKRequest()
+#     hdr = Header(stamp=rospy.Time.now(), frame_id='base')
+#     pose = Pose(
+#         position=Point(des_pose[0:3]),
+#         orienation=createQuaternionFromRPY(pose[3:])
+#     )
+#     ikreq.pose_stamp.append(PoseStamped(header=hdr, pose=pose))
+#     try:
+#         rospy.wait_for_service(ns, 5.0)
+#         resp = iksvc(ikreq)
+#     except (rospy.ServiceException, rospy.ROSException), e
 
 if __name__=='__main__':
     rospy.loginfo("Starting moveit_interface node")
