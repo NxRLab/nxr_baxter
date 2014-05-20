@@ -136,7 +136,8 @@ class Baxter_Controller:
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
         # Set up the joint value service
-        self.new_vals = True
+        self.new_vals_joints = True
+        self.new_vals_pose = False
         self.joints = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
         self.joint_val_service = rospy.Service('joint_values', JointValues, self.joint_values_callback)
         self.enable()
@@ -145,10 +146,10 @@ class Baxter_Controller:
     def setup_move_thread(self, mode):
         if mode == 'crane':
             self.joints = dict(self.crane_r_angles, **self.crane_l_angles)
-            self.new_vals = True
+            self.new_vals_joints = True
         elif mode == 'mime':
             self.joints = dict(self.mime_r_angles, **self.mime_l_angles)
-            self.new_vals = True
+            self.new_vals_joints = True
 
     # What does tiemout do?
     def setup_gripper_thread(self):
@@ -162,7 +163,7 @@ class Baxter_Controller:
         self.rs.reset()
         self.rs.enable()
         self.joints = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
-        self.new_vals = True
+        self.new_vals_joints = True
         rospy.sleep(2.0)
 
     def choose_user(self, skeletons):
@@ -306,7 +307,7 @@ class Baxter_Controller:
         if self.mime_count % DOWN_SAMPLE == 0:
             self.joints = self.mime.desired_joint_vals(l_sh, l_el, l_ha,
                                                        r_sh, r_el, r_ha)
-            self.new_vals = True
+            self.new_vals_joints = True
             self.mime_count = 0
 
     def crane_go(self, skeleton):
@@ -323,12 +324,20 @@ class Baxter_Controller:
         r_sh = skeleton.right_shoulder.transform.translation
         r_el = skeleton.right_elbow.transform.translation
         r_ha = skeleton.right_hand.transform.translation
+        torso = skeleton.torso.transform.translation
 
         if self.crane_count % DOWN_SAMPLE == 0:
             self.joints = self.crane.desired_joint_vals(l_sh, l_el, l_ha,
                                                         r_sh, r_el, r_ha)
-            self.new_vals = True
+            self.new_vals_joints = True
             self.crane_count = 0
+            # self.pose = self.crane.desired_pose_vals(l_sh, l_el, l_ha,
+            #                                             r_sh, r_el, r_ha, torso)
+            # # print self.pose
+            # # self.pose = {'x': 0.4, 'y': -0.0, 'z': 0.4, 'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0}
+            # self.pose = {'x': 1.011, 'y': -0.724, 'z': 0.514, 'roll': -2.374, 'pitch': 1.487, 'yaw': -3.070}
+            # self.new_vals_pose = True
+            # self.crane_count = 0
 
     #######################
     # SUBSCRIBER CALLBACK #
@@ -344,8 +353,14 @@ class Baxter_Controller:
         if self.userid_chosen == True:
             #A user has been chosen by a previous run
             found = False
-            #Check if they are still in the frame by running through all the skeletons in the frame
+            #Check if they are still in the frame by running through all the
+            #skeletons in the frame
             for skeleton in data.skeletons:
+                #Check if out of bounds
+                if skel_out_of_bounds(skeleton):
+                    rospy.logdebug("Skeleton %d is out of bounds and being clipped.",
+                                   skeleton.userid)
+                    continue
                 if skeleton.userid == self.main_userid:
                     skel_raw = skeleton
                     if self.first_filt_flag:
@@ -485,17 +500,33 @@ class Baxter_Controller:
         This callback handles publishing the most recent joint values
         """
         resp = JointValuesResponse()
-        if self.new_vals:
+        if self.new_vals_joints:
             # Publish the new values
             resp.new_values = True
+            resp.val_type = 'joints'
             resp.joint_names = self.joints.keys()
             resp.joint_values = self.joints.values()
-            self.new_vals = False
+            self.new_vals_joints = False
+        elif self.new_vals_pose:
+            # Publish the new values
+            resp.new_values = True
+            resp.val_type = 'pose'
+            resp.joint_names = self.pose.keys()
+            resp.joint_values = self.pose.values()
         else:
             resp.new_values = False
             resp.joint_names = []
             resp.joint_values = []
         return resp
+
+def skel_out_of_bounds(skel):
+    MAX_X = 1.1 #Meters, taken from empirical testing
+    MIN_X = -1.2
+    x = skel.torso.transform.translation.x
+    if x < MIN_X or x > MAX_X:
+        return True
+    else:
+        return False
 
 if __name__=='__main__':
     rospy.loginfo("Starting joint trajectory action server")
@@ -506,8 +537,9 @@ if __name__=='__main__':
     rospy.logdebug("node starting")
     Baxter_Controller()
 
-    while not rospy.is_shutdown():
-        rospy.spin()
+    # while not rospy.is_shutdown():
+    #     rospy.spin()
+    rospy.spin()
     
     rospy.loginfo("Baxter Controller shutting down.")
     
