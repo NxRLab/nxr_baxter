@@ -17,6 +17,8 @@ from nxr_baxter_msgs.msg import MetaMode
 
 from nxr_baxter_msgs.srv import *
 
+from time import strftime
+
 # PYTHON IMPORTS
 import os
 import signal
@@ -43,6 +45,8 @@ def terminate_process_and_children(p):
 class Heartbeat_Monitor:
     def __init__(self):
         rospy.logdebug("Calling Heartbeat_Monitor.__init__()")
+        with open("/home/nxr-baxter/shutdown_startup.log", "a") as fi:
+            fi.write("[%s] Starting Up", strftime("%Y-%m-%d %H:%M:%S"))
         # For calculating skeleton heartbeat
         # Average it every 5 seconds.
         self.heartbeat_period = 5.0
@@ -103,6 +107,8 @@ class Heartbeat_Monitor:
             except rospy.ServiceException, e:
                 rospy.logerr("Service call failed: %s",e)
             #Restart computer
+            with open("/home/nxr-baxter/shutdown_startup.log", "a") as fi:
+                fi.write("[%s] Shutting Down", strftime("%Y-%m-%d %H:%M:%S"))
             cmd = 'sudo shutdown -r now'
             subprocess.Popen(cmd,shell=True)
 
