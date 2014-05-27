@@ -91,6 +91,10 @@ class Heartbeat_Monitor:
     def empty_skel_callback(self, event):
         rospy.logdebug("Calling empty_skel_callback()")
         self._heartbeat_count += 1
+        if self.kill_count > 5:
+            #Restart computer
+            cmd = 'shutdown -r now'
+            subprocess.Popen(cmd,shell=True)
 
     # Callback for heartbeat timer calculation. Gets the current count and will
     # calculate the average. Keeps an updated list of the past n_moving_avg_filt
@@ -202,6 +206,7 @@ class Heartbeat_Monitor:
             # Check if skeleton tracker is running:
             self.skel_tracker_proc.poll()
             while self.skel_tracker_proc.returncode != None:
+                self.kill_count += 1
                 # Skeleton tracker has terminated
                 # terminate_process_and_children(self.skel_tracker_proc)
                 # rospy.sleep(2.0)
