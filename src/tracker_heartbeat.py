@@ -203,8 +203,8 @@ class Heartbeat_Monitor:
             self.skel_tracker_proc.poll()
             while self.skel_tracker_proc.returncode != None:
                 # Skeleton tracker has terminated
-                terminate_process_and_children(self.skel_tracker_proc)
-                rospy.sleep(2.0)
+                # terminate_process_and_children(self.skel_tracker_proc)
+                # rospy.sleep(2.0)
                 self.skel_tracker_proc = subprocess.Popen(cmd, shell=True)
                 rospy.sleep(20.0)
         else:
