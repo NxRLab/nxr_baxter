@@ -15,7 +15,7 @@ import moveit_msgs.msg
 import actionlib
 
 from moveit_msgs.msg import RobotTrajectory
-from trajectory_msgs.msg import JointTrajectoryPoint
+from trajectory_msgs.msg import (JointTrajectoryPoint, JointTrajectory)
 
 from control_msgs.msg import (
     FollowJointTrajectoryAction,
@@ -43,50 +43,10 @@ class Trajectory_Controller:
         self.left_arm = baxter_interface.Limb('left')
         self.right_arm = baxter_interface.Limb('right')
 
-        # self.left_joint_names = ['left_s0', 'left_s1', 'left_e0', 'left_e1',
-        #                          'left_w0', 'left_w1', 'left_w2']
-        # self.right_joint_names = ['right_s0', 'right_s1', 'right_e0', 'right_e1',
-        #                          'right_w0', 'right_w1', 'right_w2']
-
-        # ns_left = 'robot/limb/left/'
-        # ns_right = 'robot/limb/right/'
-
-        # self.left_client = actionlib.SimpleActionClient(ns_left +
-        #                                                 "follow_joint_trajectory",
-        #                                                 FollowJointTrajectoryAction)
-        # self.right_client = actionlib.SimpleActionClient(ns_right +
-        #                                                  "follow_joint_trajectory",
-        #                                                  FollowJointTrajectoryAction)
-
-        # self.left_goal = FollowJointTrajectoryGoal()
-        # self.right_goal = FollowJointTrajectoryGoal()
-        # server_up_left = self.left_client.wait_for_server(timeout=rospy.Duration(10.0))
-        # server_up_right = self.right_client.wait_for_server(timeout=rospy.Duration(10.0))
-        # if not server_up_left or not server_up_right:
-        #     rospy.logerr("Timeout waiting for JTAS")
-        #     rospy.signal_shutdown("Timed out waiting...")
-        #     sys.exit(1)
-
-        # # self.pub_rate = rospy.Publisher('/robot/joint_state_publish_rate', UInt16)
-        # # self.pub_rate.publish(500)
-        # self.new_traj = False
         self.traj = None
 
-        # self.left_goal.trajectory = self.split_traj(traj, 0, 7)
-        # self.right_goal.trajectory = self.split_traj(traj, 7, 0)
-        # self.left_goal.trajectory.header.stamp = rospy.Time.now()
-        # self.right_goal.trajectory.header.stamp = rospy.Time.now()
-        # for i in range(len(self.left_goal.trajectory.points)):
-        #     self.left_goal.trajectory.points[i].time_from_start = rospy.Duration(self.left_goal.trajectory.points[i].time_from_start)
-        #     self.right_goal.trajectory.points[i].time_from_start = rospy.Duration(self.right_goal.trajectory.points[i].time_from_start)
-        # self.left_goal.trajectory.joint_names = self.left_joint_names
-        # self.right_goal.trajectory.joint_names = self.right_joint_names
-        # self.left_client.send_goal(self.left_goal)
-        # self.right_client.send_goal(self.right_goal)
         self.timer = rospy.Timer(rospy.Duration(0.2), self.timer_callback, oneshot=False)
-        # while not rospy.is_shutdown():
-        #     self.timer_callback()
-        #     rospy.sleep(0.001)
+
 
     def timer_callback(self,event):
         if self.traj != None:
@@ -105,6 +65,21 @@ class Trajectory_Controller:
     def push(self, new_plan):
         # self.new_traj = True
         self.traj = new_plan.joint_trajectory
+        
+
+    def push_one_arm(self, new_plan, left_arm_joints):
+        # Build a new joint trajectory with left_arm_joint values at those times
+        temp_traj = JointTrajectory()
+        new_traj = new_plan.joint_trajectory
+        temp_traj.header = new_traj.header
+        temp_traj.joint_names = self.traj.joint_names
+        zero_vec = [0.0]*7
+        for i in range(len(new_traj.points)):
+            temp_traj.points[i].positions = left_arm_joints.values() + new_traj.points[i].positions
+            temp_traj.points[i].velocities = zero_vec + new_traj.points[i].velocities
+            temp_traj.points[i].accelerations = zero_vec + new_traj.points[i].accelerations
+            temp_traj.points[i].time_from_start = new_traj.points[i].time_from_start
+        self.traj = temp_traj
     
     def interpolate_trajectory(self, time_from_start):
         if len(self.traj.points) == 0:
@@ -169,11 +144,21 @@ if __name__=='__main__':
     rospy.init_node('moveit_interface', log_level=rospy.INFO)
 
     both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
+    right_arm_group = moveit_commander.MoveGroupCommander("right_arm")
+    left_arm_group = moveit_commander.MoveGroupCommander("left_arm")
+    both_arms_group.allow_replanning(True)
+    right_arm_group.allow_replanning(True)
+    left_arm_group.allow_replanning(True)
+
+    #Try setting workspace bounds, instead of maybe checking joint limits.
+    both_arms_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
+    right_arm_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
+    left_arm_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
 
     scene = moveit_commander.PlanningSceneInterface()
 
     rospy.loginfo('Sitting here.')
-    rospy.sleep(3.0)
+    rospy.sleep(10.0)
 
     robot = moveit_commander.RobotCommander()
 
@@ -186,20 +171,6 @@ if __name__=='__main__':
     # scene.add_box("table", p, (0.8, 1.25, 0.8)) # Bigger box
 
     scene.add_box("table", p, (0.75, 1.25, 0.68))
-    # p = PoseStamped()
-    # p.header.frame_id = robot.get_planning_frame()
-    # p.pose.position.x = 0.0
-    # p.pose.position.y = -52.5*2.54/100.0 - 0.02
-    # p.pose.position.z = 0.0
-    # scene.add_box("right_wall", p, (2.0, 0.04, 2.0))
-    # p = PoseStamped()
-    # p.header.frame_id = robot.get_planning_frame()
-    # p.pose.position.x = 0.0
-    # p.pose.position.y = -54*2.54/100.0 - 0.02
-    # p.pose.position.z = 0.0
-    # scene.add_box("left_wall", p, (2.0, 0.04, 2.0))
-    # # p.pose.position.y = 54*2.54/100.0
-    # # scene.add_plane("left_wall", p, normal=(0, -1, 0))
 
     traj_controller = Trajectory_Controller()
 
@@ -209,13 +180,30 @@ if __name__=='__main__':
             joint_service_proxy = rospy.ServiceProxy('joint_values', JointValues)
             joint_resp = joint_service_proxy()
             if joint_resp.new_values:
-                joints = dict(zip(joint_resp.joint_names,
-                                  joint_resp.joint_values))
-                try:
-                    both_arms_group.set_joint_value_target(joints)
-                    traj_controller.push(both_arms_group.plan())
-                except moveit_commander.MoveItCommanderException, e:
-	                rospy.logwarn("Error setting joint target, target not within bounds.")
+                if "joints" in joint_resp.val_type:
+                    joints = dict(zip(joint_resp.joint_names,
+                                      joint_resp.joint_values))
+                    try:
+                        both_arms_group.set_joint_value_target(joints)
+                        traj_controller.push(both_arms_group.plan())
+                    except moveit_commander.MoveItCommanderException, e:
+                        rospy.logwarn("Error setting joint target, target not within bounds.")
+                elif "pose" in joint_resp.val_type:
+                    try:
+                        joints = dict(zip(joint_resp.joint_names,
+                                          joint_resp.joint_values))
+                        # pose = [joints['x'], joints['y'], joints['z'],
+                        #         joints['roll'], joints['pitch'], joints['yaw']]
+                        print right_arm_group.get_current_pose()
+                        # print both_arms_group.get_current_pose()
+                        # pose = [0.805, -1.02, 0.318, 0.276, 0.649, -0.27, 0.656]
+                        # right_arm_group.clear_path_constraints()
+                        # right_arm_group.set_pose_target(pose)
+                        # # right_arm_group.set_pose_target(right_arm_group.get_current_pose())
+                        # traj_controller.push_one_arm(right_arm_group.plan(), left_arm_group.get_current_joint_values)
+                    except moveit_commander.MoveItCommanderException, e:
+                        rospy.logwarn("Error setting cartesian pose target.")
+                    
             else:
                 rospy.logdebug('Got old values')
                 rospy.sleep(0.001)
