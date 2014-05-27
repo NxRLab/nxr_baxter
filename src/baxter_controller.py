@@ -56,6 +56,8 @@ from nxr_baxter_msgs.msg import MetaMode
 #Service for providing desired joint values
 from nxr_baxter_msgs.srv import *
 
+from baxter_core_msgs.msg import AssemblyState
+
 # Don't need to down sample, we are sort of already doing that by default.
 DOWN_SAMPLE = 15
 
@@ -113,6 +115,9 @@ class Baxter_Controller:
         self.right_hand_timer = 0
         self.main_userid = 0
 
+        #5 minutes before motors shut off
+        self.motor_timeout = 5*60
+
         #Pull the required filename from the parameter server
         try:
             img_files_filename = rospy.get_param('img_files_filename')
@@ -134,6 +139,8 @@ class Baxter_Controller:
         # Set up subscriber to meta-mode controller
         self.internal_mode = None
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
+
+        self.reset_motor_timer()
 
         # Set up the joint value service
         self.new_vals_joints = True
@@ -175,6 +182,8 @@ class Baxter_Controller:
             lh = skeleton.left_hand.transform.translation.y
             rh = skeleton.right_hand.transform.translation.y
             h = skeleton.head.transform.translation.y
+            
+            self.reset_motor_timer()
 
             # PersonX is raising a hand
             if h - lh > 0.11 or h - rh > 0.11: # What units are these? A: Meters (I think) - Jon
@@ -283,6 +292,15 @@ class Baxter_Controller:
         self.img_switch.change_mode('bool_reset',3)
         self.change_mode_service(MetaMode.IDLE_ENABLED)
 
+    def reset_motor_timer(self):
+        if rs.state().stopped or not rs.state().enabled:
+            rs.enable()
+        if self.motor_timer != None:
+            self.motor_timer.shutdown()
+        self.motor_timer = rospy.Timer(rospy.Duration(self.motor_timeout), self.motor_shutdown)
+
+    def motor_shutdown(self):
+        pass
 
     #=========================================================#
     #                        ACTIONS:                         #
