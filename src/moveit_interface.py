@@ -17,6 +17,12 @@ import actionlib
 from moveit_msgs.msg import RobotTrajectory
 from trajectory_msgs.msg import (JointTrajectoryPoint, JointTrajectory)
 
+from std_msgs.msg import Header
+
+from baxter_core_msgs.srv import (
+    SolvePositionIK
+    SolvePositionIKRequest)
+
 from control_msgs.msg import (
     FollowJointTrajectoryAction,
     FollowJointTrajectoryGoal,
@@ -28,6 +34,8 @@ import baxter_dataflow
 from geometry_msgs.msg import PoseStamped
 # from std_msgs.msg import Header
 from nxr_baxter_msgs.srv import *
+
+from tf.transformations import createQuaternionFromRPY
 
 class Trajectory_Controller:
     """
@@ -139,6 +147,22 @@ class Trajectory_Controller:
         left_thread.join()
         right_thread.join()
 
+# def inverse_kin(des_pose):
+#     limb = "left_arm"
+#     ns = "ExternalTools/" + limb + "/PositionKinematicsNode/IKService"
+#     iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
+#     ikreq = SolvePositionIKRequest()
+#     hdr = Header(stamp=rospy.Time.now(), frame_id='base')
+#     pose = Pose(
+#         position=Point(des_pose[0:3]),
+#         orienation=createQuaternionFromRPY(pose[3:])
+#     )
+#     ikreq.pose_stamp.append(PoseStamped(header=hdr, pose=pose))
+#     try:
+#         rospy.wait_for_service(ns, 5.0)
+#         resp = iksvc(ikreq)
+#     except (rospy.ServiceException, rospy.ROSException), e
+
 if __name__=='__main__':
     rospy.loginfo("Starting moveit_interface node")
     rospy.init_node('moveit_interface', log_level=rospy.INFO)
@@ -192,15 +216,22 @@ if __name__=='__main__':
                     try:
                         joints = dict(zip(joint_resp.joint_names,
                                           joint_resp.joint_values))
-                        # pose = [joints['x'], joints['y'], joints['z'],
-                        #         joints['roll'], joints['pitch'], joints['yaw']]
-                        print right_arm_group.get_current_pose()
+                        pose = [joints['x'], joints['y'], joints['z'],
+                                joints['roll'], joints['pitch'], joints['yaw']]
+                        # print right_arm_group.get_current_pose()
                         # print both_arms_group.get_current_pose()
                         # pose = [0.805, -1.02, 0.318, 0.276, 0.649, -0.27, 0.656]
                         # right_arm_group.clear_path_constraints()
-                        # right_arm_group.set_pose_target(pose)
+                        # both_arms_group.clear_pose_target()
+
+                        """
+                        Plan for the right arm with the pose, then pull out the last config in joint space, and go with that??? I think that would work. Seems like actually pulling from IKFast is super hard.
+                        """
+                        right_arm_group.clear_pose_target("right_gripper")
+                        # both_arms_group.clear
+                        right_arm_group.set_pose_target(pose)
                         # # right_arm_group.set_pose_target(right_arm_group.get_current_pose())
-                        # traj_controller.push_one_arm(right_arm_group.plan(), left_arm_group.get_current_joint_values)
+                        traj_controller.push_one_arm(right_arm_group.plan(), left_arm_group.get_current_joint_values)
                     except moveit_commander.MoveItCommanderException, e:
                         rospy.logwarn("Error setting cartesian pose target.")
                     
