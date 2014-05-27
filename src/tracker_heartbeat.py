@@ -92,8 +92,18 @@ class Heartbeat_Monitor:
         rospy.logdebug("Calling empty_skel_callback()")
         self._heartbeat_count += 1
         if self.kill_count > 5:
+            rospy.wait_for_service('change_meta_mode')
+            try:
+                change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
+                change_resp = change_mode(ChangeMetaModeRequest.RESTART_KINECT)
+                if not change_resp.error:
+                    rospy.logerr("Tried to restart Kinect, but mode change request failed.")
+                else:
+                    rospy.logdebug("Kinect shutdown meta mode change succeeded.")
+            except rospy.ServiceException, e:
+                rospy.logerr("Service call failed: %s",e)
             #Restart computer
-            cmd = 'shutdown -r now'
+            cmd = 'sudo shutdown -r now'
             subprocess.Popen(cmd,shell=True)
 
     # Callback for heartbeat timer calculation. Gets the current count and will
