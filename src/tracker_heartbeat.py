@@ -46,7 +46,8 @@ class Heartbeat_Monitor:
     def __init__(self):
         rospy.logdebug("Calling Heartbeat_Monitor.__init__()")
         with open("/home/nxr-baxter/shutdown_startup.log", "a") as fi:
-            fi.write("[%s] Starting Up", strftime("%Y-%m-%d %H:%M:%S"))
+            to_print = "[" + strftime("%Y-%m-%d %H:%M:%S") + "] Starting up\n"
+            fi.write(to_print)
         # For calculating skeleton heartbeat
         # Average it every 5 seconds.
         self.heartbeat_period = 5.0
@@ -108,7 +109,8 @@ class Heartbeat_Monitor:
                 rospy.logerr("Service call failed: %s",e)
             #Restart computer
             with open("/home/nxr-baxter/shutdown_startup.log", "a") as fi:
-                fi.write("[%s] Shutting Down", strftime("%Y-%m-%d %H:%M:%S"))
+                to_print = "[" + strftime("%Y-%m-%d %H:%M:%S") + "] Shutting Down\n"
+                fi.write(to_print)
             cmd = 'sudo shutdown -r now'
             subprocess.Popen(cmd,shell=True)
 

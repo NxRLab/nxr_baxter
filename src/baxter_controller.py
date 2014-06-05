@@ -294,14 +294,16 @@ class Baxter_Controller:
         self.change_mode_service(MetaMode.IDLE_ENABLED)
 
     def reset_motor_timer(self):
-        if self.rs.state().stopped or not self.rs.state().enabled:
+        if not self.rs.state().enabled:
+        # if self.rs.state().stopped or not self.rs.state().enabled:
             self.rs.enable()
         if self.motor_timer != None:
             self.motor_timer.shutdown()
         self.motor_timer = rospy.Timer(rospy.Duration(self.motor_timeout), self.motor_shutdown)
 
-    def motor_shutdown(self):
-        pass
+    def motor_shutdown(self, event):
+        self.rs.disable()
+        rospy.loginfo("Disabling motors")
 
     #=========================================================#
     #                        ACTIONS:                         #
