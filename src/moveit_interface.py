@@ -173,6 +173,12 @@ if __name__=='__main__':
     both_arms_group.allow_replanning(True)
     right_arm_group.allow_replanning(True)
     left_arm_group.allow_replanning(True)
+    both_arms_group.set_goal_position_tolerance(0.01)
+    both_arms_group.set_goal_orientation_tolerance(0.01)
+    left_arm_group.set_goal_position_tolerance(0.01)
+    left_arm_group.set_goal_orientation_tolerance(0.01)
+    right_arm_group.set_goal_position_tolerance(0.01)
+    right_arm_group.set_goal_orientation_tolerance(0.01)
 
     #Try setting workspace bounds, instead of maybe checking joint limits.
     both_arms_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
