@@ -34,10 +34,10 @@ if __name__=='__main__':
     right_arm_group.set_goal_position_tolerance(0.01)
     right_arm_group.set_goal_orientation_tolerance(0.01)
 
-    #Try setting workspace bounds, instead of maybe checking joint limits.
-    both_arms_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
-    right_arm_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
-    left_arm_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
+    # #Try setting workspace bounds, instead of maybe checking joint limits.
+    # both_arms_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
+    # right_arm_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
+    # left_arm_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
 
     scene = moveit_commander.PlanningSceneInterface()
 
@@ -60,7 +60,12 @@ if __name__=='__main__':
 
     # scene.add_box("table", p, (0.75, 1.25, 0.68)) # Good box, but check this later
 
-    pose = [0.805, -1.02, 0.318, 0.276, 0.649, -0.27, 0.656]
+    # pose = [0.805, -1.02, 0.318, 0.276, 0.649, -0.27, 0.656]
+    pose = [0.281, -0.622, -0.327, 0.497, 0.868, 0.005, 0.005]
+
+    print "EEF link for MoveIt right arm: " + right_arm_group.get_end_effector_link()
+    print "EEF link for MoveIt left arm: " + left_arm_group.get_end_effector_link()
+    print "EEF link for MoveIt both arms: " + both_arms_group.get_end_effector_link()
 
     right_arm_group.set_pose_target(pose)
 
