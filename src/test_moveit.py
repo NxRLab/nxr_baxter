@@ -1,4 +1,4 @@
-#~/usr/bin/env python
+#!/usr/bin/env python
 
 # Adam Barber
 # June 2014
@@ -8,9 +8,15 @@
 import rospy
 import moveit_commander
 import moveit_msgs.msg
+import subprocess
+
+from geometry_msgs.msg import PoseStamped
 
 
 if __name__=='__main__':
+    rospy.loginfo("Starting joint trajectory action server")
+    cmd = 'rosrun baxter_interface joint_trajectory_action_server.py'
+    subprocess.Popen(cmd,shell=True)
     rospy.loginfo("Starting test_moveit node")
     rospy.init_node('test_moveit', log_level=rospy.INFO)
 
