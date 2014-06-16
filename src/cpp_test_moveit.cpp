@@ -1,5 +1,9 @@
-#include "ros/ros.h"
-#include "std_msgs/String.h"
+#include <ros/ros.h>
+#include <std_msgs/String.h>
+#include <geometry_msgs/Pose.h>
+
+#include <moveit/planning_interface/planning_interface.h>
+// #include <moveit/move_group_interface/move_group.h>
 
 
 /**
@@ -25,5 +29,25 @@ int main(int argc, char **argv)
     target_pose.orientation.z = -0.271;
     target_pose.orientation.w = 0.653;
 
+    right_arm_group.setPoseTarget(target_pose);
+
+    moveit::planning_interface::MoveGroup::Plan my_plan;
+    bool success = right_arm_group.plan(my_plan);
+
+    ROS_INFO("Plan 1 pose goal %s", success?"":"FAILED");
+    if(success)
+	right_arm_group.move();
+
+    sleep(5.0);
+
+    ROS_INFO("Try joint-space goal");
+
+    std::vector<double> group_var_values;
+    group.getCurrentState()->copyJointGroupPositions(group.getCurrentState()->getRobotModel()->getJointModelGroup(group.getName()), group_var_values);
+
+    group_var_values[0] = -1.0;
+    right_arm_group.setJointValueTarget(group_var_values);
+    right_arm_group.move();
+    
     return 0;
 }
