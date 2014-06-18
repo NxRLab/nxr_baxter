@@ -91,13 +91,13 @@ class Dancer(object):
         print("Dancing. Press Ctrl-c to stop...")
         for i in range(num_positions):
             while not rospy.is_shutdown():
-                right_angles = dict(zip(self.right_joint_names, left_positions[i]))
-                left_angles = dict(zip(self.left_joint_names, left_positions[i]))
+                right_angles = dict(zip(self._right_joint_names, left_positions[i]))
+                left_angles = dict(zip(self._left_joint_names, left_positions[i]))
 
-                self._right_arm.move_to_joint_positions(self, right_angles)
+                self._right_arm.move_to_joint_positions(right_angles)
                 rospy.sleep(right_times[i])
 
-                self._left_arm.move_to_joint_positions(self, left_angles)
+                self._left_arm.move_to_joint_positions(left_angles)
                 rospy.sleep(left_times[i])
 
 
@@ -107,7 +107,7 @@ def main():
     Performs the functions for the macarena dancer
     """
     print("Initializing node... ")
-    rospy.init_node("macarena dancer")
+    rospy.init_node("macarena_dancer")
 
     dancer = Dancer()
     rospy.on_shutdown(dancer.clean_shutdown)
