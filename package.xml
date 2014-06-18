@@ -30,7 +30,10 @@
   <build_depend>skeletonmsgs_nu</build_depend>
   <build_depend>nxr_baxter_msgs</build_depend>
 
+
   <build_depend>baxter_interface</build_depend>
+  <build_depend>baxter_moveit_config</build_depend>
+  <build_depend>eigen</build_depend>
   <!-- <build_depend>utilities</build_depend> -->
 
   <build_depend>tf</build_depend>
@@ -55,6 +58,7 @@
   <run_depend>nxr_baxter_msgs</run_depend>
 
   <run_depend>baxter_interface</run_depend>
+  <run_depend>baxter_moveit_config</run_depend>
   <!-- <run_depend>utilities</run_depend> -->
 
   <run_depend>tf</run_depend>

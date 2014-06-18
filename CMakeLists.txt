@@ -1,13 +1,15 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(nxr_baxter)
 
-find_package(catkin REQUIRED
+find_package(eigen REQUIRED)
+
+find_package(catkin
+  REQUIRED
   COMPONENTS
   rospy 
   roscpp 
   roslib
   actionlib
-
   message_generation
   sensor_msgs
   std_msgs
@@ -19,6 +21,7 @@ find_package(catkin REQUIRED
   nxr_baxter_msgs
   
   baxter_interface
+  baxter_moveit_config
 
   tf
   dynamic_reconfigure
@@ -27,6 +30,9 @@ find_package(catkin REQUIRED
 )
 
 include_directories(${catkin_INCLUDE_DIRS})
+include_directories(${EIGEN_INCLUDE_DIR})
+
+add_definitions(${EIGEN_DEFINITIONS})
 
 catkin_python_setup()
 
@@ -50,10 +56,12 @@ catkin_package(
   nxr_baxter_msgs
   
   baxter_interface
+  baxter_moveit_config
 
   tf
   dynamic_reconfigure
   cv_bridge
+  DEPENDS eigen
 )
 
 add_executable(cpp_test_moveit src/cpp_test_moveit.cpp)
