@@ -164,8 +164,8 @@ class Trajectory_Controller:
 #     except (rospy.ServiceException, rospy.ROSException), e
 
 if __name__=='__main__':
-    rospy.loginfo("Starting moveit_interface node")
     rospy.init_node('moveit_interface', log_level=rospy.INFO)
+    rospy.loginfo("Starting moveit_interface node")
 
     both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
     right_arm_group = moveit_commander.MoveGroupCommander("right_arm")
