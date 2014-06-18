@@ -256,7 +256,7 @@ if __name__=='__main__':
                         joints = dict(zip(joint_resp.joint_names,
                                           joint_resp.joint_values))
                         pose = [joints['x'], joints['y'], joints['z'],
-                                joints['roll'], joints['pitch'], joints['yaw']]
+                                joints['yaw'], joints['pitch'], joints['roll']]
                         desired_joints = ikright.solveIK(pose)
                         if desired_joints != None:
                             right_arm_group.set_joint_value_target(

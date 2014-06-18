@@ -345,17 +345,17 @@ class Baxter_Controller:
         torso = skeleton.torso.transform.translation
 
         if self.crane_count % DOWN_SAMPLE == 0:
-            self.joints = self.crane.desired_joint_vals(l_sh, l_el, l_ha,
-                                                        r_sh, r_el, r_ha)
-            self.new_vals_joints = True
-            self.crane_count = 0
-            # self.pose = self.crane.desired_pose_vals(l_sh, l_el, l_ha,
-            #                                             r_sh, r_el, r_ha, torso)
+            # self.joints = self.crane.desired_joint_vals(l_sh, l_el, l_ha,
+            #                                             r_sh, r_el, r_ha)
+            # self.new_vals_joints = True
+            # self.crane_count = 0
+            self.pose = self.crane.desired_pose_vals(l_sh, l_el, l_ha,
+                                                        r_sh, r_el, r_ha, torso)
             # # print self.pose
             # # self.pose = {'x': 0.4, 'y': -0.0, 'z': 0.4, 'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0}
             # self.pose = {'x': 1.011, 'y': -0.724, 'z': 0.514, 'roll': -2.374, 'pitch': 1.487, 'yaw': -3.070}
-            # self.new_vals_pose = True
-            # self.crane_count = 0
+            self.new_vals_pose = True
+            self.crane_count = 0
 
     #######################
     # SUBSCRIBER CALLBACK #
