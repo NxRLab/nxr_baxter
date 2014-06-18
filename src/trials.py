@@ -66,11 +66,11 @@ class Mover():
             'left_w2': 0.00      # (+) CCW        (-) CW         (same)
         }
         r_angles = {                # OBSERVER PERSPECTIVE 
-            'right_s0': -0.25,    # (+) right      (-) left        (inverted)
+            'right_s0': 0.60,    # (+) right      (-) left        (inverted)
             'right_s1': 0.00,     # (+) down       (-) left        (same)
             'right_e0': 0.00,     # (+) CCW        (-) CW          (inverted)
-            'right_e1': 1.57,     # (+) more bent  (-) less bent   (same)
-            'right_w0': -1.57,    # (+) CCW        (-) CW          (inverted)
+            'right_e1': 0.00,    # (+) more bent  (-) less bent   (same)
+            'right_w0': 2.75,    # (+) CCW        (-) CW          (inverted)
             'right_w1': 0.00,     # (+) more bent  (-) less bent   (same)
             'right_w2': 0.00      # (+) CCW        (-) CW          (same)
         }
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     print("Attempting to enable Baxter")
     rs.enable()
 
-    task_completer = Mover('both')
+    task_completer = Mover('right')
     task_completer.move()
 
     print("Completing tasks. Press Esc to quit.")

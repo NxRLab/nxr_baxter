@@ -77,8 +77,8 @@ class Dancer(object):
         Dances the Macarena
         """
         self.set_neutral()
-        self._right_arm.set_joint_position_speed(0.7)
-        self._left_arm.set_joint_position_speed(0.7)
+        self._right_arm.set_joint_position_speed(0.8)
+        self._left_arm.set_joint_position_speed(0.8)
 
         num_positions = 3
         right_positions = [[ 0.60,  0.00,  0.00,  0.00,  2.75,  0.00,  0.00], 
@@ -88,6 +88,11 @@ class Dancer(object):
                           [ -0.50,  0.40, -2.90,  1.90,  0.00,  1.20,  0.00],
                           [  0.60, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00]]
 
+        wiggle_right_positions = [[ -0.60, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00],
+                                  [ -0.50, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00]]
+        wiggle_left_positions = [[  0.60, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00],
+                                 [ -0.50, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00]]
+
         print("Dancing. Press Ctrl-c to stop...")
         while not rospy.is_shutdown():
             for i in range(num_positions):
@@ -95,8 +100,12 @@ class Dancer(object):
                     right_angles = dict(zip(self._right_joint_names, right_positions[i]))
                     left_angles = dict(zip(self._left_joint_names, left_positions[i]))
 
-                    self._right_arm.move_to_joint_positions(right_angles)
-                    self._left_arm.move_to_joint_positions(left_angles)
+                    self._right_arm.move_to_joint_positions(right_angles, threshold=0.1)
+                    self._left_arm.move_to_joint_positions(left_angles, threshold=0.1)
+
+                    if(i==2):
+                        rospy.sleep(3.5)
+                    
 
 
 
