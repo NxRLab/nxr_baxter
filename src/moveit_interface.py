@@ -147,21 +147,49 @@ class Trajectory_Controller:
         left_thread.join()
         right_thread.join()
 
-def inverse_kin(des_pose):
-    limb = "left_right"
-    ns = "ExternalTools/" + limb + "/PositionKinematicsNode/IKService"
-    iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
-    ikreq = SolvePositionIKRequest()
-    hdr = Header(stamp=rospy.Time.now(), frame_id='base')
-    pose = Pose(
-        position=Point(des_pose[0:3]),
-        orienation=createQuaternionFromRPY(des_pose[3:])
-    )
-    ikreq.pose_stamp.append(PoseStamped(header=hdr, pose=pose))
-    try:
-        rospy.wait_for_service(ns, 5.0)
-        resp = iksvc(ikreq)
-    except (rospy.ServiceException, rospy.ROSException), e
+class Inverse_Kinematics:
+    """
+    This class handles inverse kinematics for this script. It allows easy
+    accessability to the IKservice that Rethink provides.
+    """
+    def __init__(self,limb="right"):
+        rospy.logdebug("Calling Inverse_Kinematics.__init__()")
+        self.ns = "ExternalTools/" + limb + "/PositionKinematicsNode/IKService"
+        self.iksvc = rospy.ServiceProxy(self.ns, SolvePositionIK)
+        
+    def solveIK(self,des_pose):
+        ikreq = SolvePositionIKRequest()
+        hdr = Header(stamp=rospy.Time.now(), frame_id='base')
+        pose = Pose()
+        quat = Quaternion()
+        pose.position.x = des_pose[0]
+        pose.position.y = des_pose[1]
+        pose.position.z = des_pose[2]
+        if len(des_pose) == 6:
+            #Note that this may be wrong!
+            quat = quaternion_from_euler(des_pose[3], des_pose[4], des_pose[5])
+        else:
+            quat.x = des_pose[3]
+            quat.y = des_pose[4]
+            quat.z = des_pose[5]
+            quat.w = des_pose[6]
+        pose.orientation = quat
+
+        ikreq.pose_stamp = [PoseStamped(header=hdr, pose=pose)]
+        try:
+            rospy.wait_for_service(ns,5.0)
+            resp = self.iksvc(ikreq)
+        except (rospy.ServiceException, rospy.ROSException), e:
+            rospy.logerr("IK Service Exception thrown")
+            return None
+
+        if resp.isValid[0]:
+            des_joints = [0]*7
+            for i in range(7):
+                des_joints = resp.joints[0].position[i]
+            return des_joints
+        else:
+            return None
 
 if __name__=='__main__':
     rospy.init_node('moveit_interface', log_level=rospy.INFO)
@@ -204,6 +232,11 @@ if __name__=='__main__':
 
     traj_controller = Trajectory_Controller()
 
+    ikright = Inverse_Kinematics(limb="right")
+
+    right_arm = baxter_interface.Limb('right')
+    left_arm = baxter_interface.Limb('left')
+
     while not rospy.is_shutdown():
         rospy.wait_for_service('joint_values')
         try:
@@ -224,20 +257,11 @@ if __name__=='__main__':
                                           joint_resp.joint_values))
                         pose = [joints['x'], joints['y'], joints['z'],
                                 joints['roll'], joints['pitch'], joints['yaw']]
-                        # print right_arm_group.get_current_pose()
-                        # print both_arms_group.get_current_pose()
-                        # pose = [0.805, -1.02, 0.318, 0.276, 0.649, -0.27, 0.656]
-                        # right_arm_group.clear_path_constraints()
-                        # both_arms_group.clear_pose_target()
-
-                        """
-                        Plan for the right arm with the pose, then pull out the last config in joint space, and go with that??? I think that would work. Seems like actually pulling from IKFast is super hard.
-                        """
-                        right_arm_group.clear_pose_target("right_gripper")
-                        # both_arms_group.clear
-                        right_arm_group.set_pose_target(pose)
-                        # # right_arm_group.set_pose_target(right_arm_group.get_current_pose())
-                        traj_controller.push_one_arm(right_arm_group.plan(), left_arm_group.get_current_joint_values)
+                        desired_joints = ikright.solveIK(pose)
+                        if desired_joints != None:
+                            right_arm_group.set_joint_value_target(
+                                dict(zip(desired_joints, right_arm.joint_names())))
+                            traj_controller.push_one_arm(right_arm_group.plan(), left_arm_group.get_current_joint_values())
                     except moveit_commander.MoveItCommanderException, e:
                         rospy.logwarn("Error setting cartesian pose target.")
                     

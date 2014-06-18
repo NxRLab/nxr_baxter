@@ -29,8 +29,8 @@ if __name__=='__main__':
 
     right_arm_group = moveit_commander.MoveGroupCommander("right_arm")
 
-    # des_pose = [0.28, -0.62, -0.32, 0, -3.14/2, 0]
-    des_pose = [0.815, -1.01, 0.321, 0.271, 0.653, -0.271, 0.653]
+    des_pose = [0.28, -0.62, -0.32, 0, 3.14/2, 0]
+    # des_pose = [0.815, -1.01, 0.321, 0.271, 0.653, -0.271, 0.653]
 
     limb = "right"
     ns = "ExternalTools/" + limb + "/PositionKinematicsNode/IKService"
