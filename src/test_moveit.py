@@ -32,7 +32,7 @@ if __name__=='__main__':
     # des_pose = [0.28, -0.62, -0.32, 0, -3.14/2, 0]
     des_pose = [0.815, -1.01, 0.321, 0.271, 0.653, -0.271, 0.653]
 
-    limb = "left"
+    limb = "right"
     ns = "ExternalTools/" + limb + "/PositionKinematicsNode/IKService"
     iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
     ikreq = SolvePositionIKRequest()
@@ -57,14 +57,15 @@ if __name__=='__main__':
         rospy.loginfo("Service exception")
 
     if resp.isValid[0]:
-        des_joints = resp.joints[0];
-
+        des_joints = [0]*7
+        for i in range(7):
+            des_joints[i] = resp.joints[0].position[i]
         # print right_arm_group.get_current_pose()
         # print des_joints
         right_arm_group.set_joint_value_target(des_joints)
 
         right_arm_group.plan()
-        right_arm_group.move()
+        right_arm_group.go()
     
         print right_arm_group.get_current_pose()
 
