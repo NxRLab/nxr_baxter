@@ -77,6 +77,8 @@ class Dancer(object):
         Dances the Macarena
         """
         self.set_neutral()
+        self._right_arm.set_joint_position_speed(0.6)
+        self._left_arm.set_joint_position_speed(0.6)
 
         num_positions = 3
         right_times = [1, 2, 3, 4]
