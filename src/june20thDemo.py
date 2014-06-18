@@ -89,7 +89,7 @@ class Dancer(object):
                           [  0.60, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00]]
 
         print("Dancing. Press Ctrl-c to stop...")
-            while not rospy.is_shutdown():
+        while not rospy.is_shutdown():
             for i in range(num_positions):
                 if not rospy.is_shutdown():
                     right_angles = dict(zip(self._right_joint_names, right_positions[i]))
