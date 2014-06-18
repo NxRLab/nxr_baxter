@@ -82,22 +82,22 @@ class Dancer(object):
         right_times = [1, 2, 3, 4]
         left_times = [1, 2, 3, 4]
         right_positions = [[ 0.60,  0.00,  0.00,  0.00,  2.75,  0.00,  0.00], 
-                          [  0.60,  0.40,  2.90,  2.10,  0.00,  1.20,  0.00],
+                          [  0.60,  0.40,  2.90,  2.00,  0.00,  1.20,  0.00],
                           [ -0.60, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00]]
         left_positions = [[ -0.60,  0.00,  0.00,  0.00, -2.75,  0.00,  0.00], 
-                          [ -0.60,  0.40, -2.90,  2.10,  0.00,  1.20,  0.00],
+                          [ -0.60,  0.40, -2.90,  2.00,  0.00,  1.20,  0.00],
                           [  0.60, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00]]
 
         print("Dancing. Press Ctrl-c to stop...")
         for i in range(num_positions):
-            while not rospy.is_shutdown():
+            if not rospy.is_shutdown():
                 right_angles = dict(zip(self._right_joint_names, right_positions[i]))
                 left_angles = dict(zip(self._left_joint_names, left_positions[i]))
 
-                self._right_arm.set_joint_positions(right_angles, raw=True)
+                self._right_arm.move_to_joint_positions(right_angles)
                 #rospy.sleep(right_times[i])
 
-                self._left_arm.set_joint_positions(left_angles, raw=True)
+                self._left_arm.move_to_joint_positions(left_angles)
                 #rospy.sleep(left_times[i])
 
 
