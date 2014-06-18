@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(nxr_baxter)
 
-find_package(catkin
-  REQUIRED
+find_package(catkin REQUIRED
+  COMPONENTS
   rospy 
   roscpp 
   roslib
@@ -23,7 +23,10 @@ find_package(catkin
   tf
   dynamic_reconfigure
   cv_bridge
+
 )
+
+include_directories(${catkin_INCLUDE_DIRS})
 
 catkin_python_setup()
 
@@ -52,3 +55,5 @@ catkin_package(
   dynamic_reconfigure
   cv_bridge
 )
+
+add_executable(cpp_test_moveit src/cpp_test_moveit.cpp)
