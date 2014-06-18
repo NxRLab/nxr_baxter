@@ -94,11 +94,11 @@ class Dancer(object):
                 right_angles = dict(zip(self._right_joint_names, right_positions[i]))
                 left_angles = dict(zip(self._left_joint_names, left_positions[i]))
 
-                self._right_arm.move_to_joint_positions(right_angles)
-                rospy.sleep(right_times[i])
+                self._right_arm.set_joint_positions(right_angles, raw=True)
+                #rospy.sleep(right_times[i])
 
-                self._left_arm.move_to_joint_positions(left_angles)
-                rospy.sleep(left_times[i])
+                self._left_arm.set_joint_positions(left_angles, raw=True)
+                #rospy.sleep(left_times[i])
 
 
 
