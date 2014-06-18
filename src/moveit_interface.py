@@ -147,21 +147,21 @@ class Trajectory_Controller:
         left_thread.join()
         right_thread.join()
 
-# def inverse_kin(des_pose):
-#     limb = "left_arm"
-#     ns = "ExternalTools/" + limb + "/PositionKinematicsNode/IKService"
-#     iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
-#     ikreq = SolvePositionIKRequest()
-#     hdr = Header(stamp=rospy.Time.now(), frame_id='base')
-#     pose = Pose(
-#         position=Point(des_pose[0:3]),
-#         orienation=createQuaternionFromRPY(pose[3:])
-#     )
-#     ikreq.pose_stamp.append(PoseStamped(header=hdr, pose=pose))
-#     try:
-#         rospy.wait_for_service(ns, 5.0)
-#         resp = iksvc(ikreq)
-#     except (rospy.ServiceException, rospy.ROSException), e
+def inverse_kin(des_pose):
+    limb = "left_right"
+    ns = "ExternalTools/" + limb + "/PositionKinematicsNode/IKService"
+    iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
+    ikreq = SolvePositionIKRequest()
+    hdr = Header(stamp=rospy.Time.now(), frame_id='base')
+    pose = Pose(
+        position=Point(des_pose[0:3]),
+        orienation=createQuaternionFromRPY(des_pose[3:])
+    )
+    ikreq.pose_stamp.append(PoseStamped(header=hdr, pose=pose))
+    try:
+        rospy.wait_for_service(ns, 5.0)
+        resp = iksvc(ikreq)
+    except (rospy.ServiceException, rospy.ROSException), e
 
 if __name__=='__main__':
     rospy.init_node('moveit_interface', log_level=rospy.INFO)
