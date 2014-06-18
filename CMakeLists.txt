@@ -23,6 +23,8 @@ find_package(catkin
   baxter_interface
   baxter_moveit_config
 
+  moveit_ros_planning_interface
+
   tf
   dynamic_reconfigure
   cv_bridge
@@ -65,3 +67,5 @@ catkin_package(
 )
 
 add_executable(cpp_test_moveit src/cpp_test_moveit.cpp)
+
+target_link_libraries(cpp_test_moveit ${catkin_LIBRARIES})

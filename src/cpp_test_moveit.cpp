@@ -3,7 +3,9 @@
 #include <geometry_msgs/Pose.h>
 
 #include <moveit/planning_interface/planning_interface.h>
-// #include <moveit/move_group_interface/move_group.h>
+// #include <move_group.h>
+#include <moveit/move_group_interface/move_group.h>
+// #include <moveit/robot_state/robot_state.h>
 
 
 /**
@@ -13,12 +15,15 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "cpp_test_moveit");
     ros::NodeHandle n;
+    ROS_INFO("Trying cpp_test_moveit");
 
     moveit::planning_interface::MoveGroup right_arm_group("right_arm");
 
-    ROS_INFO("Reference frame: %s", group.getPlanningFrame().c_str());
+    ROS_INFO("Move group created.");
 
-    ROS_INFO("End effector link: %s", group.getEndEffectorLink().c_str());
+    ROS_INFO("Reference frame: %s", right_arm_group.getPlanningFrame().c_str());
+
+    ROS_INFO("End effector link: %s", right_arm_group.getEndEffectorLink().c_str());
 
     geometry_msgs::Pose target_pose;
     target_pose.position.x = 0.815;
@@ -40,14 +45,14 @@ int main(int argc, char **argv)
 
     sleep(5.0);
 
-    ROS_INFO("Try joint-space goal");
+    // ROS_INFO("Try joint-space goal");
 
-    std::vector<double> group_var_values;
-    group.getCurrentState()->copyJointGroupPositions(group.getCurrentState()->getRobotModel()->getJointModelGroup(group.getName()), group_var_values);
+    // std::vector<double> group_var_values;
+    // right_arm_group.getCurrentState()->copyJointGroupPositions(right_arm_group.getCurrentState()->getRobotModel()->getJointModelGroup(right_arm_group.getName()), group_var_values);
 
-    group_var_values[0] = -1.0;
-    right_arm_group.setJointValueTarget(group_var_values);
-    right_arm_group.move();
+    // group_var_values[0] = -1.0;
+    // right_arm_group.setJointValueTarget(group_var_values);
+    // right_arm_group.move();
     
     return 0;
 }
