@@ -80,11 +80,16 @@ class Dancer(object):
         self._right_arm.set_joint_position_speed(0.8)
         self._left_arm.set_joint_position_speed(0.8)
 
-        num_positions = 3
-        right_positions = [[ 0.60,  0.00,  0.00,  0.00,  2.75,  0.00,  0.00], 
+        num_positions = 5
+        right_positions =[[  0.60,  0.00,  0.00,  0.00,  2.75,  0.00,  0.00], #arms out, palms down
+                          [  0.60,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00], #arms out, palms up
+                          [  0.40,  0.40,  1.90,  2.10,  0.00,  0.50,  0.00], #arms crossed on shoulders
                           [  0.50,  0.40,  2.90,  1.90,  0.00,  1.20,  0.00],
                           [ -0.60, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00]]
-        left_positions = [[ -0.60,  0.00,  0.00,  0.00, -2.75,  0.00,  0.00], 
+
+        left_positions = [[ -0.60,  0.00,  0.00,  0.00, -2.75,  0.00,  0.00], #arms out, palms down
+                          [ -0.60,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00], #arms out, palms up
+                          [ -0.40,  0.40, -1.80,  1.57,  0.00,  0.00,  0.00], #arms crossed on shoulders
                           [ -0.50,  0.40, -2.90,  1.90,  0.00,  1.20,  0.00],
                           [  0.60, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00]]
 
@@ -102,9 +107,6 @@ class Dancer(object):
 
                     self._right_arm.move_to_joint_positions(right_angles, threshold=0.1)
                     self._left_arm.move_to_joint_positions(left_angles, threshold=0.1)
-
-                    if(i==2):
-                        rospy.sleep(3.5)
                     
 
 
