@@ -19,6 +19,14 @@ class Dancer(object):
         """
         Dances the macarena!
         """
+        #image
+        img = cv.LoadImage("../images/Macarena.png")
+        msg = cv_bridge.CvBridge().cv_to_imgmsg(img, encoding="bgr8")
+        pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
+        pub.publish(msg)
+
+
+
         self._pub_rate = rospy.Publisher('robot/joint_state_publish_rate',
                                          UInt16)
         self._left_arm = baxter_interface.limb.Limb("left")
@@ -109,6 +117,9 @@ class Dancer(object):
 
                     self._right_arm.move_to_joint_positions(right_angles, threshold=0.1)
                     self._left_arm.move_to_joint_positions(left_angles, threshold=0.1)
+
+                    if(i==5):
+                        rospy.sleep(3.5)
                     
 
 
