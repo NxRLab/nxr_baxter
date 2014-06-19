@@ -382,7 +382,7 @@ class Baxter_Controller:
                     rospy.logdebug("Skeleton %d is out of bounds and being clipped.",
                                    skeleton.userid)
                     continue
-                if skeleton.userid == self.main_userid:
+                elif skeleton.userid == self.main_userid:
                     skel_raw = skeleton
                     if self.first_filt_flag:
                         self.skel_filt.reset_filters(skel_raw)
