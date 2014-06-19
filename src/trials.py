@@ -57,21 +57,21 @@ class Mover():
         #     (  s0,     s1,     e0,     e1,      w0,    w1,     w2) 
         #     (-1.701, -2.147, -3.054, -0.050, -3.059, -1.571, -3.059)
         l_angles = {                # OBSERVER PERSPECTIVE
-            'left_s0': 0.25,      # (+) right      (-) left       (inverted)
-            'left_s1': 0.00,      # (+) down       (-) left       (same)
-            'left_e0': 0.00,     # (+) CCW        (-) CW         (inverted)
-            'left_e1': 1.57,      # (+) more bent  (-) less bent  (same)
+            'left_s0':-0.60,      # (+) right      (-) left       (inverted)
+            'left_s1': 0.40,      # (+) down       (-) left       (same)
+            'left_e0':-1.40,     # (+) CCW        (-) CW         (inverted)
+            'left_e1': 0.80,      # (+) more bent  (-) less bent  (same)
             'left_w0': 0.00,      # (+) CCW        (-) CW         (inverted)
-            'left_w1': 0.00,      # (+) more bent  (-) less bent  (same)
+            'left_w1': 0.50,      # (+) more bent  (-) less bent  (same)
             'left_w2': 0.00      # (+) CCW        (-) CW         (same)
         }
         r_angles = {                # OBSERVER PERSPECTIVE 
-            'right_s0': 0.60,    # (+) right      (-) left        (inverted)
+            'right_s0': 0.70,    # (+) right      (-) left        (inverted)
             'right_s1': 0.00,     # (+) down       (-) left        (same)
-            'right_e0': 0.00,     # (+) CCW        (-) CW          (inverted)
-            'right_e1': 0.00,    # (+) more bent  (-) less bent   (same)
-            'right_w0': 2.75,    # (+) CCW        (-) CW          (inverted)
-            'right_w1': 0.00,     # (+) more bent  (-) less bent   (same)
+            'right_e0': 0.60,     # (+) CCW        (-) CW          (inverted)
+            'right_e1': 1.70,    # (+) more bent  (-) less bent   (same)
+            'right_w0': 0.00,      # (+) CCW        (-) CW          (inverted)
+            'right_w1': 0.30,     # (+) more bent  (-) less bent   (same)
             'right_w2': 0.00      # (+) CCW        (-) CW          (same)
         }
         if self.limb == 'left':
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     print("Attempting to enable Baxter")
     rs.enable()
 
-    task_completer = Mover('right')
+    task_completer = Mover('both')
     task_completer.move()
 
     print("Completing tasks. Press Esc to quit.")
