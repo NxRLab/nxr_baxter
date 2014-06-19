@@ -81,14 +81,14 @@ class Dancer(object):
         self._left_arm.set_joint_position_speed(0.8)
 
         num_positions = 5
-        right_positions =[[  0.60,  0.00,  0.00,  0.00,  2.75,  0.00,  0.00], #arms out, palms down
-                          [  0.60,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00], #arms out, palms up
+        right_positions =[[  0.40,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00], #arms out, palms down
+                          [  0.40,  0.00,  0.00,  0.00,  2.75,  0.00,  0.00], #arms out, palms up
                           [  0.40,  0.40,  1.90,  2.10,  0.00,  0.50,  0.00], #arms crossed on shoulders
                           [  0.50,  0.40,  2.90,  1.90,  0.00,  1.20,  0.00],
                           [ -0.60, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00]]
 
-        left_positions = [[ -0.60,  0.00,  0.00,  0.00, -2.75,  0.00,  0.00], #arms out, palms down
-                          [ -0.60,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00], #arms out, palms up
+        left_positions = [[ -0.40,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00], #arms out, palms down
+                          [ -0.40,  0.00,  0.00,  0.00, -2.75,  0.00,  0.00], #arms out, palms up
                           [ -0.40,  0.40, -1.80,  1.57,  0.00,  0.00,  0.00], #arms crossed on shoulders
                           [ -0.50,  0.40, -2.90,  1.90,  0.00,  1.20,  0.00],
                           [  0.60, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00]]
