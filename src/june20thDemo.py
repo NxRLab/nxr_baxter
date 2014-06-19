@@ -125,7 +125,17 @@ class Dancer(object):
                     self._left_arm.move_to_joint_positions(left_angles, threshold=0.1)
 
                     if(i==5):
+                        #image
+                        img = cv.LoadImage("../images/Hey-Macarena.png")
+                        msg = cv_bridge.CvBridge().cv_to_imgmsg(img, encoding="bgr8")
+                        pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
+                        pub.publish(msg)
                         rospy.sleep(3.5)
+                        #image
+                        img = cv.LoadImage("../images/Macarena.png")
+                        msg = cv_bridge.CvBridge().cv_to_imgmsg(img, encoding="bgr8")
+                        pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
+                        pub.publish(msg)
                     
 
 
