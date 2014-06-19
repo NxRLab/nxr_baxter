@@ -5,8 +5,14 @@ import random
 
 import rospy
 
+import cv
+import cv_bridge
+
 from std_msgs.msg import (
     UInt16,
+)
+from sensor_msgs.msg import (
+    Image,
 )
 
 import baxter_interface
