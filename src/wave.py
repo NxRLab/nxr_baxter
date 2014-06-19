@@ -178,7 +178,7 @@ if __name__ == '__main__':
     print("Enabling robot... ")
     rs.enable()
     
-    send_image('/home/nxr-baxter/catkin_ws/src/nxr_baxter/images/nxr.jpg')
+    # send_image('/home/nxr-baxter/catkin_ws/src/nxr_baxter/images/nxr.jpg')
     waver = Waver()
     waver.wave()
 
