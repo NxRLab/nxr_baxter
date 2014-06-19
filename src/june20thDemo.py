@@ -25,14 +25,6 @@ class Dancer(object):
         """
         Dances the macarena!
         """
-        #image
-        img = cv.LoadImage("../images/Macarena.png")
-        msg = cv_bridge.CvBridge().cv_to_imgmsg(img, encoding="bgr8")
-        pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
-        pub.publish(msg)
-
-
-
         self._pub_rate = rospy.Publisher('robot/joint_state_publish_rate',
                                          UInt16)
         self._left_arm = baxter_interface.limb.Limb("left")
@@ -91,6 +83,12 @@ class Dancer(object):
         Dances the Macarena
         reps is number of times to repeat. reps=0 does infinite
         """
+        #image
+        img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Macarena.png")
+        msg = cv_bridge.CvBridge().cv_to_imgmsg(img, encoding="bgr8")
+        pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
+        pub.publish(msg)
+
         self.set_neutral()
         self._right_arm.set_joint_position_speed(0.8)
         self._left_arm.set_joint_position_speed(0.8)
@@ -288,7 +286,7 @@ class Head_Wobbler(object):
             command_rate.sleep()
 
         self._done = True
-
+        self._head.set_pan(0.0)
 
 class Waver():
 
@@ -403,6 +401,11 @@ def main():
     print("Initializing node... ")
     rospy.init_node("macarena_dancer")
 
+    img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Graduation-Congratulations.png")
+    msg = cv_bridge.CvBridge().cv_to_imgmsg(img, encoding="bgr8")
+    pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
+    pub.publish(msg)
+
     head_wobbler = Head_Wobbler()
     dancer = Dancer()
     arm_wobbler = Arm_Wobbler
@@ -412,11 +415,15 @@ def main():
         head_wobbler.wobble()
         rospy.sleep(30.)
         dancer.macarena(1)
-        rospy.sleep(30.)
+        rospy.sleep(5.)
+        pub.publish(msg)
+        rospy.sleep(25.)
         arm_wobbler.wobble()
         rospy.sleep(30.)
         dancer.macarena(1)
-        rospy.sleep(30.)
+        rospy.sleep(5.)
+        pub.publish(msg)
+        rospy.sleep(25.)
         waver.wave()
         rospy.sleep(30.)
 
