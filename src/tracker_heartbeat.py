@@ -32,12 +32,7 @@ def terminate_process_and_children(p):
     ps_command = subprocess.Popen("ps -o pid --ppid %d --noheaders" % p.pid, shell=True, stdout=subprocess.PIPE)
     ps_output = ps_command.stdout.read()
     retcode = ps_command.wait()
-    # assert retcode == 0, "ps command returned %d" % retcode
-    # if retcode == None:
-    #     rospy.loginfo("Retcode is 'none' which means that the proc hasn't terminated yet.")
-    # if retcode == 0:
-    #     rospy.loginfo("Process doesn't exist, ps command returned %d for pid %d", retcode, p.pid)
-    # else:
+
     for pid_str in ps_output.split("\n")[:-1]:
             os.kill(int(pid_str), signal.SIGKILL)
     p.kill()
