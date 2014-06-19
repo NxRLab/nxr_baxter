@@ -80,17 +80,19 @@ class Dancer(object):
         self._right_arm.set_joint_position_speed(0.8)
         self._left_arm.set_joint_position_speed(0.8)
 
-        num_positions = 5
+        num_positions = 6
         right_positions =[[  0.40,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00], #arms out, palms down
                           [  0.40,  0.00,  0.00,  0.00,  2.75,  0.00,  0.00], #arms out, palms up
-                          [  0.40,  0.40,  1.90,  2.10,  0.00,  0.50,  0.00], #arms crossed on shoulders
-                          [  0.50,  0.40,  2.90,  1.90,  0.00,  1.20,  0.00],
+                          [  0.40,  0.40,  1.90,  2.10,  0.00,  0.50,  0.00], #arms crossed, palms on shoulders
+                          [  0.50,  0.40,  2.90,  1.90,  0.00,  1.20,  0.00], #arms uncrossed, palms on head
+                          [  0.70,  0.00,  0.60,  1.70,  0.00,  0.30,  0.00], #arms crossed, palms on waist
                           [ -0.60, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00]]
 
         left_positions = [[ -0.40,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00], #arms out, palms down
                           [ -0.40,  0.00,  0.00,  0.00, -2.75,  0.00,  0.00], #arms out, palms up
-                          [ -0.40,  0.40, -1.80,  1.57,  0.00,  0.00,  0.00], #arms crossed on shoulders
-                          [ -0.50,  0.40, -2.90,  1.90,  0.00,  1.20,  0.00],
+                          [ -0.40,  0.40, -1.80,  1.57,  0.00,  0.00,  0.00], #arms crossed, palms on shoulders
+                          [ -0.50,  0.40, -2.90,  1.90,  0.00,  1.20,  0.00], #arms uncrossed, palms on head
+                          [ -0.60,  0.40, -1.40,  0.80,  0.00,  0.50,  0.00], #arms crossed, palms on waist
                           [  0.60, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00]]
 
         wiggle_right_positions = [[ -0.60, -0.20,  0.00,  2.00,  0.00,  0.50,  0.00],
