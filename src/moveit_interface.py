@@ -20,7 +20,7 @@ from trajectory_msgs.msg import (JointTrajectoryPoint, JointTrajectory)
 from std_msgs.msg import Header
 
 from baxter_core_msgs.srv import (
-    SolvePositionIK
+    SolvePositionIK,
     SolvePositionIKRequest)
 
 from control_msgs.msg import (
@@ -35,7 +35,7 @@ from geometry_msgs.msg import PoseStamped
 # from std_msgs.msg import Header
 from nxr_baxter_msgs.srv import *
 
-from tf.transformations import createQuaternionFromRPY
+from tf.transformations import quaternion_from_euler
 
 class Trajectory_Controller:
     """
