@@ -95,16 +95,19 @@ class Crane():
                                 math.pow((left_elbow.y - left_hand.y),2) +
                                 math.pow((left_elbow.z - left_hand.z),2)))
         RJ_ARM_LENGTH = 41*2.54/100.0
-        #From URDF,
-        x_offset = 0.055695
-        y_offset = 0
-        z_offset = 0.011038
+        #From URDF, offsets from base/torso to right_uper_shoulder.
+        x_offset = 0.62
+        y_offset = -0.259
+        z_offset = 0.126
         # Use left values
         # x = (left_hand.x - left_shoulder.x - torso.x)*RJ_ARM_LENGTH/arm_length + x_offset
         # y = (left_hand.y - left_shoulder.y - torso.y)*RJ_ARM_LENGTH/arm_length + y_offset
         # z = (left_hand.z - left_shoulder.z - torso.z)*RJ_ARM_LENGTH/arm_length + z_offset
-        x = (left_hand.x - torso.x)*RJ_ARM_LENGTH/arm_length + x_offset
-        y = (left_hand.y - torso.y)*RJ_ARM_LENGTH/arm_length + y_offset
+        # x = (left_hand.x - torso.x)*RJ_ARM_LENGTH/arm_length + x_offset
+        # y = (left_hand.y - torso.y)*RJ_ARM_LENGTH/arm_length + y_offset
+        # z = (left_hand.z - left_shoulder.z)*RJ_ARM_LENGTH/arm_length + z_offset
+        x = (left_hand.x - left_shoulder.x)*RJ_ARM_LENGTH/arm_length + x_offset
+        y = (left_hand.y - left_shoulder.y)*RJ_ARM_LENGTH/arm_length + y_offset
         z = (left_hand.z - left_shoulder.z)*RJ_ARM_LENGTH/arm_length + z_offset
         # print "left_hand.z ", left_hand.z
         # print "left_shoulder.z ", left_shoulder.z
