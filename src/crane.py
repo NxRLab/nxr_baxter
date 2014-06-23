@@ -100,9 +100,17 @@ class Crane():
         y_offset = 0
         z_offset = 0.011038
         # Use left values
-        x = (left_hand.x - left_shoulder.x - torso.x)*RJ_ARM_LENGTH/arm_length + x_offset
-        y = (left_hand.y - left_shoulder.y - torso.y)*RJ_ARM_LENGTH/arm_length + y_offset
-        z = (left_hand.z - left_shoulder.z - torso.z)*RJ_ARM_LENGTH/arm_length + z_offset
+        # x = (left_hand.x - left_shoulder.x - torso.x)*RJ_ARM_LENGTH/arm_length + x_offset
+        # y = (left_hand.y - left_shoulder.y - torso.y)*RJ_ARM_LENGTH/arm_length + y_offset
+        # z = (left_hand.z - left_shoulder.z - torso.z)*RJ_ARM_LENGTH/arm_length + z_offset
+        x = (left_hand.x - torso.x)*RJ_ARM_LENGTH/arm_length + x_offset
+        y = (left_hand.y - torso.y)*RJ_ARM_LENGTH/arm_length + y_offset
+        z = (left_hand.z - left_shoulder.z)*RJ_ARM_LENGTH/arm_length + z_offset
+        # print "left_hand.z ", left_hand.z
+        # print "left_shoulder.z ", left_shoulder.z
+        print "x ", x
+        print "y ", y
+        print "z ", z
 
         # Set orientation
         roll = 0 # Could be defined to be in line with the arm or something

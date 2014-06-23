@@ -165,22 +165,27 @@ class Inverse_Kinematics:
         hdr = Header(stamp=rospy.Time.now(), frame_id='base')
         pose = Pose()
         quat = Quaternion()
-        pose.position.x = des_pose[0]
-        pose.position.y = des_pose[1]
-        pose.position.z = des_pose[2]
         if len(des_pose) == 6:
             #Note that this may be wrong!
-            quat = quaternion_from_euler(des_pose[3], des_pose[4], des_pose[5])
+            quatArray = quaternion_from_euler(des_pose[3], des_pose[4], des_pose[5], axes='sxyz')
+            quat.x = quatArray[0]
+            quat.y = quatArray[1]
+            quat.z = quatArray[2]
+            quat.w = quatArray[3]
         else:
             quat.x = des_pose[3]
             quat.y = des_pose[4]
             quat.z = des_pose[5]
             quat.w = des_pose[6]
         pose.orientation = quat
+        pose.position.x = des_pose[0]
+        pose.position.y = des_pose[1]
+        pose.position.z = des_pose[2]
+        # print pose.position
 
         ikreq.pose_stamp = [PoseStamped(header=hdr, pose=pose)]
         try:
-            rospy.wait_for_service(ns,5.0)
+            rospy.wait_for_service(self.ns,5.0)
             resp = self.iksvc(ikreq)
         except (rospy.ServiceException, rospy.ROSException), e:
             rospy.logerr("IK Service Exception thrown")
@@ -192,6 +197,7 @@ class Inverse_Kinematics:
                 des_joints = resp.joints[0].position[i]
             return des_joints
         else:
+            # print resp.isValid
             return None
 
 if __name__=='__main__':
@@ -261,6 +267,7 @@ if __name__=='__main__':
                         pose = [joints['x'], joints['y'], joints['z'],
                                 joints['yaw'], joints['pitch'], joints['roll']]
                         desired_joints = ikright.solveIK(pose)
+                        # print desired_joints
                         if desired_joints != None:
                             right_arm_group.set_joint_value_target(
                                 dict(zip(desired_joints, right_arm.joint_names())))
