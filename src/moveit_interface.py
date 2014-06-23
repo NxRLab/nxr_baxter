@@ -194,7 +194,7 @@ class Inverse_Kinematics:
         if resp.isValid[0]:
             des_joints = [0]*7
             for i in range(7):
-                des_joints = resp.joints[0].position[i]
+                des_joints[i] = resp.joints[0].position[i]
             return des_joints
         else:
             # print resp.isValid

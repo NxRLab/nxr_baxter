@@ -96,9 +96,9 @@ class Crane():
                                 math.pow((left_elbow.z - left_hand.z),2)))
         RJ_ARM_LENGTH = 41*2.54/100.0
         #From URDF, offsets from base/torso to right_uper_shoulder.
-        x_offset = 0.62
+        x_offset = 0.062
         y_offset = -0.259
-        z_offset = 0.126
+        z_offset = 0.120
         # Use left values
         # x = (left_hand.x - left_shoulder.x - torso.x)*RJ_ARM_LENGTH/arm_length + x_offset
         # y = (left_hand.y - left_shoulder.y - torso.y)*RJ_ARM_LENGTH/arm_length + y_offset
@@ -114,6 +114,7 @@ class Crane():
         print "x ", x
         print "y ", y
         print "z ", z
+        print self.arm.endpoint_pose()
 
         # Set orientation
         roll = 0 # Could be defined to be in line with the arm or something
