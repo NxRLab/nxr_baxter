@@ -140,6 +140,7 @@ class Baxter_Controller:
         self.internal_mode = None
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
 
+        self.motor_timer = None
         self.reset_motor_timer()
 
         # Set up the joint value service
@@ -293,8 +294,8 @@ class Baxter_Controller:
         self.change_mode_service(MetaMode.IDLE_ENABLED)
 
     def reset_motor_timer(self):
-        if rs.state().stopped or not rs.state().enabled:
-            rs.enable()
+        if self.rs.state().stopped or not self.rs.state().enabled:
+            self.rs.enable()
         if self.motor_timer != None:
             self.motor_timer.shutdown()
         self.motor_timer = rospy.Timer(rospy.Duration(self.motor_timeout), self.motor_shutdown)

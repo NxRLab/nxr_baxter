@@ -31,7 +31,10 @@ from control_msgs.msg import (
 import baxter_interface
 import baxter_dataflow
 
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import (
+    PoseStamped,
+    Pose,
+    Quaternion)
 # from std_msgs.msg import Header
 from nxr_baxter_msgs.srv import *
 
