@@ -109,15 +109,17 @@ class Crane():
         # x = (left_hand.x - left_shoulder.x)*RJ_ARM_LENGTH/arm_length + x_offset
         # y = (left_hand.y - left_shoulder.y)*RJ_ARM_LENGTH/arm_length + y_offset
         # z = (left_hand.z - left_shoulder.z)*RJ_ARM_LENGTH/arm_length + z_offset
-        x = (left_hand.x - torso.x)
-        y = (left_hand.y - torso.y)
-        z = (left_hand.z - torso.z)
+        # Baxter: x out, y left, z up from his perspective
+        # Kinect: x right, y down, z out from its perspective   
+        x = (-left_hand.z + torso.z)
+        y = (-torso.x + left_hand.x)
+        z = (-torso.y + left_hand.y)
         # print "left_hand.z ", left_hand.z
         # print "left_shoulder.z ", left_shoulder.z
-        print "x ", x
-        print "y ", y
-        print "z ", z
-        print self.arm.endpoint_pose()
+        # print "x ", x
+        # print "y ", y
+        # print "z ", z
+        # print self.arm.endpoint_pose()
 
         # Set orientation
         roll = 0 # Could be defined to be in line with the arm or something

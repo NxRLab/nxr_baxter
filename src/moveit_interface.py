@@ -80,13 +80,14 @@ class Trajectory_Controller:
 
     def push_one_arm(self, new_plan, left_arm_joints):
         # Build a new joint trajectory with left_arm_joint values at those times
-        temp_traj = JointTrajectory()
         new_traj = new_plan.joint_trajectory
+        temp_traj = JointTrajectory()
+        temp_traj.points = [JointTrajectoryPoint()]*len(new_traj.points)
         temp_traj.header = new_traj.header
         temp_traj.joint_names = self.traj.joint_names
         zero_vec = [0.0]*7
         for i in range(len(new_traj.points)):
-            temp_traj.points[i].positions = left_arm_joints.values() + new_traj.points[i].positions
+            temp_traj.points[i].positions = left_arm_joints + new_traj.points[i].positions
             temp_traj.points[i].velocities = zero_vec + new_traj.points[i].velocities
             temp_traj.points[i].accelerations = zero_vec + new_traj.points[i].accelerations
             temp_traj.points[i].time_from_start = new_traj.points[i].time_from_start
@@ -192,6 +193,7 @@ class Inverse_Kinematics:
             return None
 
         if resp.isValid[0]:
+            print resp.isValid
             des_joints = [0]*7
             for i in range(7):
                 des_joints[i] = resp.joints[0].position[i]
@@ -269,8 +271,9 @@ if __name__=='__main__':
                         desired_joints = ikright.solveIK(pose)
                         # print desired_joints
                         if desired_joints != None:
-                            right_arm_group.set_joint_value_target(
-                                dict(zip(desired_joints, right_arm.joint_names())))
+                            joints_one_arm = dict(zip(right_arm.joint_names(),
+                                                      desired_joints))
+                            right_arm_group.set_joint_value_target(joints_one_arm)
                             traj_controller.push_one_arm(right_arm_group.plan(), left_arm_group.get_current_joint_values())
                     except moveit_commander.MoveItCommanderException, e:
                         rospy.logwarn("Error setting cartesian pose target.")
