@@ -86,8 +86,9 @@ class Trajectory_Controller:
         temp_traj.header = new_traj.header
         temp_traj.joint_names = self.traj.joint_names
         zero_vec = [0.0]*7
+        left_arm_vals = [0.35, 0.0, 0.0, 1.57, 0.0, 0.0, 0.0]
         for i in range(len(new_traj.points)):
-            temp_traj.points[i].positions = left_arm_joints + new_traj.points[i].positions
+            temp_traj.points[i].positions = left_arm_vals + new_traj.points[i].positions
             temp_traj.points[i].velocities = zero_vec + new_traj.points[i].velocities
             temp_traj.points[i].accelerations = zero_vec + new_traj.points[i].accelerations
             temp_traj.points[i].time_from_start = new_traj.points[i].time_from_start
@@ -209,9 +210,9 @@ if __name__=='__main__':
     both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
     right_arm_group = moveit_commander.MoveGroupCommander("right_arm")
     left_arm_group = moveit_commander.MoveGroupCommander("left_arm")
-    both_arms_group.allow_replanning(True)
-    right_arm_group.allow_replanning(True)
-    left_arm_group.allow_replanning(True)
+    # both_arms_group.allow_replanning(True)
+    # right_arm_group.allow_replanning(True)
+    # left_arm_group.allow_replanning(True)
     both_arms_group.set_goal_position_tolerance(0.01)
     both_arms_group.set_goal_orientation_tolerance(0.01)
     left_arm_group.set_goal_position_tolerance(0.01)
@@ -274,7 +275,7 @@ if __name__=='__main__':
                             joints_one_arm = dict(zip(right_arm.joint_names(),
                                                       desired_joints))
                             right_arm_group.set_joint_value_target(joints_one_arm)
-                            traj_controller.push_one_arm(right_arm_group.plan(), left_arm_group.get_current_joint_values())
+                            traj_controller.push_one_arm(right_arm_group.plan(), left_arm.joint_angles())
                     except moveit_commander.MoveItCommanderException, e:
                         rospy.logwarn("Error setting cartesian pose target.")
                     

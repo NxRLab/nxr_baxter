@@ -88,17 +88,17 @@ class Crane():
                           right_shoulder, right_elbow, right_hand, torso):
         # Find distance from shoulder to hand for human
         # Total arm length:
-        # arm_length = (math.sqrt(math.pow((left_shoulder.x - left_elbow.x),2) +
-        #                         math.pow((left_shoulder.y - left_elbow.y),2) +
-        #                         math.pow((left_shoulder.z - left_elbow.z),2)) +
-        #                 math.sqrt(math.pow((left_elbow.x - left_hand.x),2) +
-        #                         math.pow((left_elbow.y - left_hand.y),2) +
-        #                         math.pow((left_elbow.z - left_hand.z),2)))
-        # RJ_ARM_LENGTH = 41*2.54/100.0
+        arm_length = (math.sqrt(math.pow((left_shoulder.x - left_elbow.x),2) +
+                                math.pow((left_shoulder.y - left_elbow.y),2) +
+                                math.pow((left_shoulder.z - left_elbow.z),2)) +
+                        math.sqrt(math.pow((left_elbow.x - left_hand.x),2) +
+                                math.pow((left_elbow.y - left_hand.y),2) +
+                                math.pow((left_elbow.z - left_hand.z),2)))
+        RJ_ARM_LENGTH = 41*2.54/100.0
         #From URDF, offsets from base/torso to right_uper_shoulder.
-        # x_offset = 0.062
-        # y_offset = -0.259
-        # z_offset = 0.120
+        x_offset = 0.062
+        y_offset = -0.259
+        z_offset = 0.120
         # Use left values
         # x = (left_hand.x - left_shoulder.x - torso.x)*RJ_ARM_LENGTH/arm_length + x_offset
         # y = (left_hand.y - left_shoulder.y - torso.y)*RJ_ARM_LENGTH/arm_length + y_offset
@@ -110,10 +110,14 @@ class Crane():
         # y = (left_hand.y - left_shoulder.y)*RJ_ARM_LENGTH/arm_length + y_offset
         # z = (left_hand.z - left_shoulder.z)*RJ_ARM_LENGTH/arm_length + z_offset
         # Baxter: x out, y left, z up from his perspective
-        # Kinect: x right, y down, z out from its perspective   
-        x = (-left_hand.z + torso.z)
-        y = (-torso.x + left_hand.x)
-        z = (-torso.y + left_hand.y)
+        # Kinect: x right, y down, z out from its perspective
+        # Best ones so far!
+        # x = (-left_hand.z + torso.z)
+        # y = (-torso.x + left_hand.x)
+        # z = (-torso.y + left_hand.y)
+        x = (-left_hand.z + left_shoulder.z)*RJ_ARM_LENGTH/arm_length + x_offset
+        y = (left_hand.x - left_shoulder.x)*RJ_ARM_LENGTH/arm_length + y_offset
+        z = (-left_hand.y + left_shoulder.y)*RJ_ARM_LENGTH/arm_length + z_offset
         # print "left_hand.z ", left_hand.z
         # print "left_shoulder.z ", left_shoulder.z
         # print "x ", x
