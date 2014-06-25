@@ -80,7 +80,7 @@ class Mime():
         """
         Determines how to move Baxter's limbs in order to mimic user
         """
-
+        rospy.logdebug("Calling Mime().human_to_baxter(...)")
         for arm in ['left', 'right']:
             if arm=='left':
                 sh = l_sh

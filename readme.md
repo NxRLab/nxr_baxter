@@ -16,7 +16,7 @@ To start this game, the user raises their right arm. After doing so, they match 
 
 In reality, the robot is only mimicking the users shoulder and elbow angles. 
 
-The `mimic.py` file contains the description for the `Mime` class. This class provides an interface for playing the mime game described above. The only function that should be used is `Mime().desired_joint_vals(left_shoulder, left_elbow, left_hand, right_shoulder, right_elbow, right_hand)` which takes in tfs to the skeleton data for the human, and returns the joint values for the robot to achieve to mimic the user.
+The `mimic.py` file contains the description for the `Mime` class. This class provides an interface for playing the mime game described above. The only function that should be used is `Mime().desired_joint_vals(left_shoulder, left_elbow, left_hand, right_shoulder, right_elbow, right_hand)` which takes in tfs to the skeleton data for the human, and returns the joint values for the robot to achieve to mimic the user. None of the other functions besides the constructor should be used.
 
 ## Crane Game
 To start this game, the user raises their left arm. After doing so, they match their left arm with RJ's right by raising it to their sides. Once the user has done this, the robot will mimic the user's left arm motions. By bending their right arm at the elbow, they can control RJ's left gripper. This allows for picking and placing objects. The goal is to pick up and move around various blocks on the table placed in front of RJ.
