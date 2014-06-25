@@ -126,7 +126,7 @@ class Crane():
         # print self.arm.endpoint_pose()
 
         # scaling = RJ_ARM_LENGTH/arm_length
-        scaling = 1
+        scaling = 1.0
         x = (left_hand.x - torso.x)*scaling
         y = (torso.z - left_hand.z)*scaling
         z = (torso.y - left_hand.y)*scaling
