@@ -115,9 +115,9 @@ class Crane():
         # x = (-left_hand.z + torso.z)
         # y = (-torso.x + left_hand.x)
         # z = (-torso.y + left_hand.y)
-        x = (-left_hand.z + left_shoulder.z)*RJ_ARM_LENGTH/arm_length + x_offset
-        y = (left_hand.x - left_shoulder.x)*RJ_ARM_LENGTH/arm_length + y_offset
-        z = (-left_hand.y + left_shoulder.y)*RJ_ARM_LENGTH/arm_length + z_offset
+        # x = (-left_hand.z + left_shoulder.z)*RJ_ARM_LENGTH/arm_length + x_offset
+        # y = (left_hand.x - left_shoulder.x)*RJ_ARM_LENGTH/arm_length + y_offset
+        # z = (-left_hand.y + left_shoulder.y)*RJ_ARM_LENGTH/arm_length + z_offset
         # print "left_hand.z ", left_hand.z
         # print "left_shoulder.z ", left_shoulder.z
         # print "x ", x
@@ -125,9 +125,15 @@ class Crane():
         # print "z ", z
         # print self.arm.endpoint_pose()
 
+        # scaling = RJ_ARM_LENGTH/arm_length
+        scaling = 1
+        x = (left_hand.x - torso.x)*scaling
+        y = (torso.z - left_hand.z)*scaling
+        z = (torso.y - left_hand.y)*scaling
+
         # Set orientation
         roll = 0 # Could be defined to be in line with the arm or something
-        pitch = math.pi/2.0 # Could be defined to be in line with the arm or something
+        pitch = math.pi # Could be defined to be in line with the arm or something
         yaw = 0
         pose = {'x': x, 'y': y, 'z': z, 'roll': roll, 'pitch': pitch, 'yaw': yaw}
 
