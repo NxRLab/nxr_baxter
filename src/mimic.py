@@ -24,12 +24,6 @@ from vector_operations import (make_vector_from_POINTS,
 	                           vector_projection_onto_plane,
 	                           shortest_vector_from_point_to_vector)
 
-###################
-# MOVEIT IMPORTS: #
-###################
-import moveit_commander
-import moveit_msgs.msg
-
 ##################
 # OTHER IMPORTS: #
 ##################
@@ -41,24 +35,23 @@ import math
 import operator
 from pprint import pprint
 
-from trajectory_speed_up import traj_speed_up
-
-
-
 class Mime():
     """
     Mime control class
 
-    This class controls Baxter by making him mimic an individual's
-    movements that are being tracked by an Asus Xtion sensor. The Mime
-    obtains the tracking data by subscribing to the /skeleton messsages
-    published by the skeletontracker_nu script.
+    This class controls Baxter by making him mimic an individual's movements
+    that are being tracked by an Asus Xtion sensor. The Mime has the skeleton
+    data passed to it by the calling function, and returns the desired joint
+    values for the robot.
+
     """
 
     def __init__(self,):
         """
         Mime constructor
         """
+        rospy.logdebug("Calling Mime().__init__()")
+        # Get interfaces to the two individual arms
         self.left_arm = baxter_interface.Limb('left')
         self.right_arm = baxter_interface.Limb('right')
 
@@ -67,6 +60,7 @@ class Mime():
         """
         Returns the desired joint values given the skeleton values
         """
+        rospy.logdebug("Calling Mime().desired_joint_vals(...)")
         angles = {'left': [], 'right': []}
         self.human_to_baxter(left_shoulder, left_elbow, left_hand,
                              right_shoulder, right_elbow, right_hand, angles)
@@ -81,35 +75,6 @@ class Mime():
                                     position[3], position[4], position[5],
                                     position[6]]))
         return dict(l_positions, **r_positions)
-
-    def move(self, left_shoulder, left_elbow, left_hand,
-             right_shoulder, right_elbow, right_hand):
-        """
-        Creates and sends threads for Baxter's arm movement
-        """
-        angles = {'left': [], 'right': []}
-        self.human_to_baxter(left_shoulder, left_elbow, left_hand,
-                             right_shoulder, right_elbow, right_hand, angles)
-        position = angles['left']
-        l_positions = dict(zip(self.left_arm.joint_names(),
-                               [position[0], position[1], position[2],
-                                    position[3], position[4], position[5],
-                                    position[6]]))
-        position = angles['right']
-        r_positions = dict(zip(self.right_arm.joint_names(),
-                               [position[0], position[1], position[2],
-                                    position[3], position[4], position[5],
-                                    position[6]]))
-        # self.both_arms.stop()
-        # self.both_arms.set_joint_value_target(dict(l_positions, **r_positions))
-        # traj = self.both_arms.plan()
-        rospy.logwarn('Pre-go')
-        # self.both_arms.execute(traj)
-        self.both_arms.go(joints=dict(l_positions, **r_positions), wait=True)
-        rospy.logwarn('Post-go')
-        # traj = self.both_arms.plan()
-        # new_traj = traj_speed_up(traj, spd=3.0)
-        # self.both_arms.execute(new_traj)
 
     def human_to_baxter(self, l_sh, l_el, l_ha, r_sh, r_el, r_ha, a):
         """
@@ -154,8 +119,6 @@ class Mime():
                 else:
                     s1 = -theta
                 angles = a['right']
-                # Assume moveit will avoid wall
-                # angles.append(s0)
                 # s0 assignment in safe range
                 if -0.25 < s0 and s0 < 1.60:
                     angles.append(s0)
@@ -180,8 +143,6 @@ class Mime():
                 w0 = -w0
                 w2 = -w2
                 angles = a['left']
-                # Assume moveit will avoid walls
-                # angles.append(s0)
                 # s0 assignment in safe range
                 if -1.60 < s0 and s0 < 0.25:
                     angles.append(s0)

@@ -16,13 +16,14 @@ To start this game, the user raises their right arm. After doing so, they match 
 
 In reality, the robot is only mimicking the users shoulder and elbow angles. 
 
+The `mimic.py` file contains the description for the `Mime` class. This class provides an interface for playing the mime game described above. The only function that should be used is `Mime().desired_joint_vals(left_shoulder, left_elbow, left_hand, right_shoulder, right_elbow, right_hand)` which takes in tfs to the skeleton data for the human, and returns the joint values for the robot to achieve to mimic the user.
+
 ## Crane Game
 To start this game, the user raises their left arm. After doing so, they match their left arm with RJ's right by raising it to their sides. Once the user has done this, the robot will mimic the user's left arm motions. By bending their right arm at the elbow, they can control RJ's left gripper. This allows for picking and placing objects. The goal is to pick up and move around various blocks on the table placed in front of RJ.
 
 Since the robot is only mimicking the shoulder and elbow angles, it can be difficult to actually pick up objects. We are currently working on implementing a cartesian based planner instead of a configuration based planner.
 
-
-The `crane.py` file contains the description for the `Crane` class. This class provides an interface for playing the game. The class has two functions that are primarily accessed once an instance has been created. The two are `desired_joint_vals(left_shoulder, left_elbow, lefthand, right_shoulder, right_elbow, right_hand)` and `desired_pos_vals()` with the same input arguments. The inputs in this case are the TFs for the person at each of those joints as given by the skeleton tracker. Both functions check if the right arm's elbow has been bent and will close the gripper if that is the case. The `desired_joint_vals` function will return the desired baxter arm configuration to match the human's arm, and `desired_pose_vals` will return the desired end effector pose. This latter function is the configuration based planner described above, and is not currently working.
+The `crane.py` file contains the description for the `Crane` class. This class provides an interface for playing the game. The class has two functions that are primarily accessed once an instance has been created. The two are `desired_joint_vals(left_shoulder, left_elbow, lefthand, right_shoulder, right_elbow, right_hand)` and `desired_pos_vals()` with the same input arguments. The inputs in this case are the TFs for the person at each of those joints as given by the skeleton tracker. Both functions check if the right arm's elbow has been bent and will close the gripper if that is the case. The `desired_joint_vals` function will return the desired baxter arm configuration to match the human's arm, and `desired_pose_vals` will return the desired end effector pose. This latter function is the configuration based planner described above, and is not currently working. The rest of the functions beyond the constructor should not be needed.
 
 
 ## Workarounds for Asus Xtion

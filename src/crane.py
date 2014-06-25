@@ -44,6 +44,7 @@ class Crane():
         """
         Crane constructor
         """
+        rospy.logdebug("Calling Crane().__init__")
         # Get access to the right arm and gripper
         self.arm = baxter_interface.Limb('right')
         self.gripper = baxter_interface.Gripper('right')
@@ -64,24 +65,33 @@ class Crane():
         """
         Returns the joint values based on the human skeleton.
         """
-        # Initialize 
+        rospy.logdebug("Calling Crane().desired_joint_vals(...)")
+        # Initialize a list of angles that we will return.  This is probably not
+        # the best way to do it, but this is how Jon did it orginally and Adam
+        # wanted to match.
         angles = []
+        # Both fills in 'angles' list and checks if the gripper should be open or closed
         if self.human_to_baxter(left_shoulder, left_elbow, left_hand,
                                 right_shoulder, right_elbow, right_hand, angles):
             self.gripper.close()
         else:
             self.gripper.open()
 
+        # Stores the positions for the right arm in the standard dictionary for arm values
         r_positions = dict(zip(self.arm.joint_names(),
                                 [angles[0], angles[1], angles[2], angles[3],
                                 angles[4], angles[5], angles[6]]))
-
+        # Returns the combined dictionary for all joints
         return dict(self.crane_l_angles, **r_positions)
 
     def desired_pose_vals(self, left_shoulder, left_elbow, left_hand,
                           right_shoulder, right_elbow, right_hand, torso):
-        # Find distance from shoulder to hand for human
-        # Total arm length:
+        """
+        Returns the pose values based on the human skeleton. Similar to
+        desired_joint_vals. Currently not working as ideal.
+        """
+        rospy.logdebug("Calling Crane().desired_pose_vals(...)")
+        # Use length of arms to potentially calculate a useful scaling
         arm_length = (math.sqrt(math.pow((left_shoulder.x - left_elbow.x),2) +
                                 math.pow((left_shoulder.y - left_elbow.y),2) +
                                 math.pow((left_shoulder.z - left_elbow.z),2)) +
@@ -93,16 +103,7 @@ class Crane():
         x_offset = 0.062
         y_offset = -0.259
         z_offset = 0.120
-        # Use left values
-        # x = (left_hand.x - left_shoulder.x - torso.x)*RJ_ARM_LENGTH/arm_length + x_offset
-        # y = (left_hand.y - left_shoulder.y - torso.y)*RJ_ARM_LENGTH/arm_length + y_offset
-        # z = (left_hand.z - left_shoulder.z - torso.z)*RJ_ARM_LENGTH/arm_length + z_offset
-        # x = (left_hand.x - torso.x)*RJ_ARM_LENGTH/arm_length + x_offset
-        # y = (left_hand.y - torso.y)*RJ_ARM_LENGTH/arm_length + y_offset
-        # z = (left_hand.z - left_shoulder.z)*RJ_ARM_LENGTH/arm_length + z_offset
-        # x = (left_hand.x - left_shoulder.x)*RJ_ARM_LENGTH/arm_length + x_offset
-        # y = (left_hand.y - left_shoulder.y)*RJ_ARM_LENGTH/arm_length + y_offset
-        # z = (left_hand.z - left_shoulder.z)*RJ_ARM_LENGTH/arm_length + z_offset
+
         # Baxter: x out, y left, z up from his perspective
         # Kinect: x right, y down, z out from its perspective
         # Best ones so far!
@@ -112,11 +113,6 @@ class Crane():
         # x = (-left_hand.z + left_shoulder.z)*RJ_ARM_LENGTH/arm_length + x_offset
         # y = (left_hand.x - left_shoulder.x)*RJ_ARM_LENGTH/arm_length + y_offset
         # z = (-left_hand.y + left_shoulder.y)*RJ_ARM_LENGTH/arm_length + z_offset
-        # print "left_hand.z ", left_hand.z
-        # print "left_shoulder.z ", left_shoulder.z
-        # print "x ", x
-        # print "y ", y
-        # print "z ", z
         # print self.arm.endpoint_pose()
 
         # scaling = RJ_ARM_LENGTH/arm_length
@@ -142,13 +138,15 @@ class Crane():
             self.gripper.open()
 
         return pose
-        
 
     def human_to_baxter(self, l_sh, l_el, l_ha, r_sh, r_el, r_ha, a):
         """
         Computes angles sent to Baxter's arm, checks if gripper should adjust
         """
+        rospy.logdebug("Calling Crane().human_to_baxter(...)")
         # Crane Arm
+        # Forms vectors between points in 3-space and uses that and
+        # vector operations to calculate the angles.
         l_upper_arm = make_vector_from_POINTS(l_sh, l_el)
         l_forearm = make_vector_from_POINTS(l_el, l_ha)
         # S0
@@ -186,7 +184,10 @@ class Crane():
         return False
 
     def check_angles(self, s0, s1, e0, e1, w0, w1, w2, angles):
-
+        """
+        This function checks if the desired angles will be within the constraints.
+        """
+        rospy.logdebug("Calling Crane().check_angles(...)")
         if -0.25 < s0 and s0 < 1.60:
             angles.append(s0)
         elif -0.25 < s0:
