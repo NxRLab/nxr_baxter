@@ -22,6 +22,9 @@ To start this game, the user raises their left arm. After doing so, they match t
 Since the robot is only mimicking the shoulder and elbow angles, it can be difficult to actually pick up objects. We are currently working on implementing a cartesian based planner instead of a configuration based planner.
 
 
+The `crane.py` file contains the description for the `Crane` class. This class provides an interface for playing the game. The class has two functions that are primarily accessed once an instance has been created. The two are `desired_joint_vals(left_shoulder, left_elbow, lefthand, right_shoulder, right_elbow, right_hand)` and `desired_pos_vals()` with the same input arguments. The inputs in this case are the TFs for the person at each of those joints as given by the skeleton tracker. Both functions check if the right arm's elbow has been bent and will close the gripper if that is the case. The `desired_joint_vals` function will return the desired baxter arm configuration to match the human's arm, and `desired_pose_vals` will return the desired end effector pose. This latter function is the configuration based planner described above, and is not currently working.
+
+
 ## Workarounds for Asus Xtion
 After being on for a long time, the Asus will start to slow down the frequency at which it publishes skeletons.
 

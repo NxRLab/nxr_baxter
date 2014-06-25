@@ -30,14 +30,6 @@ from vector_operations import (make_vector_from_POINTS,
 import operator
 import math
 
-###################
-# MOVEIT IMPORTS: #
-###################
-import moveit_commander
-import moveit_msgs.msg
-
-# from trajectory_speed_up import traj_speed_up
-
 class Crane():
     """
     Crane control class
@@ -52,25 +44,27 @@ class Crane():
         """
         Crane constructor
         """
+        # Get access to the right arm and gripper
         self.arm = baxter_interface.Limb('right')
         self.gripper = baxter_interface.Gripper('right')
-        # self.pub_rate = rospy.Publisher('/robot/joint_state_publish_rate', UInt16)
-        # self.pub_rate.publish(500)
+        # define the neutral position for the crane game right arm
         self.neutral_position = dict(zip(self.arm.joint_names(),
                                          [0.00, 0.00, 1.57, 0.00, 0.00, 0.00, 0.00]))
+        # We will always want the left arm in this position
         self.crane_l_angles = {'left_s0': 0.35, 'left_s1': 0.00,
                                'left_e0': 0.00, 'left_e1': 1.57,
                                'left_w0': 0.00, 'left_w1': 0.00,
                                'left_w2': 0.00}
+        # Activate the gripper
         self.gripper_state = True
         self.gripper_state_timer = 0
-        self.right_arm = moveit_commander.MoveGroupCommander("right_arm")
 
     def desired_joint_vals(self, left_shoulder, left_elbow, left_hand,
                            right_shoulder, right_elbow, right_hand):
         """
         Returns the joint values based on the human skeleton.
         """
+        # Initialize 
         angles = []
         if self.human_to_baxter(left_shoulder, left_elbow, left_hand,
                                 right_shoulder, right_elbow, right_hand, angles):
@@ -149,27 +143,6 @@ class Crane():
 
         return pose
         
-
-    def move(self, left_shoulder, left_elbow, left_hand, right_shoulder, right_elbow, right_hand):
-        """
-        Moves the crane arm and gripper based on human skeleton positions
-        """
-        angles = []
-        if self.human_to_baxter(left_shoulder, left_elbow, left_hand,
-                                right_shoulder, right_elbow, right_hand, angles):
-            self.gripper.close()
-        else:
-            self.gripper.open()
-
-
-        r_positions = dict(zip(self.arm.joint_names(),
-                               [angles[0], angles[1], angles[2], angles[3], angles[4], angles[5], angles[6]]))
-        # self.arm.set_joint_positions(r_positions)
-        self.right_arm.stop()
-        self.right_arm.set_joint_value_target(r_positions)
-        traj = self.right_arm.plan()
-        new_traj = traj_speed_up(traj, spd=3.0)
-        self.right_arm.execute(new_traj)
 
     def human_to_baxter(self, l_sh, l_el, l_ha, r_sh, r_el, r_ha, a):
         """
