@@ -532,6 +532,7 @@ class Baxter_Controller:
             resp.val_type = 'pose'
             resp.joint_names = self.pose.keys()
             resp.joint_values = self.pose.values()
+            self.new_vals_pose = False
         else:
             resp.new_values = False
             resp.joint_names = []

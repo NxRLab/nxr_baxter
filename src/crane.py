@@ -113,13 +113,16 @@ class Crane():
         # x = (-left_hand.z + left_shoulder.z)*RJ_ARM_LENGTH/arm_length + x_offset
         # y = (left_hand.x - left_shoulder.x)*RJ_ARM_LENGTH/arm_length + y_offset
         # z = (-left_hand.y + left_shoulder.y)*RJ_ARM_LENGTH/arm_length + z_offset
-        # print self.arm.endpoint_pose()
 
         # scaling = RJ_ARM_LENGTH/arm_length
         scaling = 1.0
-        x = (left_hand.x - torso.x)*scaling
-        y = (torso.z - left_hand.z)*scaling
+        x = (torso.z - left_hand.z)*scaling
+        y = (left_hand.x - torso.x)*scaling
         z = (torso.y - left_hand.y)*scaling
+        # print "x: ", x
+        # print "y: ", y
+        # print "z: ", z
+        # print self.arm.endpoint_pose()
 
         # Set orientation
         roll = 0 # Could be defined to be in line with the arm or something
