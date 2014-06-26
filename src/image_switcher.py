@@ -49,7 +49,7 @@ class ImageSwitcher(object):
             self.image_no = 0
 
         image_filename = image_list[self.image_no]
-        # msg = cv_bridge.CvBridge().cv_to_imgmsg(cv.LoadImage(image_filename))
+
         msg = cv_bridge.CvBridge().cv2_to_imgmsg(cv2.imread(image_filename))
         rospy.logdebug("Changing image")
         self._pub.publish(msg)

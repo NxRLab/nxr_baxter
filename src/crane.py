@@ -30,14 +30,6 @@ from vector_operations import (make_vector_from_POINTS,
 import operator
 import math
 
-###################
-# MOVEIT IMPORTS: #
-###################
-import moveit_commander
-import moveit_msgs.msg
-
-# from trajectory_speed_up import traj_speed_up
-
 class Crane():
     """
     Crane control class
@@ -52,42 +44,54 @@ class Crane():
         """
         Crane constructor
         """
+        rospy.logdebug("Calling Crane().__init__")
+        # Get access to the right arm and gripper
         self.arm = baxter_interface.Limb('right')
         self.gripper = baxter_interface.Gripper('right')
-        # self.pub_rate = rospy.Publisher('/robot/joint_state_publish_rate', UInt16)
-        # self.pub_rate.publish(500)
+        # define the neutral position for the crane game right arm
         self.neutral_position = dict(zip(self.arm.joint_names(),
                                          [0.00, 0.00, 1.57, 0.00, 0.00, 0.00, 0.00]))
+        # We will always want the left arm in this position
         self.crane_l_angles = {'left_s0': 0.35, 'left_s1': 0.00,
                                'left_e0': 0.00, 'left_e1': 1.57,
                                'left_w0': 0.00, 'left_w1': 0.00,
                                'left_w2': 0.00}
+        # Activate the gripper
         self.gripper_state = True
         self.gripper_state_timer = 0
-        self.right_arm = moveit_commander.MoveGroupCommander("right_arm")
 
     def desired_joint_vals(self, left_shoulder, left_elbow, left_hand,
                            right_shoulder, right_elbow, right_hand):
         """
         Returns the joint values based on the human skeleton.
         """
+        rospy.logdebug("Calling Crane().desired_joint_vals(...)")
+        # Initialize a list of angles that we will return.  This is probably not
+        # the best way to do it, but this is how Jon did it orginally and Adam
+        # wanted to match.
         angles = []
+        # Both fills in 'angles' list and checks if the gripper should be open or closed
         if self.human_to_baxter(left_shoulder, left_elbow, left_hand,
                                 right_shoulder, right_elbow, right_hand, angles):
             self.gripper.close()
         else:
             self.gripper.open()
 
+        # Stores the positions for the right arm in the standard dictionary for arm values
         r_positions = dict(zip(self.arm.joint_names(),
                                 [angles[0], angles[1], angles[2], angles[3],
                                 angles[4], angles[5], angles[6]]))
-
+        # Returns the combined dictionary for all joints
         return dict(self.crane_l_angles, **r_positions)
 
     def desired_pose_vals(self, left_shoulder, left_elbow, left_hand,
                           right_shoulder, right_elbow, right_hand, torso):
-        # Find distance from shoulder to hand for human
-        # Total arm length:
+        """
+        Returns the pose values based on the human skeleton. Similar to
+        desired_joint_vals. Currently not working as ideal.
+        """
+        rospy.logdebug("Calling Crane().desired_pose_vals(...)")
+        # Use length of arms to potentially calculate a useful scaling
         arm_length = (math.sqrt(math.pow((left_shoulder.x - left_elbow.x),2) +
                                 math.pow((left_shoulder.y - left_elbow.y),2) +
                                 math.pow((left_shoulder.z - left_elbow.z),2)) +
@@ -95,18 +99,35 @@ class Crane():
                                 math.pow((left_elbow.y - left_hand.y),2) +
                                 math.pow((left_elbow.z - left_hand.z),2)))
         RJ_ARM_LENGTH = 41*2.54/100.0
-        #From URDF,
-        x_offset = 0.055695
-        y_offset = 0
-        z_offset = 0.011038
-        # Use left values
-        x = (left_hand.x - left_shoulder.x - torso.x)*RJ_ARM_LENGTH/arm_length + x_offset
-        y = (left_hand.y - left_shoulder.y - torso.y)*RJ_ARM_LENGTH/arm_length + y_offset
-        z = (left_hand.z - left_shoulder.z - torso.z)*RJ_ARM_LENGTH/arm_length + z_offset
+        #From URDF, offsets from base/torso to right_uper_shoulder.
+        # x_offset = 0.062
+        # y_offset = -0.259
+        # z_offset = 0.120
+
+        # Baxter: x out, y left, z up from his perspective
+        # Kinect: x right, y down, z out from its perspective
+        # Best ones so far!
+        # x = (-left_hand.z + torso.z)
+        # y = (-torso.x + left_hand.x)
+        # z = (-torso.y + left_hand.y)
+        # x = (-left_hand.z + left_shoulder.z)*RJ_ARM_LENGTH/arm_length + x_offset
+        # y = (left_hand.x - left_shoulder.x)*RJ_ARM_LENGTH/arm_length + y_offset
+        # z = (-left_hand.y + left_shoulder.y)*RJ_ARM_LENGTH/arm_length + z_offset
+
+        # scaling = RJ_ARM_LENGTH/arm_length
+        scaling = 1.0
+        # Introduce a small offset
+        x = (torso.z - left_hand.z)*scaling + 0.2
+        y = (left_hand.x - torso.x)*scaling
+        z = (torso.y - left_hand.y)*scaling - 0.3
+        # print "x: ", x
+        # print "y: ", y
+        # print "z: ", z
+        # print self.arm.endpoint_pose()
 
         # Set orientation
         roll = 0 # Could be defined to be in line with the arm or something
-        pitch = math.pi/2.0 # Could be defined to be in line with the arm or something
+        pitch = math.pi # Could be defined to be in line with the arm or something
         yaw = 0
         pose = {'x': x, 'y': y, 'z': z, 'roll': roll, 'pitch': pitch, 'yaw': yaw}
 
@@ -121,34 +142,15 @@ class Crane():
             self.gripper.open()
 
         return pose
-        
-
-    def move(self, left_shoulder, left_elbow, left_hand, right_shoulder, right_elbow, right_hand):
-        """
-        Moves the crane arm and gripper based on human skeleton positions
-        """
-        angles = []
-        if self.human_to_baxter(left_shoulder, left_elbow, left_hand,
-                                right_shoulder, right_elbow, right_hand, angles):
-            self.gripper.close()
-        else:
-            self.gripper.open()
-
-
-        r_positions = dict(zip(self.arm.joint_names(),
-                               [angles[0], angles[1], angles[2], angles[3], angles[4], angles[5], angles[6]]))
-        # self.arm.set_joint_positions(r_positions)
-        self.right_arm.stop()
-        self.right_arm.set_joint_value_target(r_positions)
-        traj = self.right_arm.plan()
-        new_traj = traj_speed_up(traj, spd=3.0)
-        self.right_arm.execute(new_traj)
 
     def human_to_baxter(self, l_sh, l_el, l_ha, r_sh, r_el, r_ha, a):
         """
         Computes angles sent to Baxter's arm, checks if gripper should adjust
         """
+        rospy.logdebug("Calling Crane().human_to_baxter(...)")
         # Crane Arm
+        # Forms vectors between points in 3-space and uses that and
+        # vector operations to calculate the angles.
         l_upper_arm = make_vector_from_POINTS(l_sh, l_el)
         l_forearm = make_vector_from_POINTS(l_el, l_ha)
         # S0
@@ -186,7 +188,10 @@ class Crane():
         return False
 
     def check_angles(self, s0, s1, e0, e1, w0, w1, w2, angles):
-
+        """
+        This function checks if the desired angles will be within the constraints.
+        """
+        rospy.logdebug("Calling Crane().check_angles(...)")
         if -0.25 < s0 and s0 < 1.60:
             angles.append(s0)
         elif -0.25 < s0:

@@ -1,4 +1,4 @@
-#import roslib; roslib.load_manifest('kinect_pendulum_demo')
+#!/usr/bin/env python
 import rospy
 import tf
 from skeletonmsgs_nu.msg import Skeleton
