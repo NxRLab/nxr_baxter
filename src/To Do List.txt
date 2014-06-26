@@ -1,8 +1,0 @@
-For Wednesday
-- Filter movements on small movements
-
-Future
-- Voice control for open/close
-- "Failed to load symbols, rosdep will not function properly"
-- Change modes
-- Get bigger boxes for mimic mode

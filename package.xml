@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>nxr_baxter</name>
-  <version>0.0.1</version>
+  <version>0.1.0</version>
   <description>
     This is a package that has Baxter scripts developed at NU.
   </description>
@@ -9,6 +9,9 @@
   <maintainer email="jonathanrovira2016@u.northwestern.edu">Jon Rovira</maintainer>
   <author email="jonathanrovira2016@u.northwestern.edu">Jon Rovira</author>
   <author email="kylelueptow@gmail.com">Kyle Lueptow</author>
+  <author email="adb421@gmail.com">Adam Barber</author>
+  <author email="schultzjarvis@gmail.com">Jarvis Schultz</author>
+  <author email="tgdiriba@gmail.com">Tigist Diriba</author>
   <license>BSD</license>
 
   <!-- Dependencies -->
@@ -31,12 +34,13 @@
   <build_depend>nxr_baxter_msgs</build_depend>
 
   <build_depend>baxter_interface</build_depend>
-  <build_depend>utilities</build_depend>
+  <build_depend>baxter_moveit_config</build_depend>
+  <build_depend>moveit_ros_planning_interface</build_depend>
+  <build_depend>eigen</build_depend>
 
   <build_depend>tf</build_depend>
   <build_depend>cv_bridge</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
-  <!---->
 
   <!--Run_depends-->
   <run_depend>rospy</run_depend>
@@ -55,13 +59,11 @@
   <run_depend>nxr_baxter_msgs</run_depend>
 
   <run_depend>baxter_interface</run_depend>
-  <run_depend>utilities</run_depend>
+  <run_depend>baxter_moveit_config</run_depend>
+  <run_depend>moveit_ros_planning_interface</run_depend>
 
   <run_depend>tf</run_depend>
   <run_depend>cv_bridge</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
-  <!---->
-
-  <!---->
 
 </package>

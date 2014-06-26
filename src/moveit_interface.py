@@ -31,11 +31,14 @@ from control_msgs.msg import (
 import baxter_interface
 import baxter_dataflow
 
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import (
+    PoseStamped,
+    Pose,
+    Quaternion)
 # from std_msgs.msg import Header
 from nxr_baxter_msgs.srv import *
 
-# from tf.transformations import createQuaternionFromRPY
+from tf.transformations import quaternion_from_euler
 
 class Trajectory_Controller:
     """
@@ -79,13 +82,15 @@ class Trajectory_Controller:
 
     def push_one_arm(self, new_plan, left_arm_joints):
         # Build a new joint trajectory with left_arm_joint values at those times
-        temp_traj = JointTrajectory()
         new_traj = new_plan.joint_trajectory
+        temp_traj = JointTrajectory()
+        temp_traj.points = [JointTrajectoryPoint()]*len(new_traj.points)
         temp_traj.header = new_traj.header
         temp_traj.joint_names = self.traj.joint_names
         zero_vec = [0.0]*7
+        left_arm_vals = [0.35, 0.0, 0.0, 1.57, 0.0, 0.0, 0.0]
         for i in range(len(new_traj.points)):
-            temp_traj.points[i].positions = left_arm_joints.values() + new_traj.points[i].positions
+            temp_traj.points[i].positions = left_arm_vals + new_traj.points[i].positions
             temp_traj.points[i].velocities = zero_vec + new_traj.points[i].velocities
             temp_traj.points[i].accelerations = zero_vec + new_traj.points[i].accelerations
             temp_traj.points[i].time_from_start = new_traj.points[i].time_from_start
@@ -149,32 +154,73 @@ class Trajectory_Controller:
         left_thread.join()
         right_thread.join()
 
-# def inverse_kin(des_pose):
-#     limb = "left_arm"
-#     ns = "ExternalTools/" + limb + "/PositionKinematicsNode/IKService"
-#     iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
-#     ikreq = SolvePositionIKRequest()
-#     hdr = Header(stamp=rospy.Time.now(), frame_id='base')
-#     pose = Pose(
-#         position=Point(des_pose[0:3]),
-#         orienation=createQuaternionFromRPY(pose[3:])
-#     )
-#     ikreq.pose_stamp.append(PoseStamped(header=hdr, pose=pose))
-#     try:
-#         rospy.wait_for_service(ns, 5.0)
-#         resp = iksvc(ikreq)
-#     except (rospy.ServiceException, rospy.ROSException), e
+class Inverse_Kinematics:
+    """
+    This class handles inverse kinematics for this script. It allows easy
+    accessability to the IKservice that Rethink provides.
+    """
+    def __init__(self,limb="right"):
+        rospy.logdebug("Calling Inverse_Kinematics.__init__()")
+        self.ns = "ExternalTools/" + limb + "/PositionKinematicsNode/IKService"
+        self.iksvc = rospy.ServiceProxy(self.ns, SolvePositionIK)
+        
+    def solveIK(self,des_pose):
+        ikreq = SolvePositionIKRequest()
+        hdr = Header(stamp=rospy.Time.now(), frame_id='base')
+        pose = Pose()
+        quat = Quaternion()
+        if len(des_pose) == 6:
+            #Note that this may be wrong!
+            quatArray = quaternion_from_euler(des_pose[3], des_pose[4], des_pose[5], axes='sxyz')
+            quat.x = quatArray[0]
+            quat.y = quatArray[1]
+            quat.z = quatArray[2]
+            quat.w = quatArray[3]
+        else:
+            quat.x = des_pose[3]
+            quat.y = des_pose[4]
+            quat.z = des_pose[5]
+            quat.w = des_pose[6]
+        pose.orientation = quat
+        pose.position.x = des_pose[0]
+        pose.position.y = des_pose[1]
+        pose.position.z = des_pose[2]
+        # print pose.position
+
+        ikreq.pose_stamp = [PoseStamped(header=hdr, pose=pose)]
+        try:
+            rospy.wait_for_service(self.ns,5.0)
+            resp = self.iksvc(ikreq)
+        except (rospy.ServiceException, rospy.ROSException), e:
+            rospy.logerr("IK Service Exception thrown")
+            return None
+
+        if resp.isValid[0]:
+            print resp.isValid
+            des_joints = [0]*7
+            for i in range(7):
+                des_joints[i] = resp.joints[0].position[i]
+            return des_joints
+        else:
+            # print resp.isValid
+            return None
 
 if __name__=='__main__':
-    rospy.loginfo("Starting moveit_interface node")
     rospy.init_node('moveit_interface', log_level=rospy.INFO)
+    rospy.loginfo("Starting moveit_interface node")
 
     both_arms_group = moveit_commander.MoveGroupCommander("both_arms")
     right_arm_group = moveit_commander.MoveGroupCommander("right_arm")
     left_arm_group = moveit_commander.MoveGroupCommander("left_arm")
-    both_arms_group.allow_replanning(True)
-    right_arm_group.allow_replanning(True)
-    left_arm_group.allow_replanning(True)
+    # both_arms_group.allow_replanning(True)
+    # right_arm_group.allow_replanning(True)
+    # left_arm_group.allow_replanning(True)
+    both_arms_group.set_goal_position_tolerance(0.01)
+    both_arms_group.set_goal_orientation_tolerance(0.01)
+    left_arm_group.set_goal_position_tolerance(0.01)
+    left_arm_group.set_goal_orientation_tolerance(0.01)
+    right_arm_group.set_goal_position_tolerance(0.01)
+    right_arm_group.set_goal_orientation_tolerance(0.01)
 
     #Try setting workspace bounds, instead of maybe checking joint limits.
     both_arms_group.set_workspace([-10, -51*2.54/100.0, -10, 10, 53*2.54/100.0, 10])
@@ -191,14 +237,18 @@ if __name__=='__main__':
     # Add in objects
     p = PoseStamped()
     p.header.frame_id = robot.get_planning_frame()
-    p.pose.position.x = 1.0
+    p.pose.position.x = 0.8
     p.pose.position.y = 0.025
     p.pose.position.z = -0.6
-    # scene.add_box("table", p, (0.8, 1.25, 0.8)) # Bigger box
 
     scene.add_box("table", p, (0.75, 1.25, 0.68))
 
     traj_controller = Trajectory_Controller()
+
+    ikright = Inverse_Kinematics(limb="right")
+
+    right_arm = baxter_interface.Limb('right')
+    left_arm = baxter_interface.Limb('left')
 
     while not rospy.is_shutdown():
         rospy.wait_for_service('joint_values')
@@ -219,21 +269,14 @@ if __name__=='__main__':
                         joints = dict(zip(joint_resp.joint_names,
                                           joint_resp.joint_values))
                         pose = [joints['x'], joints['y'], joints['z'],
-                                joints['roll'], joints['pitch'], joints['yaw']]
-                        # print right_arm_group.get_current_pose()
-                        # print both_arms_group.get_current_pose()
-                        # pose = [0.805, -1.02, 0.318, 0.276, 0.649, -0.27, 0.656]
-                        # right_arm_group.clear_path_constraints()
-                        # both_arms_group.clear_pose_target()
-
-                        """
-                        Plan for the right arm with the pose, then pull out the last config in joint space, and go with that??? I think that would work. Seems like actually pulling from IKFast is super hard.
-                        """
-                        right_arm_group.clear_pose_target("right_gripper")
-                        # both_arms_group.clear
-                        right_arm_group.set_pose_target(pose)
-                        # # right_arm_group.set_pose_target(right_arm_group.get_current_pose())
-                        traj_controller.push_one_arm(right_arm_group.plan(), left_arm_group.get_current_joint_values)
+                                joints['yaw'], joints['pitch'], joints['roll']]
+                        desired_joints = ikright.solveIK(pose)
+                        # print desired_joints
+                        if desired_joints != None:
+                            joints_one_arm = dict(zip(right_arm.joint_names(),
+                                                      desired_joints))
+                            right_arm_group.set_joint_value_target(joints_one_arm)
+                            traj_controller.push_one_arm(right_arm_group.plan(), left_arm.joint_angles())
                     except moveit_commander.MoveItCommanderException, e:
                         rospy.logwarn("Error setting cartesian pose target.")
                     
