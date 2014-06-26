@@ -100,9 +100,9 @@ class Crane():
                                 math.pow((left_elbow.z - left_hand.z),2)))
         RJ_ARM_LENGTH = 41*2.54/100.0
         #From URDF, offsets from base/torso to right_uper_shoulder.
-        x_offset = 0.062
-        y_offset = -0.259
-        z_offset = 0.120
+        # x_offset = 0.062
+        # y_offset = -0.259
+        # z_offset = 0.120
 
         # Baxter: x out, y left, z up from his perspective
         # Kinect: x right, y down, z out from its perspective
@@ -116,9 +116,10 @@ class Crane():
 
         # scaling = RJ_ARM_LENGTH/arm_length
         scaling = 1.0
-        x = (torso.z - left_hand.z)*scaling
+        # Introduce a small offset
+        x = (torso.z - left_hand.z)*scaling + 0.2
         y = (left_hand.x - torso.x)*scaling
-        z = (torso.y - left_hand.y)*scaling
+        z = (torso.y - left_hand.y)*scaling - 0.2
         # print "x: ", x
         # print "y: ", y
         # print "z: ", z
