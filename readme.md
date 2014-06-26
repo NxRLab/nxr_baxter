@@ -42,3 +42,8 @@ One problem with this is that sometimes the computer gets stuck on BIOS which is
 ##Images
 Note that images are not uploaded as they were included in the .gitignore. However, `image_files.txt` is quite important, and indicates the locations of all the images. The `ImageSwitcher` class as defined in `image_switcher.py` reads in that file at the start, with the syntax for that file defined in the classes comments for its constructor. The file should be a list of modes of execution followed by a list of filenames that the ImageSwitcher should cycle between when in that mode. 
 
+
+#Other Scripts
+- `camera_arm.py` is an example of how to use the hand and head cameras. Some of its functions may have been deprecated
+- `clap.py` provides a class for "clapping" where RJ brings his arms together and then apart
+- 
