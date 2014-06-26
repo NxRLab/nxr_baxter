@@ -66,6 +66,3 @@ catkin_package(
   DEPENDS eigen
 )
 
-add_executable(cpp_test_moveit src/cpp_test_moveit.cpp)
-
-target_link_libraries(cpp_test_moveit ${catkin_LIBRARIES})
