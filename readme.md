@@ -38,3 +38,7 @@ The `tracker_heartbeat.py` script also handles starting up and shutting down the
 When the `restart_usb.sh` script has been called 5 times, `tracker_heartbeat.py` will restart the computer to try to solve the problems. This is handled in another workaround fashion. There is a file that is being monitored by a background script running on the computer every second. Whenever that script sees a 1 in the file instead of a 0, it will restart the computer. The reason is that the script needs to be run as root at startup in order to force the system to go down.
 
 One problem with this is that sometimes the computer gets stuck on BIOS which is a huge pain. Someone then needs to go in and start it manually, I think the problem is with the keyboard.
+
+##Images
+Note that images are not uploaded as they were included in the .gitignore. However, `image_files.txt` is quite important, and indicates the locations of all the images. The `ImageSwitcher` class as defined in `image_switcher.py` reads in that file at the start, with the syntax for that file defined in the classes comments for its constructor. The file should be a list of modes of execution followed by a list of filenames that the ImageSwitcher should cycle between when in that mode. 
+
