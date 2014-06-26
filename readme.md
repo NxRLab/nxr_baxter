@@ -56,7 +56,9 @@ Note that images are not uploaded as they were included in the .gitignore. Howev
 
 - `meta_mode_controller.py` contains the `MetaMode_Controller` class that handles the service calls to request a mode change as well as the topic to publish about mode changes. The idea is one node sends a service call to request the mode to change, if its possible, then the class publishes to a latched topic the new mode and all nodes listening have a callback to handle changes in mode. This allows all nodes to have a synchronized mode without requiring polling the parameter server.
 
+- `restart_usb.sh` is the script that unbinds and rebinds the usb device to effectively unplug and replug the Asus
 
+- `skeleton_filter.py` is the filter that Jarvis wrote with Jon to filter out noise from the Asus. This comes from a white paper that Microsoft published.
 
 
 
