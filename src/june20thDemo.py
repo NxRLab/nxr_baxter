@@ -405,7 +405,7 @@ def main():
 
     head_wobbler = Head_Wobbler()
     dancer = Dancer()
-    arm_wobbler = Arm_Wobbler
+    arm_wobbler = Arm_Wobbler()
     waver = Waver()
 
     while not rospy.is_shutdown():

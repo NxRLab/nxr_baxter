@@ -18,9 +18,9 @@ class AlvarRectifier():
 	def rectify_markers(self, response):
 		for marker in response.markers:
 			marker_pose = marker.pose.pose
-			marker_pose.point.x += self.X_OFFSET
-			marker_pose.point.y += self.Y_OFFSET
-			marker_pose.point.z += self.Z_OFFSET
+			marker_pose.position.x += self.X_OFFSET
+			marker_pose.position.y += self.Y_OFFSET
+			marker_pose.position.z += self.Z_OFFSET
 		
 		self.rectified_response = response
 	
@@ -28,7 +28,7 @@ class AlvarRectifier():
 		self.ar_rate = rospy.Rate(100)
 		while not rospy.is_shutdown():
 			self.ar_pub.publish(self.rectified_response)
-			rospy.sleep(self.ar_rate)
+			self.ar_rate.sleep()
 
 if __name__ == '__main__':
 	try:
