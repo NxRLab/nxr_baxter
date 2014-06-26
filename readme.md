@@ -52,5 +52,11 @@ Note that images are not uploaded as they were included in the .gitignore. Howev
 
 -`grab.py` asks a user to give RJ an object and then passes it from one hand to the other. Doesn't look like it was ever finished
 
+-`launcher.py` was the old way of starting up the demo. Now we are using launch files, see above the top of the readme
+
+-`meta_mode_controller.py` contains the `MetaMode_Controller` class that handles the service calls to request a mode change as well as the topic to publish about mode changes. The idea is one node sends a service call to request the mode to change, if its possible, then the class publishes to a latched topic the new mode and all nodes listening have a callback to handle changes in mode. This allows all nodes to have a synchronized mode without requiring polling the parameter server.
+
+
+
 
 
