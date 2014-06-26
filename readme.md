@@ -60,5 +60,14 @@ Note that images are not uploaded as they were included in the .gitignore. Howev
 
 - `skeleton_filter.py` is the filter that Jarvis wrote with Jon to filter out noise from the Asus. This comes from a white paper that Microsoft published.
 
+- `test_moveit.py` is a script I (Adam) wrote to try and get MoveIt working with Cartesian space stuff. I used it to post questions about how to do this on the brr-users group as well as the moveit-users group. It now contains testing for doing Inverse Kinematics to get around using moveit cartesian space planning.
+
+- `test_skel_distance.py` is a script that prints someone's x, y, and z locations according to the Asus to try and clip the space that the Asus sees.
+
+- `the_robot.py` provides `The_Robot` class which does the "robot" dance.
+
+- `trajectory.py` contains the `Trajectory` class which allows an easier interface to Trajectory objects. I dont think we actually ended up using this.
+
+- `vector_operations.py` contains a number of useful functions for dealing with 3 dimensional quantities
 
 
