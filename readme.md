@@ -36,3 +36,5 @@ The `tracker_heartbeat.py` script also handles starting up and shutting down the
 
 ### Computer Restart
 When the `restart_usb.sh` script has been called 5 times, `tracker_heartbeat.py` will restart the computer to try to solve the problems. This is handled in another workaround fashion. There is a file that is being monitored by a background script running on the computer every second. Whenever that script sees a 1 in the file instead of a 0, it will restart the computer. The reason is that the script needs to be run as root at startup in order to force the system to go down.
+
+One problem with this is that sometimes the computer gets stuck on BIOS which is a huge pain. Someone then needs to go in and start it manually, I think the problem is with the keyboard.
