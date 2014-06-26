@@ -16,9 +16,9 @@ import traceback
 import threading
 import Queue
 import baxter_interface
-import iodevices
-import dataflow
-import baxter_msgs
+# import iodevices
+# import dataflow
+# import baxter_msgs
 
 
 class Clapper():

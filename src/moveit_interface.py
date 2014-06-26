@@ -53,6 +53,8 @@ class Trajectory_Controller:
         rospy.logdebug("Calling Trajectory_Controller.__init__()")
         self.left_arm = baxter_interface.Limb('left')
         self.right_arm = baxter_interface.Limb('right')
+        self.left_arm.set_joint_position_speed(0.5)
+        self.right_arm.set_joint_position_speed(0.5)
 
         self.traj = None
 

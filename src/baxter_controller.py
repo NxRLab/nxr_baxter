@@ -139,7 +139,7 @@ class Baxter_Controller:
         # Set up subscriber to meta-mode controller
         self.internal_mode = None
         rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
-
+        
         self.motor_timer = None
         self.reset_motor_timer()
 
@@ -294,14 +294,16 @@ class Baxter_Controller:
         self.change_mode_service(MetaMode.IDLE_ENABLED)
 
     def reset_motor_timer(self):
-        if self.rs.state().stopped or not self.rs.state().enabled:
+        if not self.rs.state().enabled:
+        # if self.rs.state().stopped or not self.rs.state().enabled:
             self.rs.enable()
         if self.motor_timer != None:
             self.motor_timer.shutdown()
         self.motor_timer = rospy.Timer(rospy.Duration(self.motor_timeout), self.motor_shutdown)
 
-    def motor_shutdown(self):
-        pass
+    def motor_shutdown(self, event):
+        self.rs.disable()
+        rospy.loginfo("Disabling motors")
 
     #=========================================================#
     #                        ACTIONS:                         #
@@ -380,7 +382,7 @@ class Baxter_Controller:
                     rospy.logdebug("Skeleton %d is out of bounds and being clipped.",
                                    skeleton.userid)
                     continue
-                if skeleton.userid == self.main_userid:
+                elif skeleton.userid == self.main_userid:
                     skel_raw = skeleton
                     if self.first_filt_flag:
                         self.skel_filt.reset_filters(skel_raw)

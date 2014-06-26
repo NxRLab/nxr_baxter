@@ -17,6 +17,8 @@ from nxr_baxter_msgs.msg import MetaMode
 
 from nxr_baxter_msgs.srv import *
 
+from time import strftime
+
 # PYTHON IMPORTS
 import os
 import signal
@@ -30,12 +32,7 @@ def terminate_process_and_children(p):
     ps_command = subprocess.Popen("ps -o pid --ppid %d --noheaders" % p.pid, shell=True, stdout=subprocess.PIPE)
     ps_output = ps_command.stdout.read()
     retcode = ps_command.wait()
-    # assert retcode == 0, "ps command returned %d" % retcode
-    # if retcode == None:
-    #     rospy.loginfo("Retcode is 'none' which means that the proc hasn't terminated yet.")
-    # if retcode == 0:
-    #     rospy.loginfo("Process doesn't exist, ps command returned %d for pid %d", retcode, p.pid)
-    # else:
+
     for pid_str in ps_output.split("\n")[:-1]:
             os.kill(int(pid_str), signal.SIGKILL)
     p.kill()
@@ -43,6 +40,9 @@ def terminate_process_and_children(p):
 class Heartbeat_Monitor:
     def __init__(self):
         rospy.logdebug("Calling Heartbeat_Monitor.__init__()")
+        with open("/home/nxr-baxter/shutdown_startup.log", "a") as fi:
+            to_print = "[" + strftime("%Y-%m-%d %H:%M:%S") + "] Starting up\n"
+            fi.write(to_print)
         # For calculating skeleton heartbeat
         # Average it every 5 seconds.
         self.heartbeat_period = 5.0
@@ -92,8 +92,21 @@ class Heartbeat_Monitor:
         rospy.logdebug("Calling empty_skel_callback()")
         self._heartbeat_count += 1
         if self.kill_count > 5:
+            rospy.wait_for_service('change_meta_mode')
+            try:
+                change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
+                change_resp = change_mode(ChangeMetaModeRequest.RESTART_KINECT)
+                if not change_resp.error:
+                    rospy.logerr("Tried to restart Kinect, but mode change request failed.")
+                else:
+                    rospy.logdebug("Kinect shutdown meta mode change succeeded.")
+            except rospy.ServiceException, e:
+                rospy.logerr("Service call failed: %s",e)
             #Restart computer
-            cmd = 'shutdown -r now'
+            with open("/home/nxr-baxter/shutdown_startup.log", "a") as fi:
+                to_print = "[" + strftime("%Y-%m-%d %H:%M:%S") + "] Shutting Down\n"
+                fi.write(to_print)
+            cmd = 'sudo shutdown -r now'
             subprocess.Popen(cmd,shell=True)
 
     # Callback for heartbeat timer calculation. Gets the current count and will
