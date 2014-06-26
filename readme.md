@@ -48,4 +48,9 @@ Note that images are not uploaded as they were included in the .gitignore. Howev
 
 -`clap.py` provides a class for "clapping" where RJ brings his arms together and then apart
 
--Something
+-`cv_sandbox.py` was used as a testbed for learning opencv alongside RJ
+
+-`grab.py` asks a user to give RJ an object and then passes it from one hand to the other. Doesn't look like it was ever finished
+
+
+
