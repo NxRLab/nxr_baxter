@@ -45,5 +45,6 @@ Note that images are not uploaded as they were included in the .gitignore. Howev
 
 #Other Scripts
 - `camera_arm.py` is an example of how to use the hand and head cameras. Some of its functions may have been deprecated
+
 - `clap.py` provides a class for "clapping" where RJ brings his arms together and then apart
 - 
