@@ -44,17 +44,17 @@ Note that images are not uploaded as they were included in the .gitignore. Howev
 
 
 #Other Scripts
--`camera_arm.py` is an example of how to use the hand and head cameras. Some of its functions may have been deprecated
+- `camera_arm.py` is an example of how to use the hand and head cameras. Some of its functions may have been deprecated
 
--`clap.py` provides a class for "clapping" where RJ brings his arms together and then apart
+- `clap.py` provides a class for "clapping" where RJ brings his arms together and then apart
 
--`cv_sandbox.py` was used as a testbed for learning opencv alongside RJ
+- `cv_sandbox.py` was used as a testbed for learning opencv alongside RJ
 
--`grab.py` asks a user to give RJ an object and then passes it from one hand to the other. Doesn't look like it was ever finished
+- `grab.py` asks a user to give RJ an object and then passes it from one hand to the other. Doesn't look like it was ever finished
 
--`launcher.py` was the old way of starting up the demo. Now we are using launch files, see above the top of the readme
+- `launcher.py` was the old way of starting up the demo. Now we are using launch files, see above the top of the readme
 
--`meta_mode_controller.py` contains the `MetaMode_Controller` class that handles the service calls to request a mode change as well as the topic to publish about mode changes. The idea is one node sends a service call to request the mode to change, if its possible, then the class publishes to a latched topic the new mode and all nodes listening have a callback to handle changes in mode. This allows all nodes to have a synchronized mode without requiring polling the parameter server.
+- `meta_mode_controller.py` contains the `MetaMode_Controller` class that handles the service calls to request a mode change as well as the topic to publish about mode changes. The idea is one node sends a service call to request the mode to change, if its possible, then the class publishes to a latched topic the new mode and all nodes listening have a callback to handle changes in mode. This allows all nodes to have a synchronized mode without requiring polling the parameter server.
 
 
 
