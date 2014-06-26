@@ -119,7 +119,7 @@ class Crane():
         # Introduce a small offset
         x = (torso.z - left_hand.z)*scaling + 0.2
         y = (left_hand.x - torso.x)*scaling
-        z = (torso.y - left_hand.y)*scaling - 0.2
+        z = (torso.y - left_hand.y)*scaling - 0.3
         # print "x: ", x
         # print "y: ", y
         # print "z: ", z
