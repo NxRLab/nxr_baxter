@@ -10,13 +10,10 @@
 
 # ROS IMPORTS
 import rospy
-
+import roslib
 from std_msgs.msg import Empty
-
 from nxr_baxter_msgs.msg import MetaMode
-
 from nxr_baxter_msgs.srv import *
-
 from time import strftime
 
 # PYTHON IMPORTS
@@ -24,6 +21,7 @@ import os
 import signal
 import subprocess
 import threading
+
 
 # Function taken from Jarvis/Jon's script to kill all child processes
 def terminate_process_and_children(p):
@@ -40,7 +38,7 @@ def terminate_process_and_children(p):
 class Heartbeat_Monitor:
     def __init__(self):
         rospy.logdebug("Calling Heartbeat_Monitor.__init__()")
-        with open("/home/nxr-baxter/shutdown_startup.log", "a") as fi:
+        with open(os.path.join(os.path.expanduser("~"), "shutdown_startup.log"), "a") as fi:
             to_print = "[" + strftime("%Y-%m-%d %H:%M:%S") + "] Starting up\n"
             fi.write(to_print)
         # For calculating skeleton heartbeat
@@ -103,7 +101,7 @@ class Heartbeat_Monitor:
             except rospy.ServiceException, e:
                 rospy.logerr("Service call failed: %s",e)
             #Restart computer
-            with open("/home/nxr-baxter/shutdown_startup.log", "a") as fi:
+            with open(os.path.join(os.path.expanduser("~"), "shutdown_startup.log"), "a") as fi:
                 to_print = "[" + strftime("%Y-%m-%d %H:%M:%S") + "] Shutting Down\n"
                 fi.write(to_print)
             cmd = 'sudo shutdown -r now'
@@ -170,12 +168,13 @@ class Heartbeat_Monitor:
         terminate_process_and_children(self.openni_proc)
         
         #USB restart
+        pkgdir = roslib.packages.get_pkg_dir('nxr_baxter')
         rospy.loginfo("Restarting usb...")
-        cmd = "/home/adam-baxter/adam_groovy_ws/src/nxr_baxter_demo_package/src/restart_usb.sh"
+        cmd = os.path.join(pkgdir, "src/restart_usb.sh")
         subprocess.call(cmd, shell=True)
 
         #Set the flag in udev_reload.txt for the cron job to fix it
-        file_name = '/home/nxr-baxter/src/udev_reload.txt'
+        file_name = os.path.join(os.path.expanduser("~"),'src/udev_reload.txt')
         checked = False
         while not checked:
             try:
