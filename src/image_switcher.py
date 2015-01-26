@@ -90,7 +90,7 @@ class ImageSwitcher(object):
         self.image_timer = None
         self._image_period = image_period
         self._image_no = 0
-        self._pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True)
+        self._pub = rospy.Publisher('/robot/xdisplay', sensor_msgs.msg.Image, latch=True, queue_size=1)
         self._startTimer()
 
     def change_mode(self, newMode=None, newPeriod=None):

@@ -47,7 +47,7 @@ class MetaMode_Controller:
         msg = MetaMode()
         msg.mode = msg.IDLE_ENABLED
         self.current_mode = msg.IDLE_ENABLED
-        self._pub = rospy.Publisher('meta_mode', MetaMode, latch=True)
+        self._pub = rospy.Publisher('meta_mode', MetaMode, latch=True, queue_size=3)
         self._pub.publish(msg)
         self.change_mode = rospy.Service('change_meta_mode', ChangeMetaMode, self.change_mode_callback)
 

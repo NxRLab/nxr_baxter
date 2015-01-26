@@ -90,15 +90,15 @@ class Trajectory_Controller:
         zero_vec = [0.0]*7
         left_arm_vals = [0.35, 0.0, 0.0, 1.57, 0.0, 0.0, 0.0]
         for i in range(len(new_traj.points)):
-            temp_traj.points[i].positions = left_arm_vals + new_traj.points[i].positions
-            temp_traj.points[i].velocities = zero_vec + new_traj.points[i].velocities
-            temp_traj.points[i].accelerations = zero_vec + new_traj.points[i].accelerations
+            temp_traj.points[i].positions = left_arm_vals + list(new_traj.points[i].positions)
+            temp_traj.points[i].velocities = zero_vec + list(new_traj.points[i].velocities)
+            temp_traj.points[i].accelerations = zero_vec + list(new_traj.points[i].accelerations)
             temp_traj.points[i].time_from_start = new_traj.points[i].time_from_start
         self.traj = temp_traj
     
     def interpolate_trajectory(self, time_from_start):
         if len(self.traj.points) == 0:
-            rospy.loginfo("Traj length is 0")
+            rospy.logdebug("Traj length is 0")
             return None
         for j in range(len(self.traj.points)):
             point = self.traj.points[j]
