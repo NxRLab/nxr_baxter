@@ -1,0 +1,6 @@
+<launch>
+  <!-- By default we do not overwrite the URDF. Change the following to true to change the default behavior -->
+  <arg name="load_robot_description" default="true"/>
+  <!-- Load universal robotic description format (URDF) -->
+  <param if="$(arg load_robot_description)" name="robot_description" textfile="$(find baxter_description)/urdf/baxter.urdf"/>
+</launch>
