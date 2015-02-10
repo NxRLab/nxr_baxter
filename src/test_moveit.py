@@ -6,6 +6,7 @@
 # Node for testing moveit stuff
 
 import struct
+import numpy as np
 
 import rospy
 import moveit_commander
@@ -16,6 +17,9 @@ from std_msgs.msg import Header
 from baxter_core_msgs.srv import (
     SolvePositionIK,
     SolvePositionIKRequest)
+import baxter_interface
+
+from sensor_msgs.msg import JointState
 
 from geometry_msgs.msg import (
     PoseStamped,
@@ -27,15 +31,21 @@ from tf.transformations import quaternion_from_euler
 
 
 def ik_timeout(req, timeout=3.0):
+    limb = "right"
+    ns = "ExternalTools/" + limb + "/PositionKinematicsNode/IKService"
+    iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
     base = rospy.Time.now()
     # set seed:
     req.seed_mode = req.SEED_USER
+    right = baxter_interface.Limb('right')
     while (rospy.Time.now()-base).to_sec() <= timeout:
-        # generate a random valid q:
-        
+        # generate a random q:
+        q = right.joint_angles()
+        js = JointState(name=q.keys(), position=q.values() + np.pi/2*np.random.randn(7))
+        req.seed_angles = np.array([js])
         try:
             rospy.wait_for_service(ns, 0.5)
-            resp = iksvc(ikreq)
+            resp = iksvc(req)
         except (rospy.ServiceException, rospy.ROSException), e:
             rospy.loginfo("Service exception")
             return None
@@ -103,6 +113,13 @@ def move_pos(des_pose, timeout=3.0):
         print "\r\n","ikt = "
         print ikt
         print ""
+        if ikt is not None:
+            des_joints = [0]*7
+            for i in range(7):
+                des_joints[i] = ikt.joints[0].position[i]
+            right_arm_group.set_joint_value_target(des_joints)
+            right_arm_group.plan()
+            right_arm_group.go()            
     return
     
 
@@ -134,8 +151,8 @@ if __name__=='__main__':
 
     # des_pose = [0.28, -0.62, -0.32, 0, 3.14/2, 0]
     des_pose = [0.815, -1.01, 0.321, 0.271, 0.653, -0.271, 0.653]
-    des_pose2 = [0.724, 0.125, -0.055, 0.183, 0.983, -0.013, -0.015]
-    des_pose3 = [1.037, 0.140, 0.212, -0.072, 0.744, 0.041, 0.663]
+    des_pose2 = [1.037, 0.140, 0.212, -0.072, 0.744, 0.041, 0.663]
+    des_pose3 = [0.724, 0.125, -0.055, 0.183, 0.983, -0.013, -0.015]
 
     # add scene:
     scene = moveit_commander.PlanningSceneInterface()
@@ -148,24 +165,26 @@ if __name__=='__main__':
     p.pose.position.y = -0.25
     p.pose.position.z = 0.1
 
-    # scene.remove_world_object("table")
+    scene.remove_world_object("table")
     # scene.add_box("collision_box", p, (0.25, 0.1, 1.0))
 
-    # p = PoseStamped()
-    # p.header.frame_id = robot.get_planning_frame()
-    # p.pose.position.x = 0.8
-    # p.pose.position.y = 0.025
-    # p.pose.position.z = -0.6
-    # scene.add_box("table", p, (0.75, 1.25, 0.68))
+    p = PoseStamped()
+    p.header.frame_id = robot.get_planning_frame()
+    p.pose.position.x = 0.8
+    p.pose.position.y = 0.025
+    p.pose.position.z = -0.6
+    scene.add_box("table", p, (0.75, 1.25, 0.68))
 
-    # print "\r\nTesting position 1"
-    # move_pos(des_pose)
+    print "\r\nTesting position 1"
+    move_pos(des_pose)
+    rospy.sleep(2)
 
-    # rospy.sleep(2)
-
-    # print "\r\nTesting position 2"
-    # move_pos(des_pose3)
-    # # move_pos(des_pose3)
+    print "\r\nTesting position 2"
+    move_pos(des_pose2)
+    rospy.sleep(2)
+    
+    print "\r\nTesting position 3"
+    move_pos(des_pose3)
 
     print "\r\nspinning..."
     rospy.spin()
