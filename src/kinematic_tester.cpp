@@ -84,18 +84,20 @@ int main(int argc, char **argv)
   const std::vector<std::string> &joint_names = joint_model_group->getJointModelNames();
 
   ROS_INFO("Sleeping...");
-  ros::Duration(2.0).sleep();
+  ros::Duration(0.1).sleep();
   ROS_INFO("Done sleeping.");
 
-  // kinematic_state->update(true);
+  kinematic_state->update(true);
   
   // Get Joint Values
   // ^^^^^^^^^^^^^^^^
   // We can retreive the current set of joint values stored in the state for the right arm.
-  // static const double arr[] = {0.6891408681701661, 0.1702718672607422, 0.06711165939331055, 1.338014740704346, -1.7368497450988771, 0.14342720350341798, 1.2678351197387696};
-  // std::vector<double> joint_values(arr, arr+sizeof(arr)/sizeof(arr[0]));
+  static const double arr[] = {0.6891408681701661, 0.1702718672607422, 0.06711165939331055, 1.338014740704346, -1.7368497450988771, 0.14342720350341798, 1.2678351197387696};
+  std::vector<double> joint_values(arr, arr+sizeof(arr)/sizeof(arr[0]));
   // kinematic_state->setVariablePositions(joint_values);
-  std::vector<double> joint_values;
+  kinematic_state->setJointGroupPositions("right_arm", joint_values);
+  
+  // std::vector<double> joint_values;
   kinematic_state->copyJointGroupPositions(joint_model_group, joint_values);
   for(std::size_t i = 0; i < joint_names.size(); ++i)
   {
@@ -106,7 +108,8 @@ int main(int argc, char **argv)
   // ^^^^^^^^^^^^
   // setJointGroupPositions() does not enforce joint limits by itself, but a call to enforceBounds() will do it.
   /* Set one joint in the right arm outside its joint limit */
-  joint_values[0] = 1.57;
+  joint_values[0] = 1.8*1.57;
+  joint_values[1] = 1.8*1.57;
   kinematic_state->setJointGroupPositions(joint_model_group, joint_values);
 
   /* Check whether any joint is outside its joint limits */
@@ -123,12 +126,23 @@ int main(int argc, char **argv)
   // "r_wrist_roll_link" which is the most distal link in the
   // "right_arm" of the robot.
   kinematic_state->setToRandomPositions(joint_model_group);
+  kinematic_state->update(true);
   const Eigen::Affine3d &end_effector_state = kinematic_state->getGlobalLinkTransform("right_gripper");
 
   /* Print end-effector pose. Remember that this is in the model frame */
   ROS_INFO_STREAM("Translation: " << end_effector_state.translation());
   ROS_INFO_STREAM("Rotation: " << end_effector_state.rotation());
 
+  std::cout << std::endl;
+  ROS_INFO("Current joint angles generated randomly :");
+  kinematic_state->copyJointGroupPositions(joint_model_group, joint_values);
+  for(std::size_t i = 0; i < joint_names.size(); ++i)
+  {
+    ROS_INFO("Joint %s: %f", joint_names[i].c_str(), joint_values[i]);
+  }
+
+
+  
   // Inverse Kinematics
   // ^^^^^^^^^^^^^^^^^^
   // We can now solve inverse kinematics (IK) for the right arm of the
@@ -141,6 +155,8 @@ int main(int argc, char **argv)
   // Now, we can print out the IK solution (if found):
   if (found_ik)
   {
+      std::cout << std::endl;
+      ROS_INFO("Joint angles calculated from IK:");
     kinematic_state->copyJointGroupPositions(joint_model_group, joint_values);
     for(std::size_t i=0; i < joint_names.size(); ++i)
     {
