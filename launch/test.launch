@@ -10,12 +10,11 @@
     <arg name="allow_trajectory_execution" value="true"/>
   </include>
   
-  
   <node pkg="baxter_interface" type="joint_trajectory_action_server.py" name="joint_traj_action_srv" output="screen" 
 	respawn="false" />
   
   <node pkg="nxr_baxter" type="test_moveit.py" name="test_moveit" output="screen" 
-	respawn="false" />
+	respawn="true" launch-prefix="xterm -e "/>
   <!-- <node pkg="nxr_baxter" type="moveit_interface.py" name="moveit_interface" output="screen" respawn="true"/> -->
 
 	<!-- <include file="$(find skeletontracker_nu)/launch/nu_skeletontracker.launch"/> -->

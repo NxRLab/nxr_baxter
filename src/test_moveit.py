@@ -5,6 +5,8 @@
 
 # Node for testing moveit stuff
 
+import struct
+
 import rospy
 import moveit_commander
 import moveit_msgs.msg
@@ -23,7 +25,31 @@ from geometry_msgs.msg import (
 
 from tf.transformations import quaternion_from_euler
 
-def move_pos(des_pose):
+
+def ik_timeout(req, timeout=3.0):
+    base = rospy.Time.now()
+    # set seed:
+    req.seed_mode = req.SEED_USER
+    while (rospy.Time.now()-base).to_sec() <= timeout:
+        # generate a random valid q:
+        
+        try:
+            rospy.wait_for_service(ns, 0.5)
+            resp = iksvc(ikreq)
+        except (rospy.ServiceException, rospy.ROSException), e:
+            rospy.loginfo("Service exception")
+            return None
+        resp_seeds = struct.unpack('<%dB' % len(resp.result_type),
+                               resp.result_type)
+        if (resp_seeds[0] != resp.RESULT_INVALID):
+            break
+    return resp
+
+
+
+
+
+def move_pos(des_pose, timeout=3.0):
     limb = "right"
     ns = "ExternalTools/" + limb + "/PositionKinematicsNode/IKService"
     iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
@@ -48,23 +74,55 @@ def move_pos(des_pose):
     except (rospy.ServiceException, rospy.ROSException), e:
         rospy.loginfo("Service exception")
 
-    if resp.isValid[0]:
+    resp_seeds = struct.unpack('<%dB' % len(resp.result_type),
+                               resp.result_type)
+    if (resp_seeds[0] != resp.RESULT_INVALID):
+        seed_str = {
+                    ikreq.SEED_USER: 'User Provided Seed',
+                    ikreq.SEED_CURRENT: 'Current Joint Angles',
+                    ikreq.SEED_NS_MAP: 'Nullspace Setpoints',
+                   }.get(resp_seeds[0], 'None')
+        print("SUCCESS - Valid Joint Solution Found from Seed Type: %s" %
+              (seed_str,))
+        # Format solution into Limb API-compatible dictionary
+        limb_joints = dict(zip(resp.joints[0].name, resp.joints[0].position))
+        print "\nIK Joint Solution:\n", limb_joints
+        print "------------------"
+        print "Response Message:\n", resp
+
         des_joints = [0]*7
         for i in range(7):
             des_joints[i] = resp.joints[0].position[i]
-        # print right_arm_group.get_current_pose()
-        # print des_joints
         right_arm_group.set_joint_value_target(des_joints)
-
         right_arm_group.plan()
         right_arm_group.go()
-    
-        print right_arm_group.get_current_pose()
     else:
-        print right_arm_group.get_current_pose()
-        print "IK results were not valid."
+        print("INVALID POSE - No Valid Joint Solution Found.")
+        print("Trying random seeds until timeout is reached")
+        ikt = ik_timeout(ikreq,timeout=timeout)
+        print "\r\n","ikt = "
+        print ikt
+        print ""
+    return
+    
 
-    return 
+    # if resp.isValid[0]:
+    #     des_joints = [0]*7
+    #     for i in range(7):
+    #         des_joints[i] = resp.joints[0].position[i]
+    #     # print right_arm_group.get_current_pose()
+    #     # print des_joints
+    #     right_arm_group.set_joint_value_target(des_joints)
+
+    #     right_arm_group.plan()
+    #     right_arm_group.go()
+    
+    #     print right_arm_group.get_current_pose()
+    # else:
+    #     print right_arm_group.get_current_pose()
+    #     print "IK results were not valid."
+
+    # return 
 
     
     
@@ -76,8 +134,8 @@ if __name__=='__main__':
 
     # des_pose = [0.28, -0.62, -0.32, 0, 3.14/2, 0]
     des_pose = [0.815, -1.01, 0.321, 0.271, 0.653, -0.271, 0.653]
-    # des_pose2 = [0.724, 0.125, -0.055, 0.183, 0.983, -0.013, -0.015]
-    des_pose2 = [1.037, 0.140, 0.212, -0.072, 0.744, 0.041, 0.663]
+    des_pose2 = [0.724, 0.125, -0.055, 0.183, 0.983, -0.013, -0.015]
+    des_pose3 = [1.037, 0.140, 0.212, -0.072, 0.744, 0.041, 0.663]
 
     # add scene:
     scene = moveit_commander.PlanningSceneInterface()
@@ -90,8 +148,8 @@ if __name__=='__main__':
     p.pose.position.y = -0.25
     p.pose.position.z = 0.1
 
-    scene.remove_world_object("table")
-    scene.add_box("collision_box", p, (0.25, 0.1, 1.0))
+    # scene.remove_world_object("table")
+    # scene.add_box("collision_box", p, (0.25, 0.1, 1.0))
 
     # p = PoseStamped()
     # p.header.frame_id = robot.get_planning_frame()
@@ -100,11 +158,15 @@ if __name__=='__main__':
     # p.pose.position.z = -0.6
     # scene.add_box("table", p, (0.75, 1.25, 0.68))
 
+    # print "\r\nTesting position 1"
+    # move_pos(des_pose)
 
-    move_pos(des_pose)
+    # rospy.sleep(2)
 
-    rospy.sleep(2)
+    # print "\r\nTesting position 2"
+    # move_pos(des_pose3)
+    # # move_pos(des_pose3)
 
-    move_pos(des_pose2)
-
+    print "\r\nspinning..."
+    rospy.spin()
     
