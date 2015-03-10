@@ -53,8 +53,8 @@ class Trajectory_Controller:
         rospy.logdebug("Calling Trajectory_Controller.__init__()")
         self.left_arm = baxter_interface.Limb('left')
         self.right_arm = baxter_interface.Limb('right')
-        self.left_arm.set_joint_position_speed(0.5)
-        self.right_arm.set_joint_position_speed(0.5)
+        self.left_arm.set_joint_position_speed(0.4)
+        self.right_arm.set_joint_position_speed(0.4)
 
         self.traj = None
 
@@ -241,7 +241,7 @@ if __name__=='__main__':
     p.pose.position.y = 0.025
     p.pose.position.z = -0.6
 
-    scene.add_box("table", p, (0.75, 1.25, 0.68))
+    scene.add_box("table", p, (1.0, 1.25, 0.9)) #(0.75, 1.25, 0.68)
 
     traj_controller = Trajectory_Controller()
 
@@ -260,6 +260,7 @@ if __name__=='__main__':
                     joints = dict(zip(joint_resp.joint_names,
                                       joint_resp.joint_values))
                     try:
+			print "Setting Joint Values"
                         both_arms_group.set_joint_value_target(joints)
                         traj_controller.push(both_arms_group.plan())
                     except moveit_commander.MoveItCommanderException, e:
@@ -271,7 +272,7 @@ if __name__=='__main__':
                         pose = [joints['x'], joints['y'], joints['z'],
                                 joints['yaw'], joints['pitch'], joints['roll']]
                         desired_joints = ikright.solveIK(pose)
-                        # print desired_joints
+                        #print "Desired Joints: ", desired_joints
                         if desired_joints != None:
                             joints_one_arm = dict(zip(right_arm.joint_names(),
                                                       desired_joints))

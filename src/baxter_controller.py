@@ -171,6 +171,8 @@ class Baxter_Controller:
         self.rs.reset()
         self.rs.enable()
         self.joints = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
+
+#{'left_s0': 0.35, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 0.00, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
         self.new_vals_joints = True
         rospy.sleep(2.0)
 
@@ -515,6 +517,11 @@ class Baxter_Controller:
         self.action_id = 0
         self.left_hand_timer = 0
         self.right_hand_timer = 0
+
+	print "Resetting joint positions"
+	baxter_interface.Limb('left').move_to_joint_positions({'left_e0': 0.25118935372924805, 'left_e1': 1.3349467791320802, 'left_s0': 0.24313595460205079, 'left_s1': -0.6691991179504395, 'left_w0': -0.21667478604125978, 'left_w1': 0.9165535197143555, 'left_w2': 0.05062136594238282})
+	baxter_interface.Limb('right').move_to_joint_positions({'right_e0': -0.061742726641845706, 'right_e1': 1.1305438393798828, 'right_s0': -0.1307718620178223, 'right_s1': -0.558752501348877, 'right_w0': 0.10507768385009766, 'right_w1': 0.8770535144714356, 'right_w2': -0.5016117170654297})
+
 
     def joint_values_callback(self, req):
         """
