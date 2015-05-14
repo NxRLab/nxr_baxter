@@ -1,15 +1,15 @@
-top /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Top.png
+top Display-Top.png
 
-mime_prep /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Mime-Prep-1.png /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Mime-Prep-2.png
+mime_prep Display-Mime-Prep-1.png Display-Mime-Prep-2.png
 
-crane_prep /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Crane-Prep-1.png /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Crane-Prep-2.png
+crane_prep Display-Crane-Prep-1.png Display-Crane-Prep-2.png
 
-mime /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Mime.png
+mime Display-Mime.png
 
-crane /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Crane.png
+crane Display-Crane.png
 
-positioned /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-User-Positioned.png
+positioned Display-User-Positioned.png
 
-bool_reset /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Booleans-Reset.jpg
+bool_reset Display-Booleans-Reset.jpg
 
-kinect_reset /home/nxr-baxter/groovyws/src/nxr_baxter/images/Display-Restarting.png
+kinect_reset Display-Restarting.png

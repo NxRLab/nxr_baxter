@@ -6,11 +6,21 @@
 # Ros imports
 import rospy
 import sensor_msgs.msg
+import rospkg
 
 # Other imports
 import cv2
 import cv_bridge
 
+# builtin imports
+import os
+
+DEFAULT_IMG_FILENAME = "images/image_files.txt"
+
+def find_file(name, path):
+    for root, dirs, files in os.walk(path):
+        if name in files:
+            return os.path.join(root, name)
 
 class ImageSwitcher(object):
     """
@@ -60,7 +70,7 @@ class ImageSwitcher(object):
 
 
     # written first without file stuff, lets just get it working hardcoded
-    def __init__(self, img_files_filename, mode='idle', image_period=0):
+    def __init__(self, img_files_filename=None, mode='idle', image_period=0):
         """
         Constructor for the class, takes a filename that contains a list 
         of modes and their image files. Optionally takes a mode and an image
@@ -75,6 +85,11 @@ class ImageSwitcher(object):
         modeN filenameN
         """
         rospy.logdebug("Calling image_switcher.__init__")
+        if img_files_filename is None:
+            # then let's try and guess what the filename should be
+            rp = rospkg.RosPack()
+            BASEPATH = rp.get_path('nxr_baxter')
+            img_files_filename = os.path.join(BASEPATH, DEFAULT_IMG_FILENAME)
         f = open(img_files_filename, 'r')
         self.mode_to_images = {}
         for line in f:
@@ -86,6 +101,23 @@ class ImageSwitcher(object):
             #Maybe want to raise an exception here instead of this
             rospy.logerr("Image mode requested not in list of image modes. Requested: %s, going to top mode.", mode)
             mode = "top"
+        # now let's check if the paths are not absolute paths, and if they aren't, let's try and turn them into absolute paths:    
+        for files in self.mode_to_images.values():
+            for i,fname in enumerate(files):
+                if not os.path.isabs(fname):
+                    rp = rospkg.RosPack()
+                    BASEPATH = rp.get_path('nxr_baxter')
+                    # try default location:
+                    guess = os.path.join(BASEPATH, "images", fname)
+                    if os.path.exists(guess):
+                        files[i] = guess
+                    else:
+                        # search whole package:
+                        guess = find_file(fname, BASEPATH)
+                        if guess:
+                            files[i] = guess
+                        else:
+                            rospy.logwarn("Could not find image %s"%fname)
         self._mode = mode
         self.image_timer = None
         self._image_period = image_period
@@ -127,9 +159,9 @@ class ImageSwitcher(object):
 if __name__=="__main__":
     #Simple test script for ImageSwitcher class
     rospy.init_node('image_switcher_test_node', log_level=rospy.INFO)
-    rospy.info("image switcher timer test")
-    img_sw = ImageSwitcher('top')
-    rospy.info("made object")
+    rospy.loginfo("image switcher timer test")
+    img_sw = ImageSwitcher(mode='top')
+    rospy.loginfo("made object")
     rospy.sleep(6)
     img_sw.change_mode('crane_prep')
     rospy.spin()

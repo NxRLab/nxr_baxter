@@ -13,7 +13,7 @@
 	  <arg name="allow_trajectory_execution" value="true"/>
 	</include>
 
-	<rosparam param="img_files_filename">'/home/nxr-baxter/groovyws/src/nxr_baxter/images/image_files.txt'</rosparam>
+	<param name="img_files_filename" value="$(find nxr_baxter)/images/image_files.txt" />
 	
 	<node pkg="nxr_baxter" type="meta_mode_controller.py" name="meta_mode" output="screen" respawn="true" />
 
