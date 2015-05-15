@@ -230,7 +230,7 @@ if __name__=='__main__':
     scene = moveit_commander.PlanningSceneInterface()
 
     rospy.loginfo('Sitting here.')
-    rospy.sleep(10.0)
+    rospy.sleep(3.0)
 
     robot = moveit_commander.RobotCommander()
 
