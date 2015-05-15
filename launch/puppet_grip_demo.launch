@@ -1,0 +1,18 @@
+<launch>
+	<!-- <arg name="joint" default="left" /> -->
+	<arg name="mirror" default="false" />
+
+	<group unless="$(arg mirror)" >
+	  <node pkg="baxter_examples" type="joint_velocity_puppet.py" name="puppet_control" output="screen" respawn="true" args="-l left" />
+	  <node name="left_upper_relay" pkg="topic_tools" type="relay" args="/robot/digital_io/left_upper_button/state /robot/digital_io/right_upper_button/state" />
+	  <node name="left_lower_relay" pkg="topic_tools" type="relay" args="/robot/digital_io/left_lower_button/state /robot/digital_io/right_lower_button/state" />
+	</group>
+
+	<group if="$(arg mirror)" >
+	  <node pkg="baxter_examples" type="joint_velocity_puppet.py" name="puppet_control" output="screen" respawn="true" args="-l right" />
+	  <node name="right_upper_relay" pkg="topic_tools" type="relay" args="/robot/digital_io/right_upper_button/state /robot/digital_io/left_upper_button/state" />
+	  <node name="right_lower_relay" pkg="topic_tools" type="relay" args="/robot/digital_io/right_lower_button/state /robot/digital_io/left_lower_button/state" />
+	</group>
+
+	<node pkg="baxter_examples" type="gripper_cuff_control.py" name="gripper_control" output="log" respawn="true" />
+</launch>

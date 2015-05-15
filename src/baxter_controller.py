@@ -473,7 +473,7 @@ class Baxter_Controller:
             if data.mode == MetaMode.MIME:
                 self.choose_mime()
             elif data.mode == MetaMode.CRANE:
-                self.choose_crane()
+                self.choose_mime()
             elif data.mode == MetaMode.IDLE_DISABLED:
             #Disable everything
                 self.disable()
