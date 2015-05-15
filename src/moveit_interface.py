@@ -238,10 +238,30 @@ if __name__=='__main__':
     p = PoseStamped()
     p.header.frame_id = robot.get_planning_frame()
     p.pose.position.x = 0.8
-    p.pose.position.y = 0.025
-    p.pose.position.z = -0.6
+    p.pose.position.y = 0.0
+    p.pose.position.z = -0.70
+    scene.add_box("table", p, (0.762, 1.239, 1.0))
 
-    scene.add_box("table", p, (1.0, 1.25, 0.9)) #(0.75, 1.25, 0.68)
+    # add right splash guard
+    p.pose.position.x = 0.8
+    p.pose.position.y = -1.239/2.0
+    p.pose.position.z = -.135
+    scene.add_box("right_guard", p, (0.762, 0.025, 0.127))
+
+
+    # add left splash guard
+    p.pose.position.x = 0.8
+    p.pose.position.y = 1.239/2.0
+    p.pose.position.z = -.135
+    scene.add_box("left_guard", p, (0.762, 0.025, 0.127))
+
+
+    # add back splash guard
+    p.pose.position.x = 0.8 - .762/2
+    p.pose.position.y = 0.0
+    p.pose.position.z = -.135
+    scene.add_box("back_guard", p, (.025, 1.239, 0.127))
+
 
     traj_controller = Trajectory_Controller()
 

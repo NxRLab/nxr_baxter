@@ -116,7 +116,7 @@ class Baxter_Controller:
         self.main_userid = 0
 
         #5 minutes before motors shut off
-        self.motor_timeout = 5*60
+        self.motor_timeout = 10*60
 
         #Pull the required filename from the parameter server
         try:
@@ -170,7 +170,7 @@ class Baxter_Controller:
         """
         self.rs.reset()
         self.rs.enable()
-        self.joints = {'left_s0': 0.25, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': -0.25, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
+        self.joints = {'left_s0': 0.0, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 1.57, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00, 'right_s0': 0.15, 'right_s1': 0.00, 'right_e0': 0.00, 'right_e1': 1.57, 'right_w0': 0.00, 'right_w1': 0.00, 'right_w2': 0.00}
 
 #{'left_s0': 0.35, 'left_s1': 0.00, 'left_e0': 0.00, 'left_e1': 0.00, 'left_w0': 0.00, 'left_w1': 0.00, 'left_w2': 0.00}
         self.new_vals_joints = True
@@ -519,9 +519,16 @@ class Baxter_Controller:
         self.right_hand_timer = 0
 
 	print "Resetting joint positions"
-	baxter_interface.Limb('left').move_to_joint_positions({'left_e0': 0.25118935372924805, 'left_e1': 1.3349467791320802, 'left_s0': 0.24313595460205079, 'left_s1': -0.6691991179504395, 'left_w0': -0.21667478604125978, 'left_w1': 0.9165535197143555, 'left_w2': 0.05062136594238282})
-	baxter_interface.Limb('right').move_to_joint_positions({'right_e0': -0.061742726641845706, 'right_e1': 1.1305438393798828, 'right_s0': -0.1307718620178223, 'right_s1': -0.558752501348877, 'right_w0': 0.10507768385009766, 'right_w1': 0.8770535144714356, 'right_w2': -0.5016117170654297})
 
+        # first go to "high" positions:
+	baxter_interface.Limb('left').move_to_joint_positions({'left_e0' : 0.1967330358215332, 'left_e1' : -0.0441019476013183, 'left_s0' : -0.0069029135375976, 'left_s1' : -0.1154320541564941, 'left_w0' : -0.4003689851806641, 'left_w1' : -0.0920388471679687, 'left_w2' : -0.1656699249023437})
+	baxter_interface.Limb('right').move_to_joint_positions({'right_e0' : -0.2937573205444336, 'right_e1' : -0.0502378707458496, 'right_s0' : 0.16797089608154298, 'right_s1' : -0.1284708908386230, 'right_w0' : -0.0134223318786621, 'right_w1' : -0.1587670113647461, 'right_w2' : 0.44332044719238284})
+
+        # now go to "idle" positions:
+	baxter_interface.Limb('left').move_to_joint_positions({'left_e0': 0.25118935372924805, 'left_e1': 1.3349467791320802, 'left_s0': 0.60, 'left_s1': -0.6691991179504395, 'left_w0': -0.21667478604125978, 'left_w1': 0.9165535197143555, 'left_w2': 0.05062136594238282})
+	baxter_interface.Limb('right').move_to_joint_positions({'right_e0': -0.061742726641845706, 'right_e1': 1.1305438393798828, 'right_s0': -0.60, 'right_s1': -0.558752501348877, 'right_w0': 0.10507768385009766, 'right_w1': 0.8770535144714356, 'right_w2': -0.5016117170654297})
+	# baxter_interface.Limb('left').move_to_joint_positions({'left_e0': 0.25118935372924805, 'left_e1': 1.3349467791320802, 'left_s0': 0.24313595460205079, 'left_s1': -0.6691991179504395, 'left_w0': -0.21667478604125978, 'left_w1': 0.9165535197143555, 'left_w2': 0.05062136594238282})
+	# baxter_interface.Limb('right').move_to_joint_positions({'right_e0': -0.061742726641845706, 'right_e1': 1.1305438393798828, 'right_s0': -0.1307718620178223, 'right_s1': -0.558752501348877, 'right_w0': 0.10507768385009766, 'right_w1': 0.8770535144714356, 'right_w2': -0.5016117170654297})
 
     def joint_values_callback(self, req):
         """
