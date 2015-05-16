@@ -15,4 +15,9 @@
 	</group>
 
 	<node pkg="baxter_examples" type="gripper_cuff_control.py" name="gripper_control" output="log" respawn="true" />
+
+	<!-- start up rviz -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find nxr_baxter)/launch/puppet_demo.rviz" />
+
+
 </launch>

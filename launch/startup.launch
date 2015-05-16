@@ -23,5 +23,7 @@
 
 	<node pkg="nxr_baxter" type="moveit_interface.py" name="moveit_interface" output="screen" respawn="true"/>
 
+	<!-- start up rviz -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find nxr_baxter)/launch/mime_demo.rviz" />
 
 </launch>
