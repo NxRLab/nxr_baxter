@@ -38,12 +38,13 @@ def terminate_process_and_children(p):
 class Heartbeat_Monitor:
     def __init__(self):
         rospy.logdebug("Calling Heartbeat_Monitor.__init__()")
+        self.call_count = 3
         with open(os.path.join(os.path.expanduser("~"), "shutdown_startup.log"), "a") as fi:
             to_print = "[" + strftime("%Y-%m-%d %H:%M:%S") + "] Starting up\n"
             fi.write(to_print)
         # For calculating skeleton heartbeat
         # Average it every 5 seconds.
-        self.heartbeat_period = 5.0
+        self.heartbeat_period = 1.0
         # Initialize count
         self._heartbeat_count = 0
 
@@ -52,7 +53,7 @@ class Heartbeat_Monitor:
         self.freq_filter_list = Heartbeat_List(self.n_moving_avg_filt)
 
         # Time to wait to start (1 min)
-        self.delay_start = 60
+        self.delay_start = 10
 
         self.kill_count = 0
 
@@ -118,7 +119,10 @@ class Heartbeat_Monitor:
         #Reset count
         self._heartbeat_count = 0
         rospy.loginfo("Averaged tracker frequency: %d", self.freq_filter_list.get_average())
-        if self.freq_filter_list.get_average() < self.max_allowable_frequency:
+        # if self.freq_filter_list.get_average() < self.max_allowable_frequency:
+        self.call_count += 1
+        if self.call_count%20 == 0:
+            rospy.logwarn("\r\nRESTARTING\r\n")
             # self.shutdown_and_restart()
             # Now send a service request to change the mode so we can restart
             # kinect and stuff, then our callback on that will call
