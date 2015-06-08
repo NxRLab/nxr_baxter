@@ -11,6 +11,7 @@
 # ROS IMPORTS
 import rospy
 import roslib
+import rosnode
 from std_msgs.msg import Empty
 from nxr_baxter_msgs.msg import MetaMode
 from nxr_baxter_msgs.srv import *
@@ -22,19 +23,36 @@ import signal
 import subprocess
 import threading
 
-
-# Function taken from Jarvis/Jon's script to kill all child processes
-def terminate_process_and_children(p):
-    rospy.logdebug("Calling terminate_process_and_children")
-    rospy.logdebug("Terminating process %d", p.pid)
-    ps_command = subprocess.Popen("ps -o pid --ppid %d --noheaders" % p.pid, shell=True, stdout=subprocess.PIPE)
+def process_get_children(node):
+    ps_command = subprocess.Popen("ps -o pid --ppid %d --noheaders" % int(node), shell=True, stdout=subprocess.PIPE)
     ps_output = ps_command.stdout.read()
     retcode = ps_command.wait()
+    return ps_output.split("\n")[:-1]
+    
+def process_get_children_recursively(node, leafs):
+    if node is not None:
+        children = process_get_children(node)
+        if len(children) == 0:
+            leafs.append(node)
+        for n in children:
+            process_get_children_recursively(n, leafs)
 
-    for pid_str in ps_output.split("\n")[:-1]:
-            os.kill(int(pid_str), signal.SIGKILL)
-    p.kill()
-
+def terminate_process_and_children(p):
+    rospy.loginfo("Calling terminate_process_and_children")
+    plist = []
+    try:
+        pnum = p.pid
+    except AttributeError:
+        pnum = p
+    process_get_children_recursively(pnum, plist)
+    for pid_str in plist:
+        os.kill(int(pid_str), signal.SIGINT)
+    try:
+        p.kill()
+    except AttributeError:
+        os.kill(int(p), signal.SIGINT)
+    return
+    
 class Heartbeat_Monitor:
     def __init__(self):
         rospy.logdebug("Calling Heartbeat_Monitor.__init__()")
@@ -53,7 +71,7 @@ class Heartbeat_Monitor:
         self.freq_filter_list = Heartbeat_List(self.n_moving_avg_filt)
 
         # Time to wait to start (1 min)
-        self.delay_start = 10
+        self.delay_start = 5
 
         self.kill_count = 0
 
@@ -90,7 +108,7 @@ class Heartbeat_Monitor:
     def empty_skel_callback(self, event):
         rospy.logdebug("Calling empty_skel_callback()")
         self._heartbeat_count += 1
-        if self.kill_count > 5:
+        if self.kill_count > 3:
             rospy.wait_for_service('change_meta_mode')
             try:
                 change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
@@ -121,7 +139,7 @@ class Heartbeat_Monitor:
         rospy.loginfo("Averaged tracker frequency: %d", self.freq_filter_list.get_average())
         # if self.freq_filter_list.get_average() < self.max_allowable_frequency:
         self.call_count += 1
-        if self.call_count%20 == 0:
+        if self.call_count%10 == 0:
             rospy.logwarn("\r\nRESTARTING\r\n")
             # self.shutdown_and_restart()
             # Now send a service request to change the mode so we can restart
@@ -162,36 +180,40 @@ class Heartbeat_Monitor:
         if self.main_timer != None:
             rospy.logdebug("Shutting down main timer")
             self.main_timer.shutdown()
-        rospy.loginfo("Killing nodelet...")
-        p2 = subprocess.Popen("rosnode kill /camera_nodelet_manager", shell=True, stdout=subprocess.PIPE)
-        rospy.sleep(2.0)
+
         rospy.loginfo("Killing skeleton tracker...")
         terminate_process_and_children(self.skel_tracker_proc)
         rospy.sleep(2.0)
         rospy.loginfo("Killing openni processes...")
         terminate_process_and_children(self.openni_proc)
+        rospy.loginfo("Killing nodelet...")
+        rospy.sleep(2.0)
+        p2 = subprocess.Popen("rosnode kill /camera/camera_nodelet_manager", shell=True, stdout=subprocess.PIPE)
+        rospy.sleep(5.0)
         
-        #USB restart
-        pkgdir = roslib.packages.get_pkg_dir('nxr_baxter')
-        rospy.loginfo("Restarting usb...")
-        cmd = os.path.join(pkgdir, "src/restart_usb.sh")
-        subprocess.call(cmd, shell=True)
+        # USB restart
+        # first let's check if the kinect is running:
+        # rosnode.rosnode_cleanup()
+        # pkgdir = roslib.packages.get_pkg_dir('nxr_baxter')
+        # rospy.loginfo("Restarting usb...")
+        # cmd = os.path.join(pkgdir, "src/restart_usb.sh")
+        # subprocess.call(cmd, shell=True)
 
         #Set the flag in udev_reload.txt for the cron job to fix it
-        file_name = os.path.join(os.path.expanduser("~"),'src/udev_reload.txt')
-        checked = False
-        while not checked:
-            try:
-                fo = open(file_name, 'w+')
-                fo.write("1")
-                fo.close()
-                checked = True
-            except IOError:
-                # file cannot be opened
-                rospy.sleep(1.0)
-                pass
+        # file_name = os.path.join(os.path.expanduser("~"),'src/udev_reload.txt')
+        # checked = False
+        # while not checked:
+        #     try:
+        #         fo = open(file_name, 'w+')
+        #         fo.write("1")
+        #         fo.close()
+        #         checked = True
+        #     except IOError:
+        #         # file cannot be opened
+        #         rospy.sleep(1.0)
+        #         pass
 
-        rospy.sleep(10.0)
+        rospy.sleep(2.0)
         #restart processes
         self.launch_processes()
         self.start_delay_timer()
