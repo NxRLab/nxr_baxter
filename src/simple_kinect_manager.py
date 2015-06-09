@@ -4,14 +4,13 @@ import rospy
 import roslib
 from std_srvs.srv import Empty
 from std_srvs.srv import EmptyResponse
+from std_srvs.srv import EmptyRequest
 import os
 import signal
 import subprocess
 import threading
 
 
-def check_if_kinect_running():
-    
 
 
 def process_get_children(node):
@@ -55,6 +54,27 @@ class KinectController( object ):
         # create services for starting and stopping Kinect:
         self.start_kin_service = rospy.Service('start_kinect', Empty, self.start_procs)
         self.stop_kin_service = rospy.Service('stop_kinect', Empty, self.stop_procs)
+
+        # create a timer for polling skeleton tracker:
+        self.poll_tracker_timer = rospy.Timer(rospy.Duration(3.0), self.check_skel_cb)
+        self.check_count = 0
+
+        return
+
+    def check_skel_cb(self, data):
+        if self.skel_tracker_proc is not None:
+            running = self.check_skel_tracker()
+            if not running:
+                self.check_count += 1
+            else:
+                self.check_count = 0
+        if self.check_count > 3:
+            rospy.logwarn("Tracker should be running and it's not")
+            self.check_count = 0
+            rospy.logwarn("Shutting down processes")
+            self.stop_procs(EmptyRequest())
+            rospy.logwarn("Starting processes")
+            self.start_procs(EmptyRequest())
         return
 
     def start_procs(self, req):
@@ -67,19 +87,59 @@ class KinectController( object ):
             rospy.loginfo("PROCESS IS = %s"%self.openni_proc.pid)
         else:
             rospy.logwarn("Trying to start openni thread while it is already running.")
-            rospy.loginfo("self.openni_proc.poll() returns %s " % self.openni_proc.poll())
+
+        if self.skel_tracker_proc == None or self.skel_tracker_proc.poll() != None:
+            rospy.loginfo("Launching skeleton tracker...")
+            cmd = 'rosrun skeletontracker_nu skeletontracker'
+            self.skel_tracker_proc = subprocess.Popen(cmd,shell=True)
+            # now check if this process is actually running:
+            # for i in range(5):
+            #     if self.check_skel_tracker():
+            #         break
+            #     else:
+            #         rospy.logwarn("skeleton_tracker is not running... checked for the %d time", i+1)
+            #     rospy.sleep(5.0)
+        else:
+            rospy.logwarn("Trying to start skeleton tracker thread while it is already running.")
+
         return EmptyResponse()
 
+        
+    def check_skel_tracker(self):
+        try:
+            out = self.skel_tracker_proc.poll()
+            if out is None:
+                # print "Process is running!"
+                running = True
+            else:
+                rospy.logwarn("check_skel_tracker detected that tracker process is complete")
+                running = False
+        except AttributeError:
+            print "AttributeError"
+        return running
+
+                
     def stop_procs(self, req):
         rospy.loginfo("Stop service called")
-        if self.openni_proc != None:
-            rospy.loginfo("process is not None... attempt kill")
-            # p2 = subprocess.Popen("rosnode kill /camera/camera_nodelet_manager", shell=True, stdout=subprocess.PIPE)
-            # rospy.sleep(2.0)
+        if self.openni_proc != None or self.skel_tracker_proc != None:
+            rospy.loginfo("processes not None... attempt kill")
 
             # Kill openni_launch
             rospy.loginfo("Killing openni processes...")
-            terminate_process_and_children(self.openni_proc)
+            try:
+                terminate_process_and_children(self.openni_proc)
+            except:
+                rospy.logwarn("Exception while killing drivers")
+
+            # Kill skeleton tracker
+            rospy.loginfo("Killing skeleton tracker processes...")
+            try:
+                terminate_process_and_children(self.skel_tracker_proc)
+            except:
+                rospy.logwarn("Exception while killing tracker")
+
+            # p2 = subprocess.Popen("rosnode kill /camera/camera_nodelet_manager", shell=True, stdout=subprocess.PIPE)
+            # rospy.sleep(2.0)
 
             # # USB restart
             # pkgdir = roslib.packages.get_pkg_dir('nxr_baxter')
@@ -101,6 +161,7 @@ class KinectController( object ):
             #         pass
 
             self.openni_proc = None
+            self.skel_tracker_proc = None
         else:
             rospy.loginfo("openni_proc is None")
         return EmptyResponse()

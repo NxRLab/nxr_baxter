@@ -13,6 +13,9 @@ import rospy
 import roslib
 import rosnode
 from std_msgs.msg import Empty
+from std_srvs.srv import Empty as EmptySrv
+from std_srvs.srv import EmptyResponse
+from std_srvs.srv import EmptyRequest
 from nxr_baxter_msgs.msg import MetaMode
 from nxr_baxter_msgs.srv import *
 from time import strftime
@@ -22,289 +25,198 @@ import os
 import signal
 import subprocess
 import threading
+from collections import deque
+import numpy as np
 
-def process_get_children(node):
-    ps_command = subprocess.Popen("ps -o pid --ppid %d --noheaders" % int(node), shell=True, stdout=subprocess.PIPE)
-    ps_output = ps_command.stdout.read()
-    retcode = ps_command.wait()
-    return ps_output.split("\n")[:-1]
-    
-def process_get_children_recursively(node, leafs):
-    if node is not None:
-        children = process_get_children(node)
-        if len(children) == 0:
-            leafs.append(node)
-        for n in children:
-            process_get_children_recursively(n, leafs)
+# LOCAL IMPORTS
+from process_manager import terminate_process_and_children
 
-def terminate_process_and_children(p):
-    rospy.loginfo("Calling terminate_process_and_children")
-    plist = []
-    try:
-        pnum = p.pid
-    except AttributeError:
-        pnum = p
-    process_get_children_recursively(pnum, plist)
-    for pid_str in plist:
-        os.kill(int(pid_str), signal.SIGINT)
-    try:
-        p.kill()
-    except AttributeError:
-        os.kill(int(p), signal.SIGINT)
-    return
+# GLOBAL CONSTANTS
+MAX_AVG_PERIOD = 1/24.0 # max average period of heartbeat
+NUM_AVERAGES = 30 # number of samples to average over
+RESTART_TIMEOUT = 60 # how long before restarting computer?
     
-class Heartbeat_Monitor:
+class HeartbeatMonitor:
     def __init__(self):
-        rospy.logdebug("Calling Heartbeat_Monitor.__init__()")
-        self.call_count = 3
-        with open(os.path.join(os.path.expanduser("~"), "shutdown_startup.log"), "a") as fi:
-            to_print = "[" + strftime("%Y-%m-%d %H:%M:%S") + "] Starting up\n"
-            fi.write(to_print)
-        # For calculating skeleton heartbeat
-        # Average it every 5 seconds.
-        self.heartbeat_period = 1.0
-        # Initialize count
-        self._heartbeat_count = 0
+        rospy.logdebug("Calling HeartbeatMonitor.__init__()")
 
-        self.n_moving_avg_filt = 12
-        self.max_allowable_frequency = 24.0
-        self.freq_filter_list = Heartbeat_List(self.n_moving_avg_filt)
-
-        # Time to wait to start (1 min)
-        self.delay_start = 5
-
-        self.kill_count = 0
-
-        # Make a subscriber to call a function to track the heartbeat of the
-        # skeleton tracker
-        rospy.Subscriber("tracker_heartbeat", Empty, self.empty_skel_callback)
-        rospy.Subscriber("meta_mode", MetaMode, self.meta_mode_callback)
-
-        # We will launch openni and start the skeleton tracker here.
+        # init process vars:
         self.openni_proc = None
-        self.skel_tracker_proc = None
-        self.launch_processes()
-        #Start the delay, and launch the regular timer after the delay_start and
-        #after processes have started
-        self.start_delay_timer()
+        self.tracker_proc = None
+        self.first_flag = True
+        self.heartbeat_time = rospy.Time.now()
+        self.skelcb_count = 0
+
+        # create deque for holding periods of tracker_heartbeat
+        self.heartbeat_samples = deque(maxlen=NUM_AVERAGES)
+        
+        # create subscribers:
+        self.heartbeat_sub = rospy.Subscriber("tracker_heartbeat", Empty,
+                                              self.emptycb)
+        # self.metamode_sub = rospy.Subscriber("meta_mode", MetaMode,
+        #                                      self.meta_mode_callback)
+
+        # create service clients:
+        rospy.loginfo("Waiting for change_meta_mode service...")
+        rospy.wait_for_service("change_meta_mode")
+        self.change_mode = rospy.ServiceProxy("change_meta_mode", ChangeMetaMode)
+
+        # create services for starting and stopping Kinect:
+        self.start_kin_service = rospy.Service('start_kinect', EmptySrv, self.start_procs)
+        self.stop_kin_service = rospy.Service('stop_kinect', EmptySrv, self.stop_procs)
+
+        # create a timer for polling skeleton tracker:
+        self.tracker_timer = rospy.Timer(rospy.Duration(1.0), self.checkskel_cb)
+        self.check_count = 0
+
+        # start 
+        self.start_procs(EmptyRequest())
+        return
+
+        
+    def start_procs(self, req):
+        rospy.logdebug("/start_kinect service called")
+        if self.openni_proc == None:
+            rospy.loginfo("Launching openni processes...")
+            cmd = 'roslaunch openni_launch openni.launch'
+            self.openni_proc = subprocess.Popen(cmd, shell=True)
+        else:
+            rospy.logwarn("Trying to start openni thread while it is already running.")
+
+        if self.tracker_proc == None:
+            rospy.loginfo("Launching skeleton tracker...")
+            cmd = 'rosrun skeletontracker_nu skeletontracker'
+            self.tracker_proc = subprocess.Popen(cmd,shell=True)
+        else:
+            rospy.logwarn("Trying to start skeleton tracker thread while it is already running.")
+
+        # reset vars:
+        self.first_flag = True    
+        return EmptyResponse()
 
 
-    #Start the delay timer
-    def start_delay_timer(self):
-        rospy.logdebug("Calling start_delay_timer")
-        #clear the Heartbeat List
-        self.freq_filter_list.clear()
-        self.delay_timer = rospy.Timer(rospy.Duration(self.delay_start), self.start_main_timer, oneshot=True)
 
-    #Start the main timer after the delay timer has been launched
-    def start_main_timer(self, event=None):
-        rospy.logdebug("Calling start_main_timer")
-        self._heartbeat_count = 0
-        self.main_timer = rospy.Timer(rospy.Duration(self.heartbeat_period),
-                                          self.heartbeat_timer_callback)
+    def stop_procs(self, req):
+        rospy.loginfo("/stop_kinect service called")
+        if self.openni_proc != None or self.tracker_proc != None:
+            rospy.loginfo("processes not None... attempting to shutdown")
 
-    #Callback for the heartbeat. Updates the heartbeat count.
-    #There will be a separate timer to calculate the actual frequency
-    def empty_skel_callback(self, event):
+            # Kill openni_launch
+            rospy.loginfo("Killing openni processes...")
+            try:
+                terminate_process_and_children(self.openni_proc)
+            except:
+                rospy.logwarn("Exception while killing drivers")
+
+            # Kill skeleton tracker
+            rospy.loginfo("Killing skeleton tracker processes...")
+            try:
+                terminate_process_and_children(self.tracker_proc)
+            except:
+                rospy.logwarn("Exception while killing tracker")
+            self.openni_proc = None
+            self.tracker_proc = None
+        else:
+            rospy.loginfo("Neither tracker nor drivers are running")
+        return EmptyResponse()
+
+
+
+        
+    def emptycb(self, data):
         rospy.logdebug("Calling empty_skel_callback()")
-        self._heartbeat_count += 1
-        if self.kill_count > 3:
-            rospy.wait_for_service('change_meta_mode')
-            try:
-                change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
-                change_resp = change_mode(ChangeMetaModeRequest.RESTART_KINECT)
-                if not change_resp.error:
-                    rospy.logerr("Tried to restart Kinect, but mode change request failed.")
-                else:
-                    rospy.logdebug("Kinect shutdown meta mode change succeeded.")
-            except rospy.ServiceException, e:
-                rospy.logerr("Service call failed: %s",e)
-            #Restart computer
-            with open(os.path.join(os.path.expanduser("~"), "shutdown_startup.log"), "a") as fi:
-                to_print = "[" + strftime("%Y-%m-%d %H:%M:%S") + "] Shutting Down\n"
-                fi.write(to_print)
-            cmd = 'sudo shutdown -r now'
-            subprocess.Popen(cmd,shell=True)
+        if self.tracker_proc is not None:
+            # then the tracker is running
+            if self.first_flag:
+                self.heartbeat_time = rospy.Time.now()
+                self.heartbeat_samples.clear()
+                self.first_flag = False
+            else:
+                self.heartbeat_samples.append((rospy.Time.now()-self.heartbeat_time).to_sec())
+                self.heartbeat_time = rospy.Time.now()
+        return
 
-    # Callback for heartbeat timer calculation. Gets the current count and will
-    # calculate the average. Keeps an updated list of the past n_moving_avg_filt
-    # frequencies and if its less than max_allowable_frequency, shutdown and restart the processes
-    def heartbeat_timer_callback(self, event):
-        rospy.logdebug("Calling heartbeat_timer_callback")
-        # Calculate frequency
-        ht_bt_freq = self._heartbeat_count/self.heartbeat_period
-        self.freq_filter_list.push(ht_bt_freq)
-        #Reset count
-        self._heartbeat_count = 0
-        rospy.loginfo("Averaged tracker frequency: %d", self.freq_filter_list.get_average())
-        # if self.freq_filter_list.get_average() < self.max_allowable_frequency:
-        self.call_count += 1
-        if self.call_count%10 == 0:
-            rospy.logwarn("\r\nRESTARTING\r\n")
-            # self.shutdown_and_restart()
-            # Now send a service request to change the mode so we can restart
-            # kinect and stuff, then our callback on that will call
-            # shutdown_and_restart
-            rospy.wait_for_service('change_meta_mode')
-            try:
-                change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
-                change_resp = change_mode(ChangeMetaModeRequest.RESTART_KINECT)
-                if not change_resp.error:
-                    rospy.logerr("Tried to restart Kinect, but mode change request failed.")
-                else:
-                    rospy.logdebug("Kinect shutdown meta mode change succeeded.")
-            except rospy.ServiceException, e:
-                rospy.logerr("Service call failed: %s",e)
 
-    def meta_mode_callback(self, data):
-        rospy.logdebug("Calling meta_mode_callback")
-        if data.mode == data.RESTART_KINECT:
-            self.shutdown_and_restart()
-            #Once restarted, tell it we can go back to idle enabled mode
-            rospy.wait_for_service('change_meta_mode')
+    def check_skel_process(self):
+        try:
+            out = self.tracker_proc.poll()
+            if out is None:
+                    running = True
+            else:
+                rospy.logwarn("check_skel_process detected that tracker process is complete")
+                rospy.logwarn("This most likely indicates a segmentation fault")
+                running = False
+        except AttributeError:
+            print "AttributeError"
+        return running
+
+    
+    def checkskel_cb(self, data):
+        shutdown = False
+        restart = False
+        # is process running properly?:
+        if self.tracker_proc is not None:
+            running = self.check_skel_process()
+            if not running:
+                self.check_count += 1
+            else:
+                self.check_count = 0
+        if self.check_count > 5:
+            rospy.logwarn("Tracker should be running and it's not")
+            restart = True
+
+        # how is the frequency?:
+        self.skelcb_count += 1    
+        if len(self.heartbeat_samples) == NUM_AVERAGES and np.mean(self.heartbeat_samples) > MAX_AVG_PERIOD:
+            rospy.logwarn("Average tracker frequency has dipped below minimum")
+            restart = True
+        elif len(self.heartbeat_samples) > 0:
+            if self.skelcb_count%10 == 0:
+                rospy.loginfo("Average tracker frequency = %f",1/np.mean(self.heartbeat_samples))
+            
+        # should we attempt to restart computer?
+        if (rospy.Time.now() - self.heartbeat_time).to_sec() > RESTART_TIMEOUT:
+            rospy.logwarn("Average tracker frequency has dipped below minimum")
+            shutdown = True
+
+        if shutdown or restart:
             try:
-                change_mode = rospy.ServiceProxy('change_meta_mode', ChangeMetaMode)
-                change_resp = change_mode(ChangeMetaModeResponse.IDLE_ENABLED)
+                change_resp = self.change_mode(ChangeMetaModeRequest.RESTART_KINECT)
                 if not change_resp.error:
                     rospy.logerr("Tried to go back to idle mode, failed!")
                 else:
                     rospy.logdebug("Back to idle mode meta mode change succeeded.")
             except rospy.ServiceException, e:
                 rospy.logerr("Service call failed: %s",e)
-
-    #This function is called when the frequency gets bad
-    def shutdown_and_restart(self):
-        rospy.logdebug("Calling shutdown_and_restart")
-        self.kill_count += 1
-        rospy.loginfo("Shutdown count: %d", self.kill_count)
-        if self.main_timer != None:
-            rospy.logdebug("Shutting down main timer")
-            self.main_timer.shutdown()
-
-        rospy.loginfo("Killing skeleton tracker...")
-        terminate_process_and_children(self.skel_tracker_proc)
-        rospy.sleep(2.0)
-        rospy.loginfo("Killing openni processes...")
-        terminate_process_and_children(self.openni_proc)
-        rospy.loginfo("Killing nodelet...")
-        rospy.sleep(2.0)
-        p2 = subprocess.Popen("rosnode kill /camera/camera_nodelet_manager", shell=True, stdout=subprocess.PIPE)
-        rospy.sleep(5.0)
-        
-        # USB restart
-        # first let's check if the kinect is running:
-        # rosnode.rosnode_cleanup()
-        # pkgdir = roslib.packages.get_pkg_dir('nxr_baxter')
-        # rospy.loginfo("Restarting usb...")
-        # cmd = os.path.join(pkgdir, "src/restart_usb.sh")
-        # subprocess.call(cmd, shell=True)
-
-        #Set the flag in udev_reload.txt for the cron job to fix it
-        # file_name = os.path.join(os.path.expanduser("~"),'src/udev_reload.txt')
-        # checked = False
-        # while not checked:
-        #     try:
-        #         fo = open(file_name, 'w+')
-        #         fo.write("1")
-        #         fo.close()
-        #         checked = True
-        #     except IOError:
-        #         # file cannot be opened
-        #         rospy.sleep(1.0)
-        #         pass
-
-        rospy.sleep(2.0)
-        #restart processes
-        self.launch_processes()
-        self.start_delay_timer()
-
-    def launch_processes(self):
-        rospy.logdebug("Calling launch_processes")
-        if self.openni_proc == None or self.openni_proc.poll() != None:
-            rospy.loginfo("Launching openni processes...")
-            cmd = 'roslaunch openni_launch openni.launch'
-            self.openni_proc = subprocess.Popen(cmd,shell=True)
-            rospy.sleep(2.0)
-        else:
-            rospy.logwarn("Trying to start openni thread while it is already running.")
-            rospy.loginfo("self.openni_proc.poll() returns %d " % self.openni_proc.poll())
-
-        if self.skel_tracker_proc == None or self.skel_tracker_proc.poll() != None:
-            rospy.loginfo("Launching skeleton tracker...")
-            cmd = 'rosrun skeletontracker_nu skeletontracker'
-            self.skel_tracker_proc = subprocess.Popen(cmd,shell=True)
-            # self.skel_tracker_proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,
-            #                                           stderr=subprocess.PIPE,
-            #                                           universal_newlines=True,
-            #                                           bufsize=2)
-            # if self.passthrough_thread == None:
-            #     self.passthrough_thread = threading.Thread(target=self.passthrough)
-            #     self.passthrough_thread.start()
-            rospy.sleep(20.0)
-            # Check if skeleton tracker is running:
-            self.skel_tracker_proc.poll()
-            while self.skel_tracker_proc.returncode != None:
-                self.kill_count += 1
-                # Skeleton tracker has terminated
-                # terminate_process_and_children(self.skel_tracker_proc)
-                # rospy.sleep(2.0)
-                self.skel_tracker_proc = subprocess.Popen(cmd, shell=True)
-                rospy.sleep(20.0)
-        else:
-            rospy.logwarn("Trying to start skeleton tracker thread while it is already running.")
-            rospy.loginfo("self.openni_proc.poll() returns %d " % self.openni_proc.poll())
-
-
-
-class Heartbeat_List:
-    """
-    A list for tracking the frequency for the heartbeat. Pushing to this list
-    will remove the oldest element and replace it with the pushed element. You
-    can also ask for the current sum of all elements in the list. The list is
-    initialized to zero with a length given when initializing, defaults to 1.
-    """
-
-    def __init__(self,length=1):
-        rospy.logdebug("Calling Heartbeat_List.__init__()")
-        self._list = [0.0]*length
-        self.sum = 0.0
-        self._oldest_index = 0
-        self._max_index = length - 1
-        self.num_pushed = 0
-
-    def push(self, val):
-        rospy.logdebug("Calling Heartbeat_List.push(val)")
-        if self.num_pushed <= self._max_index:
-            self.num_pushed += 1
-        else:
-            self.sum -= self._list[self._oldest_index]
-        self.sum += val
-        self._list[self._oldest_index] = val
-        self._oldest_index += 1
-        if self._oldest_index > self._max_index:
-            self._oldest_index = 0
+            if shutdown:
+                rospy.logwarn("Shutting down computer")
+            if restart:
+                self.check_count = 0
+                rospy.logwarn("Shutting down tracker and drivers") 
+                self.stop_procs(EmptyRequest())
+                rospy.logwarn("Starting tracker and drivers")
+                self.start_procs(EmptyRequest())
+                change_resp = self.change_mode(ChangeMetaModeRequest.IDLE_ENABLED)
+                if not change_resp.error:
+                    rospy.logerr("Tried to go back to idle mode, failed!")
+                else:
+                    rospy.logdebug("Back to idle mode meta mode change succeeded.")
+        return
+            
+            
+            
+def main():
+    rospy.loginfo("Starting heartbeat_tracker node...")
+    rospy.init_node('heartbeat_tracker', log_level=rospy.INFO)
+    try:
+        hm = HeartbeatMonitor()
+    except rospy.ROSInterruptException:
+        pass
+    rospy.spin()
+    return
     
-    def clear(self):
-        rospy.logdebug("Calling Heartbeat_List.clear()")
-        self._list = [0]*(self._max_index + 1)
-        self.sum = 0.0
-        self._oldest_index = 0
-        self.num_pushed = 0
-
-    def get_average(self):
-        return self.sum/self.num_pushed
 
 
 if __name__=='__main__':
-    rospy.loginfo("Starting Heartbeat Tracker Node...")
-    rospy.init_node('Heartbeat_Tracker', log_level=rospy.INFO)
-    rospy.logdebug("node starting")
-    hm = Heartbeat_Monitor()
-
-    # rospy.sleep(60)
-    # rospy.loginfo("Attempting to kill node...")
-#    hm.shutdown_and_restart()
+    main()
     
-    rospy.spin()
-
-    rospy.loginfo("Heartbeat Tracker shutting down.")
