@@ -39,6 +39,9 @@ RESTART_TIMEOUT = 60 # how long before restarting computer?
 class HeartbeatMonitor:
     def __init__(self):
         rospy.logdebug("Calling HeartbeatMonitor.__init__()")
+        with open(os.path.join(os.path.expanduser("~"), "shutdown_startup.log"), "a") as fi:
+            to_print = "[" + strftime("%Y-%m-%d %H:%M:%S") + "] Starting up\n"
+            fi.write(to_print)
 
         # init process vars:
         self.openni_proc = None
@@ -163,12 +166,18 @@ class HeartbeatMonitor:
                 self.check_count = 0
         if self.check_count > 5:
             rospy.logwarn("Tracker should be running and it's not")
+            with open(os.path.join(os.path.expanduser("~"), "shutdown_startup.log"), "a") as fi:
+                to_print = "[" + strftime("%Y-%m-%d %H:%M:%S") + "] Tracker should be running and it's not\n"
+                fi.write(to_print)
             restart = True
 
         # how is the frequency?:
         self.skelcb_count += 1    
         if len(self.heartbeat_samples) == NUM_AVERAGES and np.mean(self.heartbeat_samples) > MAX_AVG_PERIOD:
             rospy.logwarn("Average tracker frequency has dipped below minimum")
+            with open(os.path.join(os.path.expanduser("~"), "shutdown_startup.log"), "a") as fi:
+                to_print = "[" + strftime("%Y-%m-%d %H:%M:%S") + "] Low frequency detected\n"
+                fi.write(to_print)
             restart = True
         elif len(self.heartbeat_samples) > 0:
             if self.skelcb_count%10 == 0:
@@ -176,7 +185,7 @@ class HeartbeatMonitor:
             
         # should we attempt to restart computer?
         if (rospy.Time.now() - self.heartbeat_time).to_sec() > RESTART_TIMEOUT:
-            rospy.logwarn("Average tracker frequency has dipped below minimum")
+            rospy.logwarn("Detected a restart timeout")
             shutdown = True
 
         if shutdown or restart:
@@ -190,6 +199,8 @@ class HeartbeatMonitor:
                 rospy.logerr("Service call failed: %s",e)
             if shutdown:
                 rospy.logwarn("Shutting down computer")
+                cmd = 'sudo shutdown -r now'
+                subprocess.Popen(cmd,shell=True)                
             if restart:
                 self.check_count = 0
                 rospy.logwarn("Shutting down tracker and drivers") 

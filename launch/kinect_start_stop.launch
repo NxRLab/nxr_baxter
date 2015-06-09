@@ -1,0 +1,9 @@
+<launch>
+
+	<param name="img_files_filename" value="$(find nxr_baxter)/images/image_files.txt" />
+	
+	<node pkg="nxr_baxter" type="meta_mode_controller.py" name="meta_mode" output="screen" respawn="true" />
+
+	<node pkg="nxr_baxter" type="tracker_heartbeat.py" name="skel_tracker_heartbeat" output="screen" respawn="true" />
+
+</launch>
