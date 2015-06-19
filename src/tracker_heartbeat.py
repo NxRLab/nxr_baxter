@@ -35,6 +35,7 @@ from process_manager import terminate_process_and_children
 MAX_AVG_PERIOD = 1/24.0 # max average period of heartbeat
 NUM_AVERAGES = 30 # number of samples to average over
 RESTART_TIMEOUT = 60 # how long before restarting computer?
+CHANGE_MODE_COUNT = 10 # how many timer calls before requesting to change mode back to IDLE_ENABLED
     
 class HeartbeatMonitor:
     def __init__(self):
@@ -49,13 +50,14 @@ class HeartbeatMonitor:
         self.first_flag = True
         self.heartbeat_time = rospy.Time.now()
         self.skelcb_count = 0
+        self.tmp_count = 0
 
         # create deque for holding periods of tracker_heartbeat
         self.heartbeat_samples = deque(maxlen=NUM_AVERAGES)
         
         # create subscribers:
         self.heartbeat_sub = rospy.Subscriber("tracker_heartbeat", Empty,
-                                              self.emptycb)
+                                              self.emptycb, queue_size=1)
         # self.metamode_sub = rospy.Subscriber("meta_mode", MetaMode,
         #                                      self.meta_mode_callback)
 
@@ -69,8 +71,9 @@ class HeartbeatMonitor:
         self.stop_kin_service = rospy.Service('stop_kinect', EmptySrv, self.stop_procs)
 
         # create a timer for polling skeleton tracker:
-        self.tracker_timer = rospy.Timer(rospy.Duration(1.0), self.checkskel_cb)
         self.check_count = 0
+        self.enable_delay_count = -1
+        self.tracker_timer = rospy.Timer(rospy.Duration(1.0), self.checkskel_cb)
 
         # start 
         self.start_procs(EmptyRequest())
@@ -182,36 +185,46 @@ class HeartbeatMonitor:
         elif len(self.heartbeat_samples) > 0:
             if self.skelcb_count%10 == 0:
                 rospy.loginfo("Average tracker frequency = %f",1/np.mean(self.heartbeat_samples))
+                rospy.loginfo("tmp_count = %d", self.tmp_count)
             
         # should we attempt to restart computer?
         if (rospy.Time.now() - self.heartbeat_time).to_sec() > RESTART_TIMEOUT:
             rospy.logwarn("Detected a restart timeout")
             shutdown = True
 
+        # self.tmp_count += 1
+        # if self.tmp_count%50 == 0:
+        #     restart = True
+
         if shutdown or restart:
             try:
                 change_resp = self.change_mode(ChangeMetaModeRequest.RESTART_KINECT)
                 if not change_resp.error:
-                    rospy.logerr("Tried to go back to idle mode, failed!")
+                    rospy.logerr("Failure in setting RESTART_KINECT mode")
                 else:
-                    rospy.logdebug("Back to idle mode meta mode change succeeded.")
+                    rospy.loginfo("RESTART_KINECT meta mode change succeeded")
             except rospy.ServiceException, e:
                 rospy.logerr("Service call failed: %s",e)
             if shutdown:
                 rospy.logwarn("Shutting down computer")
-                cmd = 'sudo shutdown -r now'
-                subprocess.Popen(cmd,shell=True)                
+                cmd = 'sudo /sbin/shutdown -r now'
+                subprocess.Popen(cmd,shell=True)
             if restart:
                 self.check_count = 0
                 rospy.logwarn("Shutting down tracker and drivers") 
                 self.stop_procs(EmptyRequest())
                 rospy.logwarn("Starting tracker and drivers")
                 self.start_procs(EmptyRequest())
+                self.enable_delay_count = 0
+        if self.enable_delay_count >= 0:
+            self.enable_delay_count += 1
+            if self.enable_delay_count > CHANGE_MODE_COUNT:
                 change_resp = self.change_mode(ChangeMetaModeRequest.IDLE_ENABLED)
                 if not change_resp.error:
-                    rospy.logerr("Tried to go back to idle mode, failed!")
+                    rospy.logerr("Failure in setting IDLE_ENABLED mode")
                 else:
-                    rospy.logdebug("Back to idle mode meta mode change succeeded.")
+                    rospy.loginfo("IDLE_ENABLED meta mode change succeeded")
+                    self.enable_delay_count = -1
         return
             
             

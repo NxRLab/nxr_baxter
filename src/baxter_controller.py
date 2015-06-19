@@ -467,8 +467,9 @@ class Baxter_Controller:
             self.reset_booleans()
 
     def meta_mode_callback(self, data):
+        rospy.loginfo("[baxter_controller.py] meta_mode_callback triggered")
         if self.internal_mode != data.mode:
-            rospy.logdebug("New mode: %d", data.mode)
+            rospy.loginfo("New mode: %d", data.mode)
             self.internal_mode = data.mode
             if data.mode == MetaMode.MIME:
                 self.choose_mime()
@@ -498,7 +499,7 @@ class Baxter_Controller:
         self.bool_reset()
 
     def enable(self):
-        rospy.logdebug("Calling enable...")
+        rospy.loginfo("[baxter_controller.py] Calling enable()...")
         #Enable motors
         rospy.loginfo("Enabling baxter_controller.py")
         self.disable_move_thread()
