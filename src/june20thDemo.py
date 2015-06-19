@@ -32,6 +32,9 @@ class Dancer(object):
         self._left_joint_names = self._left_arm.joint_names()
         self._right_joint_names = self._right_arm.joint_names()
 
+        self.image_pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
+        self.bridge = cv_bridge.CvBridge()
+
         #control parameters
         self._rate = 500.0 #Hz
 
@@ -84,13 +87,9 @@ class Dancer(object):
         reps is number of times to repeat. reps=0 does infinite
         """
         #image
-        # img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Macarena.png")
         img = cv2.imread("/home/nxr-baxter/indigows/src/nxr_baxter/images/Macarena.png")
-        bridge = cv_bridge.CvBridge()
-        msg = bridge.cv2_to_imgmsg(img, encoding="bgr8")
-        # msg = cv_bridge.CvBridge().cv_to_imgmsg(img, encoding="bgr8")
-        pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
-        pub.publish(msg)
+        msg = self.bridge.cv2_to_imgmsg(img, encoding="bgr8")
+        self.image_pub.publish(msg)
 
         self.set_neutral()
         self._right_arm.set_joint_position_speed(0.8)
@@ -126,18 +125,17 @@ class Dancer(object):
                     self._right_arm.move_to_joint_positions(right_angles, threshold=0.1)
                     self._left_arm.move_to_joint_positions(left_angles, threshold=0.1)
 
-                    # if(i==5):
-                    #     #image
-                    #     img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Hey-Macarena.png")
-                    #     msg = cv_bridge.CvBridge().cv_to_imgmsg(img, encoding="bgr8")
-                    #     pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
-                    #     pub.publish(msg)
-                    #     rospy.sleep(3.5)
-                    #     #image
-                    #     img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Macarena.png")
-                    #     msg = cv_bridge.CvBridge().cv_to_imgmsg(img, encoding="bgr8")
-                    #     pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
-                    #     pub.publish(msg)
+                    if(i==5):
+                        #image
+                        img = cv2.imread("/home/nxr-baxter/indigows/src/nxr_baxter/images/Hey-Macarena.png")
+                        msg = self.bridge.cv2_to_imgmsg(img, encoding="bgr8")
+                        self.image_pub.publish(msg)
+                        rospy.sleep(3.5)
+                        #image
+                        img = cv2.imread("/home/nxr-baxter/indigows/src/nxr_baxter/images/Hey-Macarena.png")
+                        msg = self.bridge.cv2_to_imgmsg(img, encoding="bgr8")
+                        self.image_pub.publish(msg)
+
             if reps > 0:
                 reps -= 1
                 if reps == 0:
@@ -404,28 +402,29 @@ def main():
     print("Initializing node... ")
     rospy.init_node("macarena_dancer")
 
-    # img = cv.LoadImage("/home/nxr-baxter/groovyws/src/nxr_baxter/images/Graduation-Congratulations.png")
-    # msg = cv_bridge.CvBridge().cv_to_imgmsg(img, encoding="bgr8")
-    # pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
-    # pub.publish(msg)
 
     head_wobbler = Head_Wobbler()
     dancer = Dancer()
     arm_wobbler = Arm_Wobbler()
     waver = Waver()
 
+
+    img = cv2.imread("/home/nxr-baxter/indigows/src/nxr_baxter/images/Graduation-Congratulations.png")
+    msg = dancer.bridge.cv2_to_imgmsg(img, encoding="bgr8")
+    dancer.image_pub.publish(msg)
+
     while not rospy.is_shutdown():
         head_wobbler.wobble()
         rospy.sleep(1.)
         dancer.macarena(1)
         rospy.sleep(5.)
-        pub.publish(msg)
+        dancer.image_pub.publish(msg)
         rospy.sleep(5.)
         arm_wobbler.wobble()
         rospy.sleep(5.)
         dancer.macarena(1)
         rospy.sleep(5.)
-        pub.publish(msg)
+        dancer.image_pub.publish(msg)
         rospy.sleep(5.)
         waver.wave()
         rospy.sleep(5.)
