@@ -5,10 +5,13 @@
 
 	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="1.28 0.10 0.19 0 0 0 base camera_link 1000" />
 
+	<!-- Setup the grippers: -->
+	<node pkg="nxr_baxter" type="add_willens_grippers.sh" name="gripper_modifier" output="screen" respawn="false" />	
+
+	<!-- MoveIt! Configurations: -->
 	<include file="$(find baxter_moveit_config)/launch/planning_context.launch">
 	  <arg name="load_robot_description" value="true"/>
 	</include>
-
 	<include file="$(find baxter_moveit_config)/launch/move_group.launch">
 	  <arg name="allow_trajectory_execution" value="true"/>
 	</include>
