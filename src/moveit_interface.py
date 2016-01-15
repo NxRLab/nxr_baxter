@@ -235,13 +235,12 @@ if __name__=='__main__':
     robot = moveit_commander.RobotCommander()
 
     # Add in objects
-    p = PoseStamped()
-    p.header.frame_id = robot.get_planning_frame()
-    p.pose.position.x = 0.8
-    p.pose.position.y = 0.025
-    p.pose.position.z = -0.6
-
-    scene.add_box("table", p, (1.0, 1.25, 0.9)) #(0.75, 1.25, 0.68)
+    # p = PoseStamped()
+    # p.header.frame_id = robot.get_planning_frame()
+    # p.pose.position.x = 0.8
+    # p.pose.position.y = 0.025
+    # p.pose.position.z = -0.6
+    # scene.add_box("table", p, (1.0, 1.25, 0.9)) #(0.75, 1.25, 0.68)
 
     traj_controller = Trajectory_Controller()
 
